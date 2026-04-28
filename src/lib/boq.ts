@@ -36,14 +36,14 @@ export function parseBoQExcel(buffer: ArrayBuffer): BoqResult {
   let sto = '';
 
   const a2Value = json[1]?.[0]?.toString() || '';
-  if (a2Value.toUpperCase().startsWith('PROJECT : ')) {
-    projectName = a2Value.substring(8).trim();
+  if (a2Value.toUpperCase().startsWith('PROJECT')) {
+    projectName = a2Value.replace(/^PROJECT\s*:\s*/i, '').trim();
     namaLop = projectName;
   }
 
   const a3Value = json[2]?.[0]?.toString() || '';
-  if (a3Value.toUpperCase().startsWith('STO : ')) {
-    sto = a3Value.substring(4).trim();
+  if (a3Value.toUpperCase().startsWith('STO')) {
+    sto = a3Value.replace(/^STO\s*:\s*/i, '').trim();
   }
 
   const rows: BoqRow[] = [];
