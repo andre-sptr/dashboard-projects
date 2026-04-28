@@ -14,6 +14,10 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     title: 'Projects Data',
     subtitle: 'Sistem pelacakan durasi perubahan status SLA project.',
   },
+  '/boq': {
+    title: 'Bill of Quantity',
+    subtitle: 'Import dan kelola data BoQ dari file Excel.',
+  },
   '/aanwijzing': {
     title: 'Catatan AANWIJZING',
     subtitle: 'Form pencatatan aanwijzing project.',

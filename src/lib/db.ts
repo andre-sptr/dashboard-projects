@@ -150,4 +150,38 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS boq (
+    id TEXT PRIMARY KEY,
+    nama_lop TEXT NOT NULL,
+    id_ihld TEXT NOT NULL DEFAULT '',
+    sto TEXT NOT NULL DEFAULT '',
+    batch_program TEXT NOT NULL DEFAULT '',
+    project_name TEXT NOT NULL DEFAULT '',
+    region TEXT NOT NULL DEFAULT 'SUMBAGTENG',
+    full_data TEXT DEFAULT '[]',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+export const getAllBoq = db.prepare('SELECT * FROM boq ORDER BY created_at DESC');
+export const getBoqById = db.prepare('SELECT * FROM boq WHERE id = ?');
+export const upsertBoq = db.prepare(`
+  INSERT INTO boq (
+    id, nama_lop, id_ihld, sto, batch_program, project_name, region, full_data, created_at, updated_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ON CONFLICT(id) DO UPDATE SET
+    nama_lop = excluded.nama_lop,
+    id_ihld = excluded.id_ihld,
+    sto = excluded.sto,
+    batch_program = excluded.batch_program,
+    project_name = excluded.project_name,
+    region = excluded.region,
+    full_data = excluded.full_data,
+    updated_at = CURRENT_TIMESTAMP
+`);
+export const deleteBoq = db.prepare('DELETE FROM boq WHERE id = ?');
+
 export default db;
