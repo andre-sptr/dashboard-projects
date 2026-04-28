@@ -1,0 +1,107 @@
+import Database from 'better-sqlite3';
+import path from 'path';
+import fs from 'fs';
+
+const dbPath = path.join(process.cwd(), 'data/projects.db');
+const dbDir = path.dirname(dbPath);
+
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const db = new Database(dbPath);
+
+db.pragma('journal_mode = WAL');
+
+export interface Project {
+  uid: string;
+  id_ihld: string;
+  batch_program: string;
+  nama_lop: string;
+  region: string;
+  status: string;
+  sub_status: string;
+  full_data: string;
+  last_changed_at: string;
+  history: string;
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS projects (
+    uid TEXT PRIMARY KEY,
+    id_ihld TEXT NOT NULL,
+    batch_program TEXT NOT NULL DEFAULT '',
+    nama_lop TEXT DEFAULT '',
+    region TEXT NOT NULL,
+    status TEXT NOT NULL,
+    sub_status TEXT NOT NULL,
+    full_data TEXT DEFAULT '[]',
+    last_changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    history TEXT DEFAULT '[]'
+  )
+`);
+
+const tableInfo = db.pragma('table_info(projects)') as { name: string }[];
+const columns = tableInfo.map((c) => c.name);
+
+if (!columns.includes('uid')) {
+  db.exec(`ALTER TABLE projects ADD COLUMN uid TEXT DEFAULT ''`);
+  db.exec(`UPDATE projects SET uid = id_ihld || '::' WHERE uid = ''`);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS projects_new (
+      uid TEXT PRIMARY KEY,
+      id_ihld TEXT NOT NULL,
+      batch_program TEXT NOT NULL DEFAULT '',
+      nama_lop TEXT DEFAULT '',
+      region TEXT NOT NULL,
+      status TEXT NOT NULL,
+      sub_status TEXT NOT NULL,
+      full_data TEXT DEFAULT '[]',
+      last_changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      history TEXT DEFAULT '[]'
+    );
+    INSERT OR IGNORE INTO projects_new
+      (uid, id_ihld, batch_program, nama_lop, region, status, sub_status, full_data, last_changed_at, history)
+    SELECT uid, id_ihld, '' as batch_program, nama_lop, region, status, sub_status, full_data, last_changed_at, history
+    FROM projects;
+    DROP TABLE projects;
+    ALTER TABLE projects_new RENAME TO projects;
+  `);
+  console.log('[db] Migrasi schema selesai: uid sekarang menjadi PRIMARY KEY.');
+}
+
+if (!columns.includes('batch_program') && columns.includes('uid')) {
+  db.exec(`ALTER TABLE projects ADD COLUMN batch_program TEXT NOT NULL DEFAULT ''`);
+}
+if (!columns.includes('nama_lop')) {
+  db.exec(`ALTER TABLE projects ADD COLUMN nama_lop TEXT DEFAULT ''`);
+}
+if (!columns.includes('full_data')) {
+  db.exec(`ALTER TABLE projects ADD COLUMN full_data TEXT DEFAULT '[]'`);
+}
+
+export const getProjectByUid = db.prepare('SELECT * FROM projects WHERE uid = ?');
+export const getAllProjects = db.prepare('SELECT * FROM projects WHERE region = ? ORDER BY last_changed_at DESC');
+export const upsertProject = db.prepare(`
+  INSERT INTO projects (
+    uid, id_ihld, batch_program, nama_lop, region, status, sub_status, full_data, last_changed_at, history
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+  ON CONFLICT(uid) DO UPDATE SET
+    id_ihld = excluded.id_ihld,
+    batch_program = excluded.batch_program,
+    nama_lop = excluded.nama_lop,
+    region = excluded.region,
+    status = excluded.status,
+    sub_status = excluded.sub_status,
+    full_data = excluded.full_data,
+    last_changed_at = CASE 
+      WHEN projects.sub_status != excluded.sub_status OR projects.status != excluded.status 
+      THEN CURRENT_TIMESTAMP 
+      ELSE projects.last_changed_at 
+    END,
+    history = excluded.history
+`);
+
+export default db;
