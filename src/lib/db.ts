@@ -104,4 +104,26 @@ export const upsertProject = db.prepare(`
     history = excluded.history
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS aanwijzing (
+    id TEXT PRIMARY KEY,
+    nama_lop TEXT NOT NULL,
+    id_ihld TEXT NOT NULL,
+    tematik TEXT DEFAULT '',
+    tanggal_aanwijzing TEXT NOT NULL,
+    catatan TEXT DEFAULT '',
+    status_after_aanwijzing TEXT DEFAULT '',
+    gpon TEXT DEFAULT '',
+    frame INTEGER DEFAULT 0,
+    slot_awal INTEGER DEFAULT 0,
+    slot_akhir INTEGER DEFAULT 0,
+    port_awal INTEGER DEFAULT 0,
+    port_akhir INTEGER DEFAULT 0,
+    wa_spang TEXT DEFAULT '',
+    ut TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 export default db;

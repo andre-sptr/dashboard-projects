@@ -14,6 +14,10 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     title: 'Projects Data',
     subtitle: 'Sistem pelacakan durasi perubahan status SLA project.',
   },
+  '/aanwijzing': {
+    title: 'Catatan AANWIJZING',
+    subtitle: 'Form pencatatan aanwijzing project.',
+  },
 };
 
 export default function MainLayout({

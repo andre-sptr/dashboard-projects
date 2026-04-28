@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Database, X, Activity } from 'lucide-react';
+import { LayoutDashboard, Database, X, Activity, FileText } from 'lucide-react';
 
 interface SidebarProps {
   open: boolean;
@@ -12,6 +12,7 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/projects', label: 'Projects Data', icon: Database },
+  { href: '/aanwijzing', label: 'Catatan AANWIJZING', icon: FileText },
 ];
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
