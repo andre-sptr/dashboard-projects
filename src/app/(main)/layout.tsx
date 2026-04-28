@@ -18,6 +18,10 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     title: 'Catatan AANWIJZING',
     subtitle: 'Form pencatatan aanwijzing project.',
   },
+  '/ut': {
+    title: 'Rekap UT',
+    subtitle: 'Form pencatatan hasil UT (Uji Terima).',
+  },
 };
 
 export default function MainLayout({

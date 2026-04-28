@@ -126,4 +126,28 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ut (
+    id TEXT PRIMARY KEY,
+    nama_lop TEXT NOT NULL,
+    id_ihld TEXT NOT NULL,
+    witel TEXT DEFAULT '',
+    tematik TEXT DEFAULT '',
+    sto TEXT DEFAULT '',
+    tim_ut TEXT DEFAULT '',
+    commtest_ut TEXT DEFAULT '',
+    jumlah_odp INTEGER DEFAULT 0,
+    jumlah_port INTEGER DEFAULT 0,
+    tanggal_ct_ut TEXT DEFAULT '',
+    temuan TEXT DEFAULT '',
+    follow_up_mitra INTEGER DEFAULT 0,
+    mitra TEXT DEFAULT '',
+    jumlah_temuan INTEGER DEFAULT 0,
+    wa_spang TEXT DEFAULT '',
+    komitmen_penyelesaian TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 export default db;

@@ -8,30 +8,37 @@ interface ProjectOption {
   id_ihld: string;
 }
 
-interface AanwijzingData {
+interface UTData {
   id: string;
   nama_lop: string;
   id_ihld: string;
+  witel: string;
   tematik: string;
-  tanggal_aanwijzing: string;
-  catatan: string;
-  status_after_aanwijzing: string;
-  gpon: string;
-  frame: number;
-  slot_awal: number;
-  slot_akhir: number;
-  port_awal: number;
-  port_akhir: number;
+  sto: string;
+  tim_ut: string;
+  commtest_ut: string;
+  jumlah_odp: number;
+  jumlah_port: number;
+  tanggal_ct_ut: string;
+  temuan: string;
+  follow_up_mitra: number;
+  mitra: string;
+  jumlah_temuan: number;
   wa_spang: string;
-  ut: string;
+  komitmen_penyelesaian: string;
   created_at: string;
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function AanwijzingPage() {
+const COMMTEST_UT_OPTIONS = [
+  { value: 'COMMTEST', label: 'COMMTEST' },
+  { value: 'UT', label: 'UT' },
+];
+
+export default function UTPage() {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
-  const [aanwijzingList, setAanwijzingList] = useState<AanwijzingData[]>([]);
+  const [utList, setUtList] = useState<UTData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,18 +49,20 @@ export default function AanwijzingPage() {
   const [formData, setFormData] = useState({
     nama_lop: '',
     id_ihld: '',
+    witel: '',
     tematik: '',
-    tanggal_aanwijzing: '',
-    catatan: '',
-    status_after_aanwijzing: '',
-    gpon: '',
-    frame: '',
-    slot_awal: '',
-    slot_akhir: '',
-    port_awal: '',
-    port_akhir: '',
+    sto: '',
+    tim_ut: '',
+    commtest_ut: '',
+    jumlah_odp: '',
+    jumlah_port: '',
+    tanggal_ct_ut: '',
+    temuan: '',
+    follow_up_mitra: false,
+    mitra: '',
+    jumlah_temuan: '',
     wa_spang: '',
-    ut: '',
+    komitmen_penyelesaian: '',
   });
 
   const [searchLop, setSearchLop] = useState('');
@@ -80,10 +89,10 @@ export default function AanwijzingPage() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('/api/aanwijzing');
+      const res = await fetch('/api/ut');
       const data = await res.json();
       setProjects(data.projects || []);
-      setAanwijzingList(data.aanwijzing || []);
+      setUtList(data.ut || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       showNotification('error', 'Gagal mengambil data');
@@ -97,13 +106,17 @@ export default function AanwijzingPage() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedProject = projects.find(p => p.nama_lop === e.target.value);
-    setFormData({
-      ...formData,
-      nama_lop: e.target.value,
-      id_ihld: selectedProject?.id_ihld || '',
-    });
+  const handleTemuanChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, temuan: value });
+
+    const temuanMatches = value.match(/^\d+\./gm);
+    const count = temuanMatches ? temuanMatches.length : 0;
+    if (count > 0) {
+      setFormData(prev => ({ ...prev, temuan: value, jumlah_temuan: String(count) }));
+    } else {
+      setFormData(prev => ({ ...prev, temuan: value, jumlah_temuan: '' }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,16 +124,14 @@ export default function AanwijzingPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/aanwijzing', {
+      const res = await fetch('/api/ut', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          frame: Number(formData.frame) || 0,
-          slot_awal: Number(formData.slot_awal) || 0,
-          slot_akhir: Number(formData.slot_akhir) || 0,
-          port_awal: Number(formData.port_awal) || 0,
-          port_akhir: Number(formData.port_akhir) || 0,
+          jumlah_odp: Number(formData.jumlah_odp) || 0,
+          jumlah_port: Number(formData.jumlah_port) || 0,
+          jumlah_temuan: Number(formData.jumlah_temuan) || 0,
           id: editingId,
         }),
       });
@@ -144,22 +155,24 @@ export default function AanwijzingPage() {
     }
   };
 
-  const handleEdit = (item: AanwijzingData) => {
+  const handleEdit = (item: UTData) => {
     setFormData({
       nama_lop: item.nama_lop,
       id_ihld: item.id_ihld,
+      witel: item.witel || '',
       tematik: item.tematik || '',
-      tanggal_aanwijzing: item.tanggal_aanwijzing || '',
-      catatan: item.catatan || '',
-      status_after_aanwijzing: item.status_after_aanwijzing || '',
-      gpon: item.gpon || '',
-      frame: String(item.frame || ''),
-      slot_awal: String(item.slot_awal || ''),
-      slot_akhir: String(item.slot_akhir || ''),
-      port_awal: String(item.port_awal || ''),
-      port_akhir: String(item.port_akhir || ''),
+      sto: item.sto || '',
+      tim_ut: item.tim_ut || '',
+      commtest_ut: item.commtest_ut || '',
+      jumlah_odp: String(item.jumlah_odp || ''),
+      jumlah_port: String(item.jumlah_port || ''),
+      tanggal_ct_ut: item.tanggal_ct_ut || '',
+      temuan: item.temuan || '',
+      follow_up_mitra: item.follow_up_mitra === 1,
+      mitra: item.mitra || '',
+      jumlah_temuan: String(item.jumlah_temuan || ''),
       wa_spang: item.wa_spang || '',
-      ut: item.ut || '',
+      komitmen_penyelesaian: item.komitmen_penyelesaian || '',
     });
     setSearchLop(item.nama_lop);
     setEditingId(item.id);
@@ -171,7 +184,7 @@ export default function AanwijzingPage() {
     if (!confirm('Yakin ingin menghapus data ini?')) return;
 
     try {
-      const res = await fetch(`/api/aanwijzing?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/ut?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         showNotification('success', 'Data berhasil dihapus');
         fetchData();
@@ -188,25 +201,27 @@ export default function AanwijzingPage() {
     setFormData({
       nama_lop: '',
       id_ihld: '',
+      witel: '',
       tematik: '',
-      tanggal_aanwijzing: '',
-      catatan: '',
-      status_after_aanwijzing: '',
-      gpon: '',
-      frame: '',
-      slot_awal: '',
-      slot_akhir: '',
-      port_awal: '',
-      port_akhir: '',
+      sto: '',
+      tim_ut: '',
+      commtest_ut: '',
+      jumlah_odp: '',
+      jumlah_port: '',
+      tanggal_ct_ut: '',
+      temuan: '',
+      follow_up_mitra: false,
+      mitra: '',
+      jumlah_temuan: '',
       wa_spang: '',
-      ut: '',
+      komitmen_penyelesaian: '',
     });
     setSearchLop('');
     setShowDropdown(false);
   };
 
-  const totalPages = Math.ceil(aanwijzingList.length / ITEMS_PER_PAGE);
-  const paginatedData = aanwijzingList.slice(
+  const totalPages = Math.ceil(utList.length / ITEMS_PER_PAGE);
+  const paginatedData = utList.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -239,10 +254,10 @@ export default function AanwijzingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-            {editingId ? 'Edit Catatan AANWIJZING' : showForm ? 'Form Catatan AANWIJZING' : 'Daftar Catatan AANWIJZING'}
+            {editingId ? 'Edit Rekap UT' : showForm ? 'Form Rekap UT' : 'Daftar Rekap UT'}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {showForm ? 'Isi form berikut untuk menyimpan data aanwijzing' : 'Kelola catatan aanwijzing project'}
+            {showForm ? 'Isi form berikut untuk menyimpan data UT' : 'Kelola data hasil UT (Uji Terima)'}
           </p>
         </div>
         {!showForm && (
@@ -263,7 +278,7 @@ export default function AanwijzingPage() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <FileText size={18} className="text-blue-600" />
-              {editingId ? 'Edit Data' : 'Input Data AANWIJZING'}
+              {editingId ? 'Edit Data' : 'Input Data Rekap UT'}
             </h3>
             <button
               onClick={() => { setShowForm(false); resetForm(); setEditingId(null); }}
@@ -333,20 +348,20 @@ export default function AanwijzingPage() {
               </div>
             </div>
 
-            {/* Tanggal & Tematik */}
+            {/* WITEL & TEMATIK */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Tanggal AANWIJZING <span className="text-red-500">*</span></label>
+                <label className={labelClass}>WITEL</label>
                 <input
-                  type="date"
-                  value={formData.tanggal_aanwijzing}
-                  onChange={(e) => setFormData({ ...formData, tanggal_aanwijzing: e.target.value })}
-                  required
+                  type="text"
+                  value={formData.witel}
+                  onChange={(e) => setFormData({ ...formData, witel: e.target.value })}
                   className={inputClass}
+                  placeholder="Masukkan WITEL..."
                 />
               </div>
               <div>
-                <label className={labelClass}>Tematik</label>
+                <label className={labelClass}>TEMATIK</label>
                 <input
                   type="text"
                   value={formData.tematik}
@@ -357,60 +372,76 @@ export default function AanwijzingPage() {
               </div>
             </div>
 
-            {/* Status After & GPON */}
+            {/* STO & TIM UT */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Status After Aanwijzing</label>
+                <label className={labelClass}>STO</label>
                 <input
                   type="text"
-                  value={formData.status_after_aanwijzing}
-                  onChange={(e) => setFormData({ ...formData, status_after_aanwijzing: e.target.value })}
+                  value={formData.sto}
+                  onChange={(e) => setFormData({ ...formData, sto: e.target.value })}
                   className={inputClass}
-                  placeholder="Masukkan STATUS..."
+                  placeholder="Masukkan STO..."
                 />
               </div>
               <div>
-                <label className={labelClass}>GPON</label>
+                <label className={labelClass}>TIM UT</label>
                 <input
                   type="text"
-                  value={formData.gpon}
-                  onChange={(e) => setFormData({ ...formData, gpon: e.target.value })}
+                  value={formData.tim_ut}
+                  onChange={(e) => setFormData({ ...formData, tim_ut: e.target.value })}
                   className={inputClass}
-                  placeholder="Masukkan GPON..."
+                  placeholder="Masukkan TIM UT..."
                 />
               </div>
             </div>
 
-            {/* Frame, Slot Awal, Slot Akhir */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* COMMTEST/UT & Tanggal CT/UT */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Frame</label>
+                <label className={labelClass}>COMMTEST/UT</label>
+                <select
+                  value={formData.commtest_ut}
+                  onChange={(e) => setFormData({ ...formData, commtest_ut: e.target.value })}
+                  className={inputClass}
+                >
+                  <option value="">Pilih...</option>
+                  {COMMTEST_UT_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Tanggal CT/UT <span className="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  value={formData.tanggal_ct_ut}
+                  onChange={(e) => setFormData({ ...formData, tanggal_ct_ut: e.target.value })}
+                  required
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            {/* JUMLAH ODP & JUMLAH PORT */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>JUMLAH ODP</label>
                 <input
                   type="number"
-                  value={formData.frame}
-                  onChange={(e) => setFormData({ ...formData, frame: e.target.value })}
+                  value={formData.jumlah_odp}
+                  onChange={(e) => setFormData({ ...formData, jumlah_odp: e.target.value })}
                   className={inputClass}
                   placeholder="0"
                   min="0"
                 />
               </div>
               <div>
-                <label className={labelClass}>Slot Awal</label>
+                <label className={labelClass}>JUMLAH PORT</label>
                 <input
                   type="number"
-                  value={formData.slot_awal}
-                  onChange={(e) => setFormData({ ...formData, slot_awal: e.target.value })}
-                  className={inputClass}
-                  placeholder="0"
-                  min="0"
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Slot Akhir</label>
-                <input
-                  type="number"
-                  value={formData.slot_akhir}
-                  onChange={(e) => setFormData({ ...formData, slot_akhir: e.target.value })}
+                  value={formData.jumlah_port}
+                  onChange={(e) => setFormData({ ...formData, jumlah_port: e.target.value })}
                   className={inputClass}
                   placeholder="0"
                   min="0"
@@ -418,66 +449,81 @@ export default function AanwijzingPage() {
               </div>
             </div>
 
-            {/* Port Awal, Port Akhir, WA SPANG */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Temuan */}
+            <div>
+              <label className={labelClass}>Temuan</label>
+              <textarea
+                value={formData.temuan}
+                onChange={handleTemuanChange}
+                className={`${inputClass} min-h-[120px] resize-y`}
+                placeholder="1. Temuan pertama&#10;2. Temuan kedua&#10;3. Temuan ketiga..."
+              />
+              <p className="text-[10px] text-gray-400 mt-1">Gunakan format: 1. ... 2. ... 3. ...</p>
+            </div>
+
+            {/* Follow Up dari Mitra & Mitra */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 pt-6">
+                <input
+                  type="checkbox"
+                  id="follow_up_mitra"
+                  checked={formData.follow_up_mitra}
+                  onChange={(e) => setFormData({ ...formData, follow_up_mitra: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="follow_up_mitra" className="text-sm text-gray-700 dark:text-gray-300">
+                  Follow Up dari Mitra
+                </label>
+              </div>
               <div>
-                <label className={labelClass}>WA SPANG</label>
+                <label className={labelClass}>Mitra</label>
+                <input
+                  type="text"
+                  value={formData.mitra}
+                  onChange={(e) => setFormData({ ...formData, mitra: e.target.value })}
+                  className={inputClass}
+                  placeholder="Masukkan MITRA..."
+                />
+              </div>
+            </div>
+
+            {/* Jumlah Temuan & WA SPANG TA */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Jumlah Temuan</label>
+                <input
+                  type="number"
+                  value={formData.jumlah_temuan}
+                  onChange={(e) => setFormData({ ...formData, jumlah_temuan: e.target.value })}
+                  className={inputClass}
+                  placeholder="0"
+                  min="0"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Otomatis terisi dari Temuan</p>
+              </div>
+              <div>
+                <label className={labelClass}>WA SPANG TA</label>
                 <input
                   type="text"
                   value={formData.wa_spang}
                   onChange={(e) => setFormData({ ...formData, wa_spang: e.target.value })}
                   className={inputClass}
-                  placeholder="Masukkan WA SPANG..."
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Port Awal</label>
-                <input
-                  type="number"
-                  value={formData.port_awal}
-                  onChange={(e) => setFormData({ ...formData, port_awal: e.target.value })}
-                  className={inputClass}
-                  placeholder="0"
-                  min="0"
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Port Akhir</label>
-                <input
-                  type="number"
-                  value={formData.port_akhir}
-                  onChange={(e) => setFormData({ ...formData, port_akhir: e.target.value })}
-                  className={inputClass}
-                  placeholder="0"
-                  min="0"
+                  placeholder="Masukkan WA SPANG TA..."
                 />
               </div>
             </div>
 
-            {/* UT */}
+            {/* Komitment penyelesaian */}
             <div>
-              <label className={labelClass}>UT</label>
+              <label className={labelClass}>Komitment penyelesaian</label>
               <input
-                type="text"
-                value={formData.ut}
-                onChange={(e) => setFormData({ ...formData, ut: e.target.value })}
+                type="date"
+                value={formData.komitmen_penyelesaian}
+                onChange={(e) => setFormData({ ...formData, komitmen_penyelesaian: e.target.value })}
                 className={inputClass}
-                placeholder="Masukkan UT..."
               />
             </div>
 
-            {/* Catatan */}
-            <div>
-              <label className={labelClass}>Catatan</label>
-              <textarea
-                value={formData.catatan}
-                onChange={(e) => setFormData({ ...formData, catatan: e.target.value })}
-                className={`${inputClass} min-h-[120px] resize-y`}
-                placeholder="1. Catatan pertama&#10;2. Catatan kedua&#10;3. Catatan ketiga..."
-              />
-              <p className="text-[10px] text-gray-400 mt-1">Gunakan format: 1. ... 2. ... 3. ...</p>
-            </div>
-            
             {/* Submit Button */}
             <div className="flex gap-3 pt-2">
               <button
@@ -513,8 +559,8 @@ export default function AanwijzingPage() {
                 <thead className="bg-gray-50 dark:bg-gray-800/50">
                   <tr>
                     <th scope="col" className="px-3 py-3 text-left text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID IHLD / Nama LOP</th>
-                    <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tgl AANWIJZING</th>
-                    <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">UT</th>
+                    <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tgl CT/UT</th>
+                    <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">COMMTEST/UT</th>
                     <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
                   </tr>
                 </thead>
@@ -530,10 +576,10 @@ export default function AanwijzingPage() {
                         </div>
                       </td>
                       <td className="px-3 py-3 text-center text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">
-                        {item.tanggal_aanwijzing ? new Date(item.tanggal_aanwijzing).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                        {item.tanggal_ct_ut ? new Date(item.tanggal_ct_ut).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                       </td>
                       <td className="px-3 py-3 text-center text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">
-                        {item.ut || '-'}
+                        {item.commtest_ut || '-'}
                       </td>
                       <td className="px-3 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
@@ -588,7 +634,7 @@ export default function AanwijzingPage() {
           <div className="px-6 py-12 text-center">
             <FileText size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-gray-500 dark:text-gray-400 text-sm">
-              {showForm ? 'Simpan data untuk melihat di daftar' : 'Belum ada data aanwijzing. Klik "Tambah" untuk memulai.'}
+              {showForm ? 'Simpan data untuk melihat di daftar' : 'Belum ada data UT. Klik "Tambah" untuk memulai.'}
             </p>
           </div>
         )}
