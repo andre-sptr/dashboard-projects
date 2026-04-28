@@ -1,12 +1,34 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Upload, Trash2, FileText, ChevronLeft, ChevronRight, X, CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Upload, Trash2, FileText, ChevronLeft, ChevronRight, X, Loader2, Eye } from 'lucide-react';
 
 interface BoqRow {
   id_ihld: string;
   batch_program: string;
   full_data: string;
+}
+
+interface ExcelTableRow {
+  no: string;
+  isSection: boolean;
+  isSummary: boolean;
+  designator: string;
+  deskripsiPekerjaan: string;
+  satuan: string;
+  materialSatuan: number;
+  jasaSatuan: number;
+  volume: number;
+  totalMaterial: number;
+  totalJasa: number;
+  totalHarga: number;
+  keterangan: string;
+}
+
+interface ParsedBoqDetail {
+  projectName: string;
+  sto: string;
+  tableRows: ExcelTableRow[];
 }
 
 interface BoqData {
@@ -32,7 +54,7 @@ export default function BoqPage() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedBoq, setSelectedBoq] = useState<BoqData | null>(null);
-  const [detailRows, setDetailRows] = useState<BoqRow[]>([]);
+  const [detailData, setDetailData] = useState<ParsedBoqDetail[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -137,10 +159,91 @@ export default function BoqPage() {
     }
   };
 
+  const parseNumber = (value: unknown): number => {
+    if (value === undefined || value === null || value === '') return 0;
+   
+    if (typeof value === 'number') return value;
+    
+    const str = value.toString().trim();
+    const cleaned = str.replace(/,/g, '');
+    const num = parseFloat(cleaned);
+
+    return isNaN(num) ? 0 : num;
+  };
+
+  const formatIdrOrDash = (value: number): string => {
+    if (!Number.isFinite(value) || value === 0) return '-';
+    return value.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+  };
+
+  const parseExcelTableRow = (fullDataArray: unknown[], _rowIndex: number): ExcelTableRow => {
+    void _rowIndex;
+    const no = (fullDataArray[0] ?? '').toString().trim();
+    const designator = (fullDataArray[1] ?? '').toString().trim();
+    const deskripsiPekerjaan = (fullDataArray[2] ?? '').toString().trim();
+    const satuan = (fullDataArray[3] ?? '').toString().trim();
+    const keterangan = (fullDataArray[10] ?? '').toString().trim();
+    const materialSatuan = parseNumber(fullDataArray[4]);
+    const jasaSatuan = parseNumber(fullDataArray[5]);
+    const volume = parseNumber(fullDataArray[6]);
+    const totalMaterial = materialSatuan * volume;
+    const totalJasa = jasaSatuan * volume;
+    const totalHarga = totalMaterial + totalJasa;
+    const summaryLabelRegex = /^(MATERIAL|JASA|TOTAL)$/i;
+    const summaryFields = [no, designator, deskripsiPekerjaan, satuan];
+    const isSummary = summaryFields.some((v) => summaryLabelRegex.test(v.trim()));
+    const isSection = !isSummary && !!no && !deskripsiPekerjaan && !satuan;
+
+    return {
+      no: no || '-',
+      isSection,
+      isSummary,
+      designator: designator || '-',
+      deskripsiPekerjaan: deskripsiPekerjaan || '-',
+      satuan: satuan || '-',
+      materialSatuan,
+      jasaSatuan,
+      volume,
+      totalMaterial,
+      totalJasa,    
+      totalHarga,   
+      keterangan: keterangan || '-',
+    };
+  };
+
+  const parseBoqDetails = (fullDataJson: string, item: BoqData): ParsedBoqDetail[] => {
+    try {
+      const rawRows: BoqRow[] = JSON.parse(fullDataJson);
+      const detail: ParsedBoqDetail = {
+        projectName: item.project_name || item.nama_lop || 'Unknown',
+        sto: item.sto || '-',
+        tableRows: [],
+      };
+
+      rawRows.forEach((row, index) => {
+        try {
+          const fullDataArray: unknown[] = JSON.parse(row.full_data);
+          const tableRow = parseExcelTableRow(fullDataArray, index);
+          
+          if (!tableRow.isSummary) {
+            detail.tableRows.push(tableRow);
+          }
+        } catch (e) {
+          console.warn('Failed to parse row:', row, e);
+        }
+      });
+
+      return [detail];
+    } catch (e) {
+      console.error('Failed to parse BoQ details:', e);
+      return [];
+    }
+  };
+
   const handleViewDetails = (item: BoqData) => {
     try {
-      const parsed = JSON.parse(item.full_data);
-      setDetailRows(parsed);
+      const parsedDetails = parseBoqDetails(item.full_data, item);
+      setDetailData(parsedDetails);
       setSelectedBoq(item);
     } catch (error) {
       console.error('Error parsing detail data:', error);
@@ -150,7 +253,7 @@ export default function BoqPage() {
 
   const handleCloseDetails = () => {
     setSelectedBoq(null);
-    setDetailRows([]);
+    setDetailData([]);
   };
 
   const totalPages = Math.ceil(boqList.length / ITEMS_PER_PAGE);
@@ -335,66 +438,196 @@ export default function BoqPage() {
       </div>
 
       {/* Detail Modal */}
-      {selectedBoq && (
+      {selectedBoq && detailData.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={handleCloseDetails}></div>
-          <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                   {selectedBoq.project_name || selectedBoq.nama_lop}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  STO: {selectedBoq.sto} | {detailRows.length} Data Rows
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Total {detailData.reduce((sum, d) => sum + d.tableRows.length, 0)} Data Rows
                 </p>
               </div>
               <button
                 onClick={handleCloseDetails}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-white/50 dark:hover:bg-gray-700 transition-all"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="overflow-auto max-h-[calc(90vh-120px)] p-4">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-800/50 sticky top-0">
-                    <tr>
-                      <th scope="col" className="px-3 py-2 text-left text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">No</th>
-                      <th scope="col" className="px-3 py-2 text-left text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID IHLD</th>
-                      <th scope="col" className="px-3 py-2 text-left text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Batch Program</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {detailRows.map((row, index) => (
-                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
-                          {index + 1}
-                        </td>
-                        <td className="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white">
-                          {row.id_ihld || '-'}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
-                          {row.batch_program || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="overflow-hidden flex flex-col max-h-[calc(95vh-140px)]">
+              <div className="overflow-auto flex-1 p-6">
+                <div className="space-y-6">
+                  {detailData.map((detail, detailIndex) => (
+                    <div key={detailIndex} className="bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200/50 dark:border-gray-700/50">
+                        <div className="w-2 h-8 bg-gradient-to-b from-yellow-400 to-orange-500 rounded-full"></div>
+                        <div>
+                          <h4 className="text-lg font-bold text-gray-900 dark:text-white">{detail.projectName}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">STO: {detail.sto}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="overflow-x-auto rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                        <table className="min-w-[1200px] border-collapse">
+                          <thead className="sticky top-0 z-10">
+                            <tr className="bg-yellow-400 dark:bg-yellow-500">
+                              <th rowSpan={2} className="px-3 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">NO</th>
+                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle min-w-[120px]">DESIGNATOR</th>
+                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle min-w-[280px]">URAIAN PEKERJAAN</th>
+                              <th rowSpan={2} className="px-3 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">SATUAN</th>
+                              <th colSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">HARGA SATUAN (PAKET-2)</th>
+                              <th rowSpan={2} className="px-3 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">VOL</th>
+                              <th colSpan={3} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">TOTAL HARGA (Rp.)</th>
+                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle min-w-[120px]">KETERANGAN</th>
+                            </tr>
+                            <tr className="bg-yellow-400 dark:bg-yellow-500">
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[110px]">MATERIAL</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[110px]">JASA</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[110px]">MATERIAL</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[110px]">JASA</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[120px]">TOTAL</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white dark:bg-gray-800">
+                            {detail.tableRows.map((row, rowIndex) => {
+                              if (row.isSection) {
+                                return (
+                                  <tr key={rowIndex} className="bg-red-500 dark:bg-red-600">
+                                    <td className="px-3 py-2 text-sm font-bold text-white text-center border border-gray-400">
+                                      {row.no}
+                                    </td>
+                                    <td colSpan={10} className="px-4 py-2 text-sm font-bold text-white border border-gray-400">
+                                      {row.designator !== '-' ? row.designator : ''}
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              return (
+                                <tr key={rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                  <td className="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white text-center border border-gray-300 dark:border-gray-600">
+                                    {row.no}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+                                    {row.designator}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 max-w-[320px] whitespace-normal">
+                                    {row.deskripsiPekerjaan}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 text-center border border-gray-300 dark:border-gray-600">
+                                    {row.satuan}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 text-right border border-gray-300 dark:border-gray-600 tabular-nums">
+                                    {formatIdrOrDash(row.materialSatuan)}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 text-right border border-gray-300 dark:border-gray-600 tabular-nums">
+                                    {formatIdrOrDash(row.jasaSatuan)}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-900 dark:text-white text-center border border-gray-300 dark:border-gray-600 tabular-nums">
+                                    {row.volume > 0 ? row.volume.toLocaleString('id-ID') : '-'}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 text-right border border-gray-300 dark:border-gray-600 tabular-nums bg-red-50/40 dark:bg-red-900/10">
+                                    {formatIdrOrDash(row.totalMaterial)}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 text-right border border-gray-300 dark:border-gray-600 tabular-nums bg-blue-50/40 dark:bg-blue-900/10">
+                                    {formatIdrOrDash(row.totalJasa)}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm font-bold text-gray-900 dark:text-white text-right border border-gray-300 dark:border-gray-600 tabular-nums bg-yellow-50/50 dark:bg-yellow-900/20">
+                                    {formatIdrOrDash(row.totalHarga)}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600">
+                                    {row.keterangan === '-' ? '' : row.keterangan}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+
+                            {(() => {
+                              const grandTotalMaterial = detail.tableRows.reduce((sum, r) => sum + r.totalMaterial, 0);
+                              const grandTotalJasa = detail.tableRows.reduce((sum, r) => sum + r.totalJasa, 0);
+                              const grandTotalAll = detail.tableRows.reduce((sum, r) => sum + r.totalHarga, 0);
+
+                              return (
+                                <>
+                                  {/* Baris Summary MATERIAL */}
+                                  <tr className="bg-gray-100 dark:bg-gray-700/60">
+                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">
+                                      MATERIAL
+                                    </td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">
+                                      {formatIdrOrDash(grandTotalMaterial)}
+                                    </td>
+                                    <td className="px-4 py-2 border border-gray-400 bg-red-50/60 dark:bg-red-900/20"></td>
+                                    <td className="px-4 py-2 border border-gray-400 bg-blue-50/60 dark:bg-blue-900/20"></td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">
+                                      {formatIdrOrDash(grandTotalMaterial)}
+                                    </td>
+                                    <td className="border border-gray-400"></td>
+                                  </tr>
+
+                                  {/* Baris Summary JASA */}
+                                  <tr className="bg-gray-100 dark:bg-gray-700/60">
+                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">
+                                      JASA
+                                    </td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">
+                                      {formatIdrOrDash(grandTotalJasa)}
+                                    </td>
+                                    <td className="px-4 py-2 border border-gray-400 bg-red-50/60 dark:bg-red-900/20"></td>
+                                    <td className="px-4 py-2 border border-gray-400 bg-blue-50/60 dark:bg-blue-900/20"></td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">
+                                      {formatIdrOrDash(grandTotalJasa)}
+                                    </td>
+                                    <td className="border border-gray-400"></td>
+                                  </tr>
+
+                                  {/* Baris Summary TOTAL */}
+                                  <tr className="bg-gray-100 dark:bg-gray-700/60">
+                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">
+                                      TOTAL
+                                    </td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">
+                                      {formatIdrOrDash(grandTotalAll)}
+                                    </td>
+                                    <td className="px-4 py-2 border border-gray-400 bg-red-50/60 dark:bg-red-900/20"></td>
+                                    <td className="px-4 py-2 border border-gray-400 bg-blue-50/60 dark:bg-blue-900/20"></td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">
+                                      {formatIdrOrDash(grandTotalAll)}
+                                    </td>
+                                    <td className="border border-gray-400"></td>
+                                  </tr>
+                                </>
+                              );
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <button
-                onClick={handleCloseDetails}
-                className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
-              >
-                Tutup
-              </button>
+            <div className="px-6 py-1.5 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Total {detailData.reduce((sum, d) => sum + d.tableRows.length, 0)} baris data
+                </p>
+                <button
+                  onClick={handleCloseDetails}
+                  className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all font-medium shadow-lg hover:shadow-xl"
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
           </div>
         </div>
