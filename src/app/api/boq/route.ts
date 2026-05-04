@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
       uniqueId,
       nama_lop,
       id_ihld,
-      '', // STO - can be empty or added if needed
+      '',
       rows[0]?.batch_program || '',
-      nama_lop, // project_name
+      nama_lop,
       'SUMBAGTENG',
       fullDataJson
     );

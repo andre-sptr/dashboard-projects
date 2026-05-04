@@ -64,7 +64,6 @@ export default function BoqPage() {
   const [detailData, setDetailData] = useState<ParsedBoqDetail[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form states
   const [formData, setFormData] = useState({
     nama_lop: '',
     id_ihld: '',
@@ -232,8 +231,8 @@ export default function BoqPage() {
       jasaSatuan,
       volume,
       totalMaterial,
-      totalJasa,    
-      totalHarga,   
+      totalJasa,
+      totalHarga,
       keterangan: keterangan || '-',
     };
   };
@@ -251,7 +250,7 @@ export default function BoqPage() {
         try {
           const fullDataArray: unknown[] = JSON.parse(row.full_data);
           const tableRow = parseExcelTableRow(fullDataArray, index);
-          
+
           if (!tableRow.isSummary) {
             detail.tableRows.push(tableRow);
           }
@@ -309,11 +308,10 @@ export default function BoqPage() {
     <div className="w-full">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in fade-in slide-in-from-right-4 ${
-          notification.type === 'success'
+        <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in fade-in slide-in-from-right-4 ${notification.type === 'success'
             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
             : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
-        }`}>
+          }`}>
           {notification.message}
         </div>
       )}
@@ -414,16 +412,15 @@ export default function BoqPage() {
 
             <div>
               <label className={labelClass}>File Excel <span className="text-red-500">*</span></label>
-              <div 
+              <div
                 onClick={() => fileInputRef.current?.click()}
                 onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files[0]); }}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
-                className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${
-                  isDragging
+                className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${isDragging
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                }`}
+                  }`}
               >
                 <input
                   ref={fileInputRef}
@@ -595,7 +592,7 @@ export default function BoqPage() {
                           <p className="text-sm text-gray-600 dark:text-gray-400">STO: {detail.sto}</p>
                         </div>
                       </div>
-                      
+
                       <div className="overflow-x-auto rounded-xl border border-gray-200/50 dark:border-gray-700/50">
                         <table className="min-w-[1200px] border-collapse">
                           <thead className="sticky top-0 z-10">

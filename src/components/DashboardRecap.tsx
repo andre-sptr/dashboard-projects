@@ -13,6 +13,19 @@ import {
   Layers,
   Clock,
 } from 'lucide-react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid
+} from 'recharts';
 
 interface Props {
   projects: Project[];
@@ -21,11 +34,16 @@ interface Props {
 type StatusBucket = 'done' | 'progress' | 'cancelled' | 'other';
 
 function classifyStatus(status: string): StatusBucket {
-  const s = (status || '').toLowerCase();
+  const s = (status || '').toLowerCase().trim();
+
+  if (/^[1-6]\./.test(s)) return 'progress';
+  if (/^[7-8]\./.test(s)) return 'done';
+
   if (s.includes('done') || s.includes('complete') || s.includes('closed') || s.includes('golive'))
     return 'done';
   if (s.includes('cancel') || s.includes('reject') || s.includes('drop')) return 'cancelled';
   if (s.includes('progress') || s.includes('ongoing') || s.includes('running')) return 'progress';
+
   return 'other';
 }
 
@@ -36,7 +54,6 @@ function parseNumber(value: unknown): number {
 }
 
 function getPortCount(fd: unknown[]): number {
-  // Index 10 is PORT PLAN, Index 29 is REAL JML PORT GOLIVE
   const plan = parseNumber(fd[10]);
   const real = parseNumber(fd[29]);
   return real > 0 ? real : plan;
@@ -163,7 +180,7 @@ export default function DashboardRecap({ projects }: Props) {
       subStatusMap.set(sub, (subStatusMap.get(sub) || 0) + ports);
 
       const goliveStr = formatExcelDateShort(fd[30]);
-      if (goliveStr) {
+      if (goliveStr && bucket === 'done') {
         totalGolivePorts += ports;
         goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);
       }
@@ -174,7 +191,6 @@ export default function DashboardRecap({ projects }: Props) {
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count);
 
-    // Generate chronological months for Golive
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
@@ -196,6 +212,24 @@ export default function DashboardRecap({ projects }: Props) {
       )
       .slice(0, 5);
 
+    const pieData = [
+      { name: 'Done', value: donePorts, color: '#10b981' },
+      { name: 'Progress', value: progressPorts, color: '#3b82f6' },
+      { name: 'Cancelled', value: cancelledPorts, color: '#ef4444' },
+      { name: 'Other', value: otherPorts, color: '#f59e0b' },
+    ].filter(d => d.value > 0);
+
+    const subStatusList = Array.from(subStatusMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => {
+        const aNum = parseFloat(a.name);
+        const bNum = parseFloat(b.name);
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return bNum - aNum;
+        }
+        return b.name.localeCompare(a.name);
+      });
+
     return {
       total: projects.length,
       totalPorts,
@@ -204,21 +238,15 @@ export default function DashboardRecap({ projects }: Props) {
       cancelledPorts,
       otherPorts,
       statusList: toSortedArr(statusMap),
-      subStatusList: toSortedArr(subStatusMap).slice(0, 10),
+      subStatusList: subStatusList,
       totalGolivePorts,
       goliveMonthList: chronologicalGolive,
       recent,
+      pieData,
     };
   }, [projects]);
 
   const { totalPorts } = stats;
-
-  const statusColorMap: Record<string, string> = {
-    done: 'bg-emerald-500',
-    progress: 'bg-blue-500',
-    cancelled: 'bg-red-500',
-    other: 'bg-amber-500',
-  };
 
   return (
     <div className="w-full space-y-6">
@@ -256,42 +284,52 @@ export default function DashboardRecap({ projects }: Props) {
 
       {/* Distribusi Status & Sub Status */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm">
+        <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm flex flex-col min-h-[350px]">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp size={18} className="text-blue-600" />
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
               Distribusi Status (by Port)
             </h3>
           </div>
-          {stats.statusList.length ? (
-            <div className="space-y-3">
-              {stats.statusList.map((s) => {
-                const bucket = classifyStatus(s.name);
-                return (
-                  <BarRow
-                    key={s.name}
-                    label={s.name}
-                    count={s.count}
-                    total={totalPorts}
-                    colorClass={statusColorMap[bucket]}
+          {stats.pieData.length ? (
+            <div className="flex-1 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats.pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {stats.pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: any) => typeof value === 'number' ? value.toLocaleString('id-ID') : value}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
-                );
-              })}
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           ) : (
             <p className="text-sm text-gray-500 italic">Belum ada data.</p>
           )}
         </div>
 
-        <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm flex flex-col max-h-[350px]">
+          <div className="flex items-center gap-2 mb-4 shrink-0">
             <Layers size={18} className="text-indigo-600" />
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
               Top Sub Status (by Port)
             </h3>
           </div>
           {stats.subStatusList.length ? (
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
               {stats.subStatusList.map((s) => (
                 <BarRow
                   key={s.name}
@@ -321,16 +359,35 @@ export default function DashboardRecap({ projects }: Props) {
             </span>
           </div>
           {stats.goliveMonthList.some(m => m.count > 0) ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-              {stats.goliveMonthList.map((s) => (
-                <BarRow
-                  key={s.name}
-                  label={s.name}
-                  count={s.count}
-                  total={stats.totalGolivePorts}
-                  colorClass="bg-emerald-500"
-                />
-              ))}
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.goliveMonthList} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 11, fill: '#6b7280' }} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 11, fill: '#6b7280' }}
+                    tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'transparent' }}
+                    formatter={(value: any) => value.toLocaleString('id-ID')}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar 
+                    dataKey="count" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]} 
+                    name="Ports"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           ) : (
             <p className="text-sm text-gray-500 italic">

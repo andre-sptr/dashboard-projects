@@ -33,8 +33,6 @@ export function parseBoQExcel(buffer: ArrayBuffer): BoqRow[] {
 
   const rows: BoqRow[] = [];
 
-  // Start from row index 4 (5th row) as before, or maybe adjust if header changes. 
-  // User says "fokus pada tablenya saja", keeping the loop starting point for now.
   for (let i = 4; i < json.length; i++) {
     const row = Array.isArray(json[i]) ? json[i] : [];
 
@@ -55,11 +53,11 @@ export function parseBoQExcel(buffer: ArrayBuffer): BoqRow[] {
 
     rows.push({
       id: uid,
-      nama_lop: '', // Will be filled from manual input
+      nama_lop: '',
       id_ihld: idIhld,
-      sto: '',      // Will be filled from manual input
+      sto: '',
       batch_program: batchProgram,
-      project_name: '', // Will be filled from manual input
+      project_name: '',
       region: 'SUMBAGTENG',
       full_data: fullData,
       rowIndex: i + 1,
