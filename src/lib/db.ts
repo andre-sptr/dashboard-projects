@@ -184,6 +184,69 @@ export const upsertBoq = db.prepare(`
 `);
 export const deleteBoq = db.prepare('DELETE FROM boq WHERE id = ?');
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS boq_aanwijzing (
+    id TEXT PRIMARY KEY,
+    aanwijzing_id TEXT NOT NULL,
+    nama_lop TEXT NOT NULL,
+    id_ihld TEXT NOT NULL DEFAULT '',
+    full_data TEXT DEFAULT '[]',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+const boqAanwijzingTableInfo = db.pragma('table_info(boq_aanwijzing)') as { name: string }[];
+const boqAanwijzingColumns = boqAanwijzingTableInfo.map((c) => c.name);
+
+if (boqAanwijzingColumns.includes('boq_items') && !boqAanwijzingColumns.includes('full_data')) {
+  db.exec(`ALTER TABLE boq_aanwijzing RENAME COLUMN boq_items TO full_data`);
+} else if (!boqAanwijzingColumns.includes('full_data')) {
+  db.exec(`ALTER TABLE boq_aanwijzing ADD COLUMN full_data TEXT DEFAULT '[]'`);
+}
+
+export const getBoqAanwijzingByAanwijzingId = db.prepare('SELECT * FROM boq_aanwijzing WHERE aanwijzing_id = ?');
+export const upsertBoqAanwijzing = db.prepare(`
+  INSERT INTO boq_aanwijzing (
+    id, aanwijzing_id, nama_lop, id_ihld, full_data, created_at, updated_at
+  )
+  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ON CONFLICT(id) DO UPDATE SET
+    aanwijzing_id = excluded.aanwijzing_id,
+    nama_lop = excluded.nama_lop,
+    id_ihld = excluded.id_ihld,
+    full_data = excluded.full_data,
+    updated_at = CURRENT_TIMESTAMP
+`);
+export const deleteBoqAanwijzingByAanwijzingId = db.prepare('DELETE FROM boq_aanwijzing WHERE aanwijzing_id = ?');
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS boq_ut (
+    id TEXT PRIMARY KEY,
+    ut_id TEXT NOT NULL,
+    nama_lop TEXT NOT NULL,
+    id_ihld TEXT NOT NULL DEFAULT '',
+    full_data TEXT DEFAULT '[]',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+export const getBoqUtByUtId = db.prepare('SELECT * FROM boq_ut WHERE ut_id = ?');
+export const upsertBoqUt = db.prepare(`
+  INSERT INTO boq_ut (
+    id, ut_id, nama_lop, id_ihld, full_data, created_at, updated_at
+  )
+  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ON CONFLICT(id) DO UPDATE SET
+    ut_id = excluded.ut_id,
+    nama_lop = excluded.nama_lop,
+    id_ihld = excluded.id_ihld,
+    full_data = excluded.full_data,
+    updated_at = CURRENT_TIMESTAMP
+`);
+export const deleteBoqUtByUtId = db.prepare('DELETE FROM boq_ut WHERE ut_id = ?');
+
 export function getProjectsForSelect() {
   const projects = db.prepare("SELECT DISTINCT nama_lop, id_ihld FROM projects WHERE nama_lop IS NOT NULL AND nama_lop != '' ORDER BY nama_lop ASC").all() as { nama_lop: string; id_ihld: string }[];
   return projects;

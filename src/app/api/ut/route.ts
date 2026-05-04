@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllUT, upsertUT, deleteUTById, getProjectsForUTSelect } from '@/lib/ut';
+import {
+  getAllUT,
+  upsertUT,
+  deleteUTById,
+  getProjectsForUTSelect,
+  getBoqUtByUtId,
+  upsertBoqUt,
+  deleteBoqUtByUtId
+} from '@/lib/ut';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +19,14 @@ export async function GET() {
   try {
     const utList = getAllUT.all() as any[];
     const projects = getProjectsForUTSelect();
+
+    const utWithBoq = utList.map(item => {
+      const boq = getBoqUtByUtId.get(item.id);
+      return { ...item, boq_data: boq || null };
+    });
+
     return NextResponse.json({
-      ut: utList,
+      ut: utWithBoq,
       projects: projects
     });
   } catch (error) {
@@ -42,6 +56,7 @@ export async function POST(request: NextRequest) {
       jumlah_temuan,
       wa_spang,
       komitmen_penyelesaian,
+      boq_data,
       id
     } = body;
 
@@ -74,6 +89,17 @@ export async function POST(request: NextRequest) {
       komitmen_penyelesaian || ''
     );
 
+    if (boq_data) {
+      const boqId = `boqut_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      upsertBoqUt.run(
+        boqId,
+        utId,
+        nama_lop,
+        id_ihld,
+        JSON.stringify(boq_data)
+      );
+    }
+
     return NextResponse.json({
       success: true,
       id: utId,
@@ -95,6 +121,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     deleteUTById.run(id);
+    deleteBoqUtByUtId.run(id);
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,10 @@
-import db, { Project, getProjectsForSelect } from './db';
+import db, { 
+  Project, 
+  getProjectsForSelect,
+  getBoqAanwijzingByAanwijzingId,
+  upsertBoqAanwijzing,
+  deleteBoqAanwijzingByAanwijzingId
+} from './db';
 
 export interface Aanwijzing {
   id: string;
@@ -49,4 +55,9 @@ export const upsertAanwijzing = db.prepare(`
     updated_at = CURRENT_TIMESTAMP
 `);
 
-export { getProjectsForSelect };
+export { 
+  getProjectsForSelect,
+  getBoqAanwijzingByAanwijzingId,
+  upsertBoqAanwijzing,
+  deleteBoqAanwijzingByAanwijzingId
+};

@@ -303,6 +303,19 @@ export default function DashboardRecap({ projects }: Props) {
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
+                    label={({ cx, x, y, percent }) => (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="currentColor"
+                        className="text-[11px] font-bold text-gray-600 dark:text-gray-400"
+                        textAnchor={x > cx ? 'start' : 'end'}
+                        dominantBaseline="central"
+                      >
+                        {`${((percent || 0) * 100).toFixed(0)}%`}
+                      </text>
+                    )}
+                    labelLine={{ stroke: '#9ca3af', strokeWidth: 1 }}
                   >
                     {stats.pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -363,27 +376,27 @@ export default function DashboardRecap({ projects }: Props) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.goliveMonthList} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 11, fill: '#6b7280' }} 
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
                     tick={{ fontSize: 11, fill: '#6b7280' }}
-                    tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}
                   />
-                  <Tooltip 
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#6b7280' }}
+                    tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
+                  />
+                  <Tooltip
                     cursor={{ fill: 'transparent' }}
                     formatter={(value: any) => value.toLocaleString('id-ID')}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Bar 
-                    dataKey="count" 
-                    fill="#10b981" 
-                    radius={[4, 4, 0, 0]} 
+                  <Bar
+                    dataKey="count"
+                    fill="#10b981"
+                    radius={[4, 4, 0, 0]}
                     name="Ports"
                   />
                 </BarChart>

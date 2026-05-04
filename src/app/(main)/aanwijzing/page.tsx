@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronDown, Save, Trash2, Edit3, Plus, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, Save, Trash2, Edit3, Plus, X, FileText, ChevronLeft, ChevronRight, Upload, Loader2, Eye } from 'lucide-react';
 
 interface ProjectOption {
   nama_lop: string;
@@ -24,7 +24,26 @@ interface AanwijzingData {
   port_akhir: number;
   wa_spang: string;
   ut: string;
+  boq_data?: {
+    full_data: string;
+  } | null;
   created_at: string;
+}
+
+interface BoqItem {
+  no: string;
+  isSection: boolean;
+  isSummary: boolean;
+  designator: string;
+  deskripsiPekerjaan: string;
+  satuan: string;
+  materialSatuan: number;
+  jasaSatuan: number;
+  volume: number;
+  totalMaterial: number;
+  totalJasa: number;
+  totalHarga: number;
+  keterangan: string;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -38,6 +57,9 @@ export default function AanwijzingPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [boqRows, setBoqRows] = useState<any[]>([]);
+  const [isUploadingBoq, setIsUploadingBoq] = useState(false);
+  const [showBoqPreview, setShowBoqPreview] = useState(false);
 
   const [formData, setFormData] = useState({
     nama_lop: '',
@@ -106,6 +128,37 @@ export default function AanwijzingPage() {
     });
   };
 
+  const handleBoqUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingBoq(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const res = await fetch('/api/boq-aanwijzing', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setBoqRows(data.data);
+        showNotification('success', 'File BoQ berhasil diuraikan');
+      } else {
+        showNotification('error', data.error || 'Gagal menguraikan file');
+      }
+    } catch (error) {
+      console.error('Error uploading BoQ:', error);
+      showNotification('error', 'Terjadi kesalahan saat upload');
+    } finally {
+      setIsUploadingBoq(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -121,6 +174,7 @@ export default function AanwijzingPage() {
           slot_akhir: Number(formData.slot_akhir) || 0,
           port_awal: Number(formData.port_awal) || 0,
           port_akhir: Number(formData.port_akhir) || 0,
+          boq_data: boqRows.length > 0 ? boqRows : null,
           id: editingId,
         }),
       });
@@ -163,6 +217,16 @@ export default function AanwijzingPage() {
     });
     setSearchLop(item.nama_lop);
     setEditingId(item.id);
+    if (item.boq_data && item.boq_data.full_data) {
+      try {
+        setBoqRows(JSON.parse(item.boq_data.full_data));
+      } catch (e) {
+        console.error('Error parsing boq_data:', e);
+        setBoqRows([]);
+      }
+    } else {
+      setBoqRows([]);
+    }
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -201,8 +265,10 @@ export default function AanwijzingPage() {
       wa_spang: '',
       ut: '',
     });
+    setBoqRows([]);
     setSearchLop('');
     setShowDropdown(false);
+    setEditingId(null);
   };
 
   const totalPages = Math.ceil(aanwijzingList.length / ITEMS_PER_PAGE);
@@ -226,11 +292,10 @@ export default function AanwijzingPage() {
     <div className="w-full">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in fade-in slide-in-from-right-4 ${
-          notification.type === 'success'
+        <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in fade-in slide-in-from-right-4 ${notification.type === 'success'
             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
             : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
-        }`}>
+          }`}>
           {notification.message}
         </div>
       )}
@@ -466,6 +531,58 @@ export default function AanwijzingPage() {
               />
             </div>
 
+            {/* BoQ-AANWIJZING */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <label className={labelClass}>BoQ-AANWIJZING</label>
+                  <p className="text-[10px] text-gray-500 lowercase">Upload file BoQ hasil Aanwijzing (.xlsx atau .xls)</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {boqRows.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowBoqPreview(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 text-xs font-bold rounded-lg border border-indigo-100 dark:border-indigo-800 transition-colors"
+                    >
+                      <Eye size={14} />
+                      Lihat Data ({boqRows.length})
+                    </button>
+                  )}
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    {isUploadingBoq ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Menguraikan...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} />
+                        {boqRows.length > 0 ? 'Ganti File' : 'Upload BoQ'}
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".xlsx, .xls"
+                      onChange={handleBoqUpload}
+                      disabled={isUploadingBoq}
+                    />
+                  </label>
+                  {boqRows.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setBoqRows([])}
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                      title="Hapus BoQ"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Catatan */}
             <div>
               <label className={labelClass}>Catatan</label>
@@ -477,7 +594,7 @@ export default function AanwijzingPage() {
               />
               <p className="text-[10px] text-gray-400 mt-1">Gunakan format: 1. ... 2. ... 3. ...</p>
             </div>
-            
+
             {/* Submit Button */}
             <div className="flex gap-3 pt-2">
               <button
@@ -522,8 +639,16 @@ export default function AanwijzingPage() {
                   {paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                       <td className="px-3 py-3">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[150px] sm:max-w-[200px]">
-                          {item.id_ihld}
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[150px] sm:max-w-[200px]">
+                            {item.id_ihld}
+                          </div>
+                          {item.boq_data && (
+                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 text-[10px] font-black rounded-md border border-indigo-200 dark:border-indigo-800" title="BoQ Attached">
+                              <FileText size={10} />
+                              BOQ
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-[200px]">
                           {item.nama_lop}
@@ -593,6 +718,66 @@ export default function AanwijzingPage() {
           </div>
         )}
       </div>
+
+      {/* BoQ Preview Modal */}
+      {showBoqPreview && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowBoqPreview(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+              <div>
+                <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">PREVIEW <span className="text-blue-600">BoQ-AANWIJZING</span></h3>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{boqRows.length} Baris Data Ditemukan</p>
+              </div>
+              <button
+                onClick={() => setShowBoqPreview(false)}
+                className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-white transition-colors shadow-sm"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                <table className="w-full text-left border-collapse min-w-[1200px]">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-gray-900/50">
+                      <th className="px-3 py-2 text-[10px] font-black text-gray-500 uppercase border-b border-gray-200 dark:border-gray-700">ID IHLD</th>
+                      <th className="px-3 py-2 text-[10px] font-black text-gray-500 uppercase border-b border-gray-200 dark:border-gray-700">Batch</th>
+                      <th className="px-3 py-2 text-[10px] font-black text-gray-500 uppercase border-b border-gray-200 dark:border-gray-700">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {boqRows.map((row, idx) => {
+                      let fd: any[] = [];
+                      try {
+                        fd = JSON.parse(row.full_data || '[]');
+                      } catch (e) { }
+
+                      return (
+                        <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/20 transition-colors">
+                          <td className="px-3 py-2 text-xs font-bold text-gray-900 dark:text-white">{row.id_ihld}</td>
+                          <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400">{row.batch_program}</td>
+                          <td className="px-3 py-2 text-[10px] font-mono text-gray-400 truncate max-w-lg">{row.full_data}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end">
+              <button
+                onClick={() => setShowBoqPreview(false)}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+              >
+                Tutup Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

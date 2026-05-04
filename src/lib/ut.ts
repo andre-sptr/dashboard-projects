@@ -1,4 +1,17 @@
-import db, { Project, getProjectsForSelect } from './db';
+import db, { 
+  Project, 
+  getProjectsForSelect,
+  getBoqUtByUtId,
+  upsertBoqUt,
+  deleteBoqUtByUtId
+} from './db';
+
+export { 
+  getProjectsForSelect as getProjectsForUTSelect,
+  getBoqUtByUtId,
+  upsertBoqUt,
+  deleteBoqUtByUtId
+};
 
 export interface UT {
   id: string;
@@ -52,5 +65,3 @@ export const upsertUT = db.prepare(`
     komitmen_penyelesaian = excluded.komitmen_penyelesaian,
     updated_at = CURRENT_TIMESTAMP
 `);
-
-export { getProjectsForSelect as getProjectsForUTSelect };

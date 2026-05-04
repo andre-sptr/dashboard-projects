@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllAanwijzing, upsertAanwijzing, deleteAanwijzingById, getProjectsForSelect } from '@/lib/aanwijzing';
+import {
+  getAllAanwijzing,
+  upsertAanwijzing,
+  deleteAanwijzingById,
+  getProjectsForSelect,
+  getBoqAanwijzingByAanwijzingId,
+  upsertBoqAanwijzing,
+  deleteBoqAanwijzingByAanwijzingId
+} from '@/lib/aanwijzing';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +19,14 @@ export async function GET() {
   try {
     const aanwijzingList = getAllAanwijzing.all() as any[];
     const projects = getProjectsForSelect();
+
+    const aanwijzingWithBoq = aanwijzingList.map(a => {
+      const boq = getBoqAanwijzingByAanwijzingId.get(a.id);
+      return { ...a, boq_data: boq || null };
+    });
+
     return NextResponse.json({
-      aanwijzing: aanwijzingList,
+      aanwijzing: aanwijzingWithBoq,
       projects: projects
     });
   } catch (error) {
@@ -40,6 +54,7 @@ export async function POST(request: NextRequest) {
       port_akhir,
       wa_spang,
       ut,
+      boq_data,
       id
     } = body;
 
@@ -70,6 +85,17 @@ export async function POST(request: NextRequest) {
       ut || ''
     );
 
+    if (boq_data) {
+      const boqId = `boqa_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      upsertBoqAanwijzing.run(
+        boqId,
+        aanwijzingId,
+        nama_lop,
+        id_ihld,
+        JSON.stringify(boq_data)
+      );
+    }
+
     return NextResponse.json({
       success: true,
       id: aanwijzingId,
@@ -91,6 +117,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     deleteAanwijzingById.run(id);
+    deleteBoqAanwijzingByAanwijzingId.run(id);
 
     return NextResponse.json({
       success: true,
