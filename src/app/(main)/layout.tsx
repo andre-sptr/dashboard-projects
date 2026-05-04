@@ -26,6 +26,14 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     title: 'Rekap UT',
     subtitle: 'Form pencatatan hasil UT (Uji Terima).',
   },
+  '/report': {
+    title: 'KPI Analytics & Report',
+    subtitle: 'Laporan mendalam performa proyek dan realisasi port.',
+  },
+  '/topology': {
+    title: 'Network Topology',
+    subtitle: 'Visualisasi hirarki perangkat OLT, ODC, dan ODP.',
+  },
 };
 
 export default function MainLayout({

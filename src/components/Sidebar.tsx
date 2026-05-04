@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Database, X, Activity, FileText, ClipboardList, Receipt } from 'lucide-react';
+import { LayoutDashboard, Database, X, Activity, FileText, ClipboardList, Receipt, BarChart3, Network } from 'lucide-react';
 
 interface SidebarProps {
   open: boolean;
@@ -15,6 +15,8 @@ const NAV_ITEMS = [
   { href: '/boq', label: 'BoQ', icon: Receipt },
   { href: '/aanwijzing', label: 'Catatan AANWIJZING', icon: FileText },
   { href: '/ut', label: 'Rekap UT', icon: ClipboardList },
+  { href: '/report', label: 'KPI Report', icon: BarChart3 },
+  { href: '/topology', label: 'Topology', icon: Network },
 ];
 
 export default function Sidebar({ open, onClose }: SidebarProps) {

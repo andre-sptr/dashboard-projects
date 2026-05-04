@@ -34,19 +34,92 @@ export default function DashboardClient({ initialProjects }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [subStatusFilter, setSubStatusFilter] = useState<string>('');
+  const [areaFilter, setAreaFilter] = useState<string>('');
+  const [branchFilter, setBranchFilter] = useState<string>('');
+
+  const areaBranchMap: Record<string, string[]> = {
+    'RIDAR': ['DUMAI', 'PEKANBARU'],
+    'RIKEP': ['BATAM'],
+    'SUMBAR': ['BUKIT TINGGI', 'PADANG']
+  };
+
+  const filterOptions = useMemo(() => {
+    const statuses = new Set<string>();
+    const subStatuses = new Set<string>();
+    const areas = new Set<string>();
+    const branches = new Set<string>();
+
+    initialProjects.forEach(p => {
+      if (p.status) statuses.add(p.status);
+      if (p.sub_status) subStatuses.add(p.sub_status);
+
+      try {
+        const fd = JSON.parse(p.full_data || '[]');
+        if (Array.isArray(fd)) {
+          if (fd[4]) areas.add(String(fd[4]).toUpperCase());
+          if (fd[7]) branches.add(String(fd[7]).toUpperCase());
+        }
+      } catch { }
+    });
+
+    const sortedAreas = Array.from(areas).sort();
+
+    let availableBranches = Array.from(branches).sort();
+    if (areaFilter) {
+      const mappedBranches = areaBranchMap[areaFilter.toUpperCase()];
+      if (mappedBranches) {
+        availableBranches = availableBranches.filter(b => mappedBranches.includes(b));
+      }
+    }
+
+    return {
+      statuses: Array.from(statuses).sort(),
+      subStatuses: Array.from(subStatuses).sort((a, b) => {
+        const aNum = parseFloat(a);
+        const bNum = parseFloat(b);
+        if (!isNaN(aNum) && !isNaN(bNum)) return bNum - aNum;
+        return b.localeCompare(a);
+      }),
+      areas: sortedAreas,
+      branches: availableBranches,
+    };
+  }, [initialProjects, areaFilter]);
+
+  React.useEffect(() => {
+    if (areaFilter && branchFilter) {
+      const mappedBranches = areaBranchMap[areaFilter.toUpperCase()];
+      if (mappedBranches && !mappedBranches.includes(branchFilter.toUpperCase())) {
+        setBranchFilter('');
+      }
+    }
+  }, [areaFilter]);
 
   const filteredProjects = useMemo(() => {
-    if (!searchQuery) return initialProjects;
-    const lowerQuery = searchQuery.toLowerCase();
-    return initialProjects.filter(
-      (p) =>
+    return initialProjects.filter((p) => {
+      const lowerQuery = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery || (
         p.id_ihld.toLowerCase().includes(lowerQuery) ||
         p.batch_program.toLowerCase().includes(lowerQuery) ||
         p.nama_lop.toLowerCase().includes(lowerQuery) ||
         p.status.toLowerCase().includes(lowerQuery) ||
         p.sub_status.toLowerCase().includes(lowerQuery)
-    );
-  }, [initialProjects, searchQuery]);
+      );
+
+      let fd: unknown[] = [];
+      try {
+        fd = JSON.parse(p.full_data || '[]');
+      } catch { }
+
+      const matchesStatus = !statusFilter || p.status === statusFilter;
+      const matchesSubStatus = !subStatusFilter || p.sub_status === subStatusFilter;
+      const matchesArea = !areaFilter || String(fd[4]) === areaFilter;
+      const matchesBranch = !branchFilter || String(fd[7]) === branchFilter;
+
+      return matchesSearch && matchesStatus && matchesSubStatus && matchesArea && matchesBranch;
+    });
+  }, [initialProjects, searchQuery, statusFilter, subStatusFilter, areaFilter, branchFilter]);
 
   const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
   const paginatedProjects = useMemo(() => {
@@ -56,7 +129,7 @@ export default function DashboardClient({ initialProjects }: Props) {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, statusFilter, subStatusFilter, areaFilter, branchFilter]);
 
   const toggleRow = (id: string) => {
     setExpandedRow(expandedRow === id ? null : id);
@@ -84,19 +157,101 @@ export default function DashboardClient({ initialProjects }: Props) {
   };
 
   return (
-    <div className="w-full">
-      {/* Search Bar */}
-      <div className="mb-6 relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+    <div className="w-full space-y-6">
+      {/* Search & Filter Section */}
+      <div className="glass-panel p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Cari ID IHLD, Nama LOP, Status..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-shadow shadow-sm"
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Cari ID IHLD, Nama LOP, Status..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="block w-full pl-10 pr-3 py-3 border border-gray-200 dark:border-gray-700 rounded-xl leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-shadow shadow-sm"
-        />
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {/* Status Filter */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.statuses.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sub Status Filter */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Sub Status</label>
+            <select
+              value={subStatusFilter}
+              onChange={(e) => setSubStatusFilter(e.target.value)}
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.subStatuses.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+
+          {/* Area Filter */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Area</label>
+            <select
+              value={areaFilter}
+              onChange={(e) => setAreaFilter(e.target.value)}
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.areas.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Branch Filter */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Branch</label>
+            <select
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.branches.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {(statusFilter || subStatusFilter || areaFilter || branchFilter || searchQuery) && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setStatusFilter('');
+                setSubStatusFilter('');
+                setAreaFilter('');
+                setBranchFilter('');
+              }}
+              className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
+            >
+              Reset Semua Filter
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Table Container */}
