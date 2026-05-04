@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Upload, Trash2, FileText, ChevronLeft, ChevronRight, X, Loader2, Eye } from 'lucide-react';
+import { Upload, Trash2, FileText, ChevronLeft, ChevronRight, X, Loader2, Eye, Plus, Save, ChevronDown } from 'lucide-react';
+
+interface ProjectOption {
+  nama_lop: string;
+  id_ihld: string;
+}
 
 interface BoqRow {
   id_ihld: string;
@@ -47,8 +52,10 @@ interface BoqData {
 const ITEMS_PER_PAGE = 5;
 
 export default function BoqPage() {
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [boqList, setBoqList] = useState<BoqData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -56,6 +63,15 @@ export default function BoqPage() {
   const [selectedBoq, setSelectedBoq] = useState<BoqData | null>(null);
   const [detailData, setDetailData] = useState<ParsedBoqDetail[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Form states
+  const [formData, setFormData] = useState({
+    nama_lop: '',
+    id_ihld: '',
+    file: null as File | null,
+  });
+  const [searchLop, setSearchLop] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -66,6 +82,7 @@ export default function BoqPage() {
       const res = await fetch('/api/boq');
       const data = await res.json();
       setBoqList(data.boq || []);
+      setProjects(data.projects || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       showNotification('error', 'Gagal mengambil data');
@@ -79,32 +96,54 @@ export default function BoqPage() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
+  const handleSelectLop = (project: ProjectOption) => {
+    setFormData({
+      ...formData,
+      nama_lop: project.nama_lop,
+      id_ihld: project.id_ihld,
+    });
+    setSearchLop(project.nama_lop);
+    setShowDropdown(false);
+  };
 
+  const handleFileChange = (file: File | undefined) => {
+    if (!file) return;
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
       showNotification('error', 'Format file harus .xlsx atau .xls');
+      return;
+    }
+    setFormData({ ...formData, file });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.file) {
+      showNotification('error', 'Pilih file Excel terlebih dahulu');
       return;
     }
 
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const submitData = new FormData();
+      submitData.append('file', formData.file);
+      submitData.append('nama_lop', formData.nama_lop);
+      submitData.append('id_ihld', formData.id_ihld);
 
       const res = await fetch('/api/boq', {
         method: 'POST',
-        body: formData,
+        body: submitData,
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        showNotification('success', data.message || 'File berhasil diupload');
+        showNotification('success', data.message || 'Data BoQ berhasil diimport');
+        resetForm();
         fetchData();
+        setShowForm(false);
       } else {
-        showNotification('error', data.error || 'Gagal upload file');
+        showNotification('error', data.error || 'Gagal import data');
       }
     } catch (error) {
       console.error('Error uploading:', error);
@@ -114,23 +153,14 @@ export default function BoqPage() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
+  const resetForm = () => {
+    setFormData({
+      nama_lop: '',
+      id_ihld: '',
+      file: null,
+    });
+    setSearchLop('');
+    setShowDropdown(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -161,13 +191,10 @@ export default function BoqPage() {
 
   const parseNumber = (value: unknown): number => {
     if (value === undefined || value === null || value === '') return 0;
-   
     if (typeof value === 'number') return value;
-    
     const str = value.toString().trim();
     const cleaned = str.replace(/,/g, '');
     const num = parseFloat(cleaned);
-
     return isNaN(num) ? 0 : num;
   };
 
@@ -256,11 +283,19 @@ export default function BoqPage() {
     setDetailData([]);
   };
 
+  const filteredProjects = projects.filter(p =>
+    p.nama_lop.toLowerCase().includes(searchLop.toLowerCase()) ||
+    p.id_ihld.toLowerCase().includes(searchLop.toLowerCase())
+  );
+
   const totalPages = Math.ceil(boqList.length / ITEMS_PER_PAGE);
   const paginatedData = boqList.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const inputClass = "w-full px-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow";
+  const labelClass = "block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide";
 
   if (loading) {
     return (
@@ -284,66 +319,153 @@ export default function BoqPage() {
       )}
 
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Bill of Quantity</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          Import dan kelola data BoQ dari file Excel
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Bill of Quantity</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Import dan kelola data BoQ dari file Excel
+          </p>
+        </div>
+        {!showForm && (
+          <button
+            onClick={() => { setShowForm(true); resetForm(); }}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus size={18} />
+            <span>Tambah</span>
+          </button>
+        )}
       </div>
 
-      {/* Upload Section */}
-      <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Upload size={18} className="text-blue-600" />
-          Upload File Excel
-        </h3>
+      {/* Form Section */}
+      {showForm && (
+        <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <FileText size={18} className="text-blue-600" />
+              Import Data BoQ
+            </h3>
+            <button
+              onClick={() => { setShowForm(false); resetForm(); }}
+              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
 
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => fileInputRef.current?.click()}
-          className={`relative border-2 border-dashed rounded-lg p-6 sm:p-10 text-center cursor-pointer transition-all ${
-            isDragging
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-          }`}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={(e) => handleFileUpload(e.target.files?.[0] as File)}
-            className="hidden"
-            disabled={isUploading}
-          />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="relative">
+                <label className={labelClass}>Nama LOP <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={showDropdown ? searchLop : formData.nama_lop}
+                    onChange={(e) => {
+                      setSearchLop(e.target.value);
+                      setShowDropdown(true);
+                      if (!e.target.value) {
+                        setFormData({ ...formData, nama_lop: '', id_ihld: '' });
+                      }
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                    required
+                    className={inputClass}
+                    placeholder="Cari Nama LOP..."
+                    autoComplete="off"
+                  />
+                  <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                </div>
 
-          {isUploading ? (
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 size={40} className="text-blue-600 animate-spin" />
-              <p className="text-sm text-gray-600 dark:text-gray-400">Mengupload file...</p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-3">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <Upload size={24} className="text-blue-600 dark:text-blue-400" />
+                {/* Dropdown */}
+                {showDropdown && filteredProjects.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {filteredProjects.map((p, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleSelectLop(p)}
+                        className="w-full px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-900 dark:text-white">{p.nama_lop}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{p.id_ihld}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showDropdown && searchLop && filteredProjects.length === 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-sm text-gray-500 dark:text-gray-400">
+                    Tidak ada hasil
+                  </div>
+                )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Klik atau drag file Excel ke sini
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Format: .xlsx atau .xls
-                </p>
+                <label className={labelClass}>ID IHLD <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={formData.id_ihld}
+                  readOnly
+                  className={`${inputClass} bg-gray-50 dark:bg-gray-900/50 cursor-not-allowed`}
+                  placeholder="Akan terisi otomatis"
+                />
               </div>
             </div>
-          )}
-        </div>
 
-        <p className="text-[10px] text-gray-400 mt-3">
-          File Excel harus memiliki format: PROJECT: [nama] di cell A2, STO: [sto] di cell A3, dan tabel data di baris berikutnya.
-        </p>
-      </div>
+            <div>
+              <label className={labelClass}>File Excel <span className="text-red-500">*</span></label>
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files[0]); }}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${
+                  isDragging
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(e) => handleFileChange(e.target.files?.[0])}
+                  className="hidden"
+                />
+                <div className="flex flex-col items-center gap-2">
+                  <Upload size={24} className={formData.file ? "text-emerald-500" : "text-gray-400"} />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {formData.file ? formData.file.name : "Klik atau drag file Excel ke sini"}
+                  </span>
+                  <span className="text-xs text-gray-500">Format: .xlsx atau .xls</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); resetForm(); }}
+                className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isUploading || !formData.nama_lop || !formData.file}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {isUploading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Save size={18} />
+                )}
+                <span>Simpan</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Data List */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -431,7 +553,7 @@ export default function BoqPage() {
           <div className="px-6 py-12 text-center">
             <FileText size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-gray-500 dark:text-gray-400 text-sm">
-              Belum ada data BoQ. Upload file Excel untuk memulai.
+              Belum ada data BoQ. Klik "Tambah" untuk memulai.
             </p>
           </div>
         )}
@@ -556,51 +678,28 @@ export default function BoqPage() {
 
                               return (
                                 <>
-                                  {/* Baris Summary MATERIAL */}
                                   <tr className="bg-gray-100 dark:bg-gray-700/60">
-                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">
-                                      MATERIAL
-                                    </td>
-                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">
-                                      {formatIdrOrDash(grandTotalMaterial)}
-                                    </td>
+                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">MATERIAL</td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">{formatIdrOrDash(grandTotalMaterial)}</td>
                                     <td className="px-4 py-2 border border-gray-400 bg-red-50/60 dark:bg-red-900/20"></td>
                                     <td className="px-4 py-2 border border-gray-400 bg-blue-50/60 dark:bg-blue-900/20"></td>
-                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">
-                                      {formatIdrOrDash(grandTotalMaterial)}
-                                    </td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">{formatIdrOrDash(grandTotalMaterial)}</td>
                                     <td className="border border-gray-400"></td>
                                   </tr>
-
-                                  {/* Baris Summary JASA */}
                                   <tr className="bg-gray-100 dark:bg-gray-700/60">
-                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">
-                                      JASA
-                                    </td>
-                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">
-                                      {formatIdrOrDash(grandTotalJasa)}
-                                    </td>
+                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">JASA</td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">{formatIdrOrDash(grandTotalJasa)}</td>
                                     <td className="px-4 py-2 border border-gray-400 bg-red-50/60 dark:bg-red-900/20"></td>
                                     <td className="px-4 py-2 border border-gray-400 bg-blue-50/60 dark:bg-blue-900/20"></td>
-                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">
-                                      {formatIdrOrDash(grandTotalJasa)}
-                                    </td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">{formatIdrOrDash(grandTotalJasa)}</td>
                                     <td className="border border-gray-400"></td>
                                   </tr>
-
-                                  {/* Baris Summary TOTAL */}
                                   <tr className="bg-gray-100 dark:bg-gray-700/60">
-                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">
-                                      TOTAL
-                                    </td>
-                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">
-                                      {formatIdrOrDash(grandTotalAll)}
-                                    </td>
+                                    <td colSpan={6} className="px-4 py-2 text-sm text-right font-bold border border-gray-400 text-gray-900 dark:text-white uppercase tracking-wider">TOTAL</td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white">{formatIdrOrDash(grandTotalAll)}</td>
                                     <td className="px-4 py-2 border border-gray-400 bg-red-50/60 dark:bg-red-900/20"></td>
                                     <td className="px-4 py-2 border border-gray-400 bg-blue-50/60 dark:bg-blue-900/20"></td>
-                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">
-                                      {formatIdrOrDash(grandTotalAll)}
-                                    </td>
+                                    <td className="px-4 py-2 text-sm text-right font-bold border border-gray-400 tabular-nums text-gray-900 dark:text-white bg-yellow-50/60 dark:bg-yellow-900/20">{formatIdrOrDash(grandTotalAll)}</td>
                                     <td className="border border-gray-400"></td>
                                   </tr>
                                 </>

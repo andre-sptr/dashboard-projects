@@ -29,6 +29,19 @@ function classifyStatus(status: string): StatusBucket {
   return 'other';
 }
 
+function parseNumber(value: unknown): number {
+  if (value === null || value === undefined || value === '') return 0;
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+}
+
+function getPortCount(fd: unknown[]): number {
+  // Index 10 is PORT PLAN, Index 29 is REAL JML PORT GOLIVE
+  const plan = parseNumber(fd[10]);
+  const real = parseNumber(fd[29]);
+  return real > 0 ? real : plan;
+}
+
 function formatExcelDateShort(value: unknown): string | null {
   if (value === null || value === undefined || value === '' || String(value).trim() === '#N/A')
     return null;
@@ -105,8 +118,8 @@ function BarRow({
         <span className="font-medium text-gray-700 dark:text-gray-300 truncate" title={label}>
           {label || '-'}
         </span>
-        <span className="text-gray-500 dark:text-gray-400 shrink-0 tabular-nums">
-          {count} <span className="text-gray-400">({pct}%)</span>
+        <span className="text-gray-500 dark:text-gray-400 shrink-0 tabular-nums font-medium">
+          {count.toLocaleString('id-ID')} <span className="text-gray-400 font-normal">({pct}%)</span>
         </span>
       </div>
       <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -121,39 +134,38 @@ function BarRow({
 
 export default function DashboardRecap({ projects }: Props) {
   const stats = useMemo(() => {
-    const total = projects.length;
-    let done = 0;
-    let progress = 0;
-    let cancelled = 0;
-    let other = 0;
+    let totalPorts = 0;
+    let donePorts = 0;
+    let progressPorts = 0;
+    let cancelledPorts = 0;
+    let otherPorts = 0;
 
     const statusMap = new Map<string, number>();
     const subStatusMap = new Map<string, number>();
-    const batchMap = new Map<string, number>();
     const goliveMonthMap = new Map<string, number>();
-    let goliveCount = 0;
+    let totalGolivePorts = 0;
 
     for (const p of projects) {
+      const fd = getFullDataArray(p);
+      const ports = getPortCount(fd);
+      totalPorts += ports;
+
       const bucket = classifyStatus(p.status);
-      if (bucket === 'done') done++;
-      else if (bucket === 'progress') progress++;
-      else if (bucket === 'cancelled') cancelled++;
-      else other++;
+      if (bucket === 'done') donePorts += ports;
+      else if (bucket === 'progress') progressPorts += ports;
+      else if (bucket === 'cancelled') cancelledPorts += ports;
+      else otherPorts += ports;
 
       const st = p.status || '-';
-      statusMap.set(st, (statusMap.get(st) || 0) + 1);
+      statusMap.set(st, (statusMap.get(st) || 0) + ports);
 
       const sub = p.sub_status || '-';
-      subStatusMap.set(sub, (subStatusMap.get(sub) || 0) + 1);
+      subStatusMap.set(sub, (subStatusMap.get(sub) || 0) + ports);
 
-      const batch = p.batch_program || '-';
-      batchMap.set(batch, (batchMap.get(batch) || 0) + 1);
-
-      const fd = getFullDataArray(p);
       const goliveStr = formatExcelDateShort(fd[30]);
       if (goliveStr) {
-        goliveCount++;
-        goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + 1);
+        totalGolivePorts += ports;
+        goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);
       }
     }
 
@@ -161,6 +173,21 @@ export default function DashboardRecap({ projects }: Props) {
       Array.from(m.entries())
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count);
+
+    // Generate chronological months for Golive
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const chronologicalGolive: { name: string; count: number }[] = [];
+
+    for (let m = 0; m <= currentMonth; m++) {
+      const d = new Date(currentYear, m, 1);
+      const label = d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+      chronologicalGolive.push({
+        name: label,
+        count: goliveMonthMap.get(label) || 0
+      });
+    }
 
     const recent = [...projects]
       .sort(
@@ -170,21 +197,21 @@ export default function DashboardRecap({ projects }: Props) {
       .slice(0, 5);
 
     return {
-      total,
-      done,
-      progress,
-      cancelled,
-      other,
+      total: projects.length,
+      totalPorts,
+      donePorts,
+      progressPorts,
+      cancelledPorts,
+      otherPorts,
       statusList: toSortedArr(statusMap),
-      subStatusList: toSortedArr(subStatusMap).slice(0, 8),
-      batchList: toSortedArr(batchMap).slice(0, 6),
-      goliveCount,
-      goliveMonthList: toSortedArr(goliveMonthMap).slice(0, 6),
+      subStatusList: toSortedArr(subStatusMap).slice(0, 10),
+      totalGolivePorts,
+      goliveMonthList: chronologicalGolive,
       recent,
     };
   }, [projects]);
 
-  const { total } = stats;
+  const { totalPorts } = stats;
 
   const statusColorMap: Record<string, string> = {
     done: 'bg-emerald-500',
@@ -195,35 +222,35 @@ export default function DashboardRecap({ projects }: Props) {
 
   return (
     <div className="w-full space-y-6">
-      {/* KPI Grid — Mobile First: 2 kolom di mobile, 4 di desktop */}
+      {/* KPI Grid */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <KpiCard
           icon={Briefcase}
-          label="Total Projects"
-          value={total}
+          label="Total Port Plan"
+          value={totalPorts.toLocaleString('id-ID')}
           accent="bg-blue-600"
-          sub="Seluruh project"
+          sub={`${stats.total} Projects`}
         />
         <KpiCard
           icon={CheckCircle2}
-          label="Done / Golive"
-          value={stats.done}
+          label="Done Ports"
+          value={stats.donePorts.toLocaleString('id-ID')}
           accent="bg-emerald-600"
-          sub={total ? `${Math.round((stats.done / total) * 100)}% dari total` : '0%'}
+          sub={totalPorts ? `${Math.round((stats.donePorts / totalPorts) * 100)}% dari total` : '0%'}
         />
         <KpiCard
           icon={Loader2}
-          label="In Progress"
-          value={stats.progress}
+          label="In Progress Ports"
+          value={stats.progressPorts.toLocaleString('id-ID')}
           accent="bg-indigo-600"
-          sub={total ? `${Math.round((stats.progress / total) * 100)}% dari total` : '0%'}
+          sub={totalPorts ? `${Math.round((stats.progressPorts / totalPorts) * 100)}% dari total` : '0%'}
         />
         <KpiCard
           icon={XCircle}
-          label="Cancelled / Drop"
-          value={stats.cancelled}
+          label="Cancelled Ports"
+          value={stats.cancelledPorts.toLocaleString('id-ID')}
           accent="bg-red-600"
-          sub={total ? `${Math.round((stats.cancelled / total) * 100)}% dari total` : '0%'}
+          sub={totalPorts ? `${Math.round((stats.cancelledPorts / totalPorts) * 100)}% dari total` : '0%'}
         />
       </section>
 
@@ -233,7 +260,7 @@ export default function DashboardRecap({ projects }: Props) {
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp size={18} className="text-blue-600" />
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Distribusi Status
+              Distribusi Status (by Port)
             </h3>
           </div>
           {stats.statusList.length ? (
@@ -245,7 +272,7 @@ export default function DashboardRecap({ projects }: Props) {
                     key={s.name}
                     label={s.name}
                     count={s.count}
-                    total={total}
+                    total={totalPorts}
                     colorClass={statusColorMap[bucket]}
                   />
                 );
@@ -260,7 +287,7 @@ export default function DashboardRecap({ projects }: Props) {
           <div className="flex items-center gap-2 mb-4">
             <Layers size={18} className="text-indigo-600" />
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Top Sub Status
+              Top Sub Status (by Port)
             </h3>
           </div>
           {stats.subStatusList.length ? (
@@ -270,7 +297,7 @@ export default function DashboardRecap({ projects }: Props) {
                   key={s.name}
                   label={s.name}
                   count={s.count}
-                  total={total}
+                  total={totalPorts}
                   colorClass="bg-indigo-500"
                 />
               ))}
@@ -281,57 +308,33 @@ export default function DashboardRecap({ projects }: Props) {
         </div>
       </section>
 
-      {/* Batch Program & Golive Month */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <Briefcase size={18} className="text-purple-600" />
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Batch Program (Top 6)
-            </h3>
-          </div>
-          {stats.batchList.length ? (
-            <div className="space-y-3">
-              {stats.batchList.map((s) => (
-                <BarRow
-                  key={s.name}
-                  label={s.name}
-                  count={s.count}
-                  total={total}
-                  colorClass="bg-purple-500"
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 italic">Belum ada data.</p>
-          )}
-        </div>
-
+      {/* Golive Month */}
+      <section className="w-full">
         <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <Calendar size={18} className="text-emerald-600" />
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Tanggal Golive per Bulan
+              Tanggal Golive per Bulan (by Port)
             </h3>
             <span className="ml-auto text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-              {stats.goliveCount} golive
+              {stats.totalGolivePorts.toLocaleString('id-ID')} total ports golive
             </span>
           </div>
-          {stats.goliveMonthList.length ? (
-            <div className="space-y-3">
+          {stats.goliveMonthList.some(m => m.count > 0) ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
               {stats.goliveMonthList.map((s) => (
                 <BarRow
                   key={s.name}
                   label={s.name}
                   count={s.count}
-                  total={stats.goliveCount}
+                  total={stats.totalGolivePorts}
                   colorClass="bg-emerald-500"
                 />
               ))}
             </div>
           ) : (
             <p className="text-sm text-gray-500 italic">
-              Belum ada data tanggal golive.
+              Belum ada data tanggal golive tahun ini.
             </p>
           )}
         </div>

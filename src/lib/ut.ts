@@ -1,4 +1,4 @@
-import db, { Project } from './db';
+import db, { Project, getProjectsForSelect } from './db';
 
 export interface UT {
   id: string;
@@ -53,7 +53,4 @@ export const upsertUT = db.prepare(`
     updated_at = CURRENT_TIMESTAMP
 `);
 
-export function getProjectsForUTSelect() {
-  const projects = db.prepare("SELECT DISTINCT nama_lop, id_ihld FROM projects WHERE nama_lop IS NOT NULL AND nama_lop != '' ORDER BY nama_lop ASC").all() as { nama_lop: string; id_ihld: string }[];
-  return projects;
-}
+export { getProjectsForSelect as getProjectsForUTSelect };

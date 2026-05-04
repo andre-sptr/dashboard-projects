@@ -1,4 +1,4 @@
-import db, { Project } from './db';
+import db, { Project, getProjectsForSelect } from './db';
 
 export interface Aanwijzing {
   id: string;
@@ -49,7 +49,4 @@ export const upsertAanwijzing = db.prepare(`
     updated_at = CURRENT_TIMESTAMP
 `);
 
-export function getProjectsForSelect() {
-  const projects = db.prepare("SELECT DISTINCT nama_lop, id_ihld FROM projects WHERE nama_lop IS NOT NULL AND nama_lop != '' ORDER BY nama_lop ASC").all() as { nama_lop: string; id_ihld: string }[];
-  return projects;
-}
+export { getProjectsForSelect };

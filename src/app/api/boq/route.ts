@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db, { getAllBoq, upsertBoq, deleteBoq } from '@/lib/db';
+import { getAllBoq, upsertBoq, deleteBoq, getProjectsForSelect } from '@/lib/db';
 import { parseBoQExcel } from '@/lib/boq';
 
 export async function GET() {
   try {
     const boqList = getAllBoq.all();
-    return NextResponse.json({ boq: boqList });
+    const projects = getProjectsForSelect();
+    return NextResponse.json({ boq: boqList, projects: projects });
   } catch (error) {
     console.error('Error fetching BoQ:', error);
     return NextResponse.json({ error: 'Gagal mengambil data BoQ' }, { status: 500 });
@@ -16,9 +17,15 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
+    const nama_lop = formData.get('nama_lop') as string | null;
+    const id_ihld = formData.get('id_ihld') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: 'File tidak ditemukan' }, { status: 400 });
+    }
+
+    if (!nama_lop || !id_ihld) {
+      return NextResponse.json({ error: 'Nama LOP dan ID IHLD wajib diisi' }, { status: 400 });
     }
 
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
@@ -26,15 +33,15 @@ export async function POST(request: NextRequest) {
     }
 
     const buffer = await file.arrayBuffer();
-    const parseResult = parseBoQExcel(buffer);
+    const rows = parseBoQExcel(buffer);
 
-    if (parseResult.rows.length === 0) {
+    if (rows.length === 0) {
       return NextResponse.json({ error: 'Tidak ada data yang ditemukan di file Excel' }, { status: 400 });
     }
 
     const uniqueId = `boq_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    const fullDataJson = JSON.stringify(parseResult.rows.map(r => ({
+    const fullDataJson = JSON.stringify(rows.map(r => ({
       id_ihld: r.id_ihld,
       batch_program: r.batch_program,
       full_data: r.full_data,
@@ -42,24 +49,22 @@ export async function POST(request: NextRequest) {
 
     upsertBoq.run(
       uniqueId,
-      parseResult.nama_lop,
-      parseResult.rows[0]?.id_ihld || '',
-      parseResult.sto,
-      parseResult.rows[0]?.batch_program || '',
-      parseResult.project_name,
+      nama_lop,
+      id_ihld,
+      '', // STO - can be empty or added if needed
+      rows[0]?.batch_program || '',
+      nama_lop, // project_name
       'SUMBAGTENG',
       fullDataJson
     );
 
     return NextResponse.json({
       success: true,
-      message: `Berhasil import ${parseResult.rows.length} baris data`,
+      message: `Berhasil import ${rows.length} baris data`,
       data: {
         id: uniqueId,
-        nama_lop: parseResult.nama_lop,
-        sto: parseResult.sto,
-        project_name: parseResult.project_name,
-        row_count: parseResult.rows.length,
+        nama_lop: nama_lop,
+        row_count: rows.length,
       },
     });
   } catch (error) {
