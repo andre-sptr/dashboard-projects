@@ -10,6 +10,17 @@ export interface TopologyNode {
     children: TopologyNode[];
 }
 
+// Column indices mapping for full_data array (0-based)
+const COLUMNS = {
+    AREA: 4,
+    STO: 5,
+    BRANCH: 7,
+    ODP_COUNT: 9,
+    PLANNED_PORTS: 10,
+    ODP_DATA: 28,
+    REALIZED_PORTS: 29
+};
+
 export function getNetworkHierarchy() {
     const projects = db.prepare('SELECT * FROM projects').all() as any[];
     const aanwijzing = db.prepare('SELECT * FROM aanwijzing').all() as any[];
@@ -22,16 +33,16 @@ export function getNetworkHierarchy() {
             fd = JSON.parse(p.full_data || '[]');
         } catch { }
 
-        const sto = fd[5] || 'UNKNOWN STO';
-        const area = fd[4] || 'UNKNOWN AREA';
-        const branch = fd[7] || 'UNKNOWN BRANCH';
+        const sto = fd[COLUMNS.STO] || 'UNKNOWN STO';
+        const area = fd[COLUMNS.AREA] || 'UNKNOWN AREA';
+        const branch = fd[COLUMNS.BRANCH] || 'UNKNOWN BRANCH';
 
         const matchAan = aanwijzing.find(a => a.id_ihld === p.id_ihld);
         const oltName = matchAan?.gpon || `OLT-${sto}`;
 
         const odcName = p.nama_lop || `ODC-${p.id_ihld}`;
-        const plannedPorts = Number(fd[10]) || 0;
-        const realizedPorts = Number(fd[29]) || 0;
+        const plannedPorts = Number(fd[COLUMNS.PLANNED_PORTS]) || 0;
+        const realizedPorts = Number(fd[COLUMNS.REALIZED_PORTS]) || 0;
         const status = p.status || 'PLANNED';
 
         if (!hierarchy[area]) hierarchy[area] = {};
@@ -63,7 +74,7 @@ export function getNetworkHierarchy() {
             olt.odcs[odcName].realizedPorts += realizedPorts;
         }
 
-        const odpData = fd[28] || '';
+        const odpData = fd[COLUMNS.ODP_DATA] || '';
         if (odpData && typeof odpData === 'string' && odpData.includes('#')) {
             const odpIds = odpData.split('#');
             odpIds.forEach(id => {
@@ -77,7 +88,7 @@ export function getNetworkHierarchy() {
                 });
             });
         } else {
-            const odpCount = Number(fd[9]) || 1;
+            const odpCount = Number(fd[COLUMNS.ODP_COUNT]) || 1;
             for (let i = 1; i <= odpCount; i++) {
                 olt.odcs[odcName].odps.push({
                     id: `${p.id_ihld}-${i}`,

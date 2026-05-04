@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
 import { getNetworkHierarchy } from '@/lib/topology';
+import { successResponse, errorResponse } from '@/lib/response';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const data = getNetworkHierarchy();
-    return NextResponse.json(data);
+    return successResponse(data);
   } catch (error) {
     console.error('Error fetching topology:', error);
-    return NextResponse.json({ error: 'Gagal mengambil data topologi' }, { status: 500 });
+    return errorResponse('Gagal mengambil data topologi');
   }
 }

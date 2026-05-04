@@ -103,9 +103,13 @@ export default function AanwijzingPage() {
   const fetchData = async () => {
     try {
       const res = await fetch('/api/aanwijzing');
-      const data = await res.json();
-      setProjects(data.projects || []);
-      setAanwijzingList(data.aanwijzing || []);
+      const response = await res.json();
+      if (response.success) {
+        setProjects(response.data.projects || []);
+        setAanwijzingList(response.data.aanwijzing || []);
+      } else {
+        showNotification('error', response.message || 'Gagal mengambil data');
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       showNotification('error', 'Gagal mengambil data');
@@ -137,18 +141,18 @@ export default function AanwijzingPage() {
     formDataUpload.append('file', file);
 
     try {
-      const res = await fetch('/api/boq-aanwijzing', {
+      const res = await fetch('/api/boq/parse', {
         method: 'POST',
         body: formDataUpload,
       });
 
-      const data = await res.json();
+      const response = await res.json();
 
-      if (res.ok) {
-        setBoqRows(data.data);
-        showNotification('success', 'File BoQ berhasil diuraikan');
+      if (response.success) {
+        setBoqRows(response.data);
+        showNotification('success', response.message || 'File BoQ berhasil diuraikan');
       } else {
-        showNotification('error', data.error || 'Gagal menguraikan file');
+        showNotification('error', response.message || 'Gagal menguraikan file');
       }
     } catch (error) {
       console.error('Error uploading BoQ:', error);
@@ -179,16 +183,16 @@ export default function AanwijzingPage() {
         }),
       });
 
-      const data = await res.json();
+      const response = await res.json();
 
-      if (res.ok) {
-        showNotification('success', editingId ? 'Data berhasil diperbarui' : 'Data berhasil disimpan');
+      if (response.success) {
+        showNotification('success', response.message || (editingId ? 'Data berhasil diperbarui' : 'Data berhasil disimpan'));
         resetForm();
         fetchData();
         setShowForm(false);
         setEditingId(null);
       } else {
-        showNotification('error', data.error || 'Gagal menyimpan data');
+        showNotification('error', response.message || 'Gagal menyimpan data');
       }
     } catch (error) {
       console.error('Error saving:', error);

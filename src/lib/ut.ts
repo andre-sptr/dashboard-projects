@@ -1,17 +1,6 @@
-import db, { 
-  Project, 
-  getProjectsForSelect,
-  getBoqUtByUtId,
-  upsertBoqUt,
-  deleteBoqUtByUtId
-} from './db';
+import db, { getProjectsForSelect } from './db';
 
-export { 
-  getProjectsForSelect as getProjectsForUTSelect,
-  getBoqUtByUtId,
-  upsertBoqUt,
-  deleteBoqUtByUtId
-};
+export { getProjectsForSelect as getProjectsForUTSelect };
 
 export interface UT {
   id: string;
@@ -65,3 +54,20 @@ export const upsertUT = db.prepare(`
     komitmen_penyelesaian = excluded.komitmen_penyelesaian,
     updated_at = CURRENT_TIMESTAMP
 `);
+
+export const getBoqUtByUtId = db.prepare('SELECT * FROM boq_ut WHERE ut_id = ?');
+
+export const upsertBoqUt = db.prepare(`
+  INSERT INTO boq_ut (
+    id, ut_id, nama_lop, id_ihld, full_data, created_at, updated_at
+  )
+  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ON CONFLICT(id) DO UPDATE SET
+    ut_id = excluded.ut_id,
+    nama_lop = excluded.nama_lop,
+    id_ihld = excluded.id_ihld,
+    full_data = excluded.full_data,
+    updated_at = CURRENT_TIMESTAMP
+`);
+
+export const deleteBoqUtByUtId = db.prepare('DELETE FROM boq_ut WHERE ut_id = ?');

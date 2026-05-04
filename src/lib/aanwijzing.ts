@@ -1,10 +1,4 @@
-import db, { 
-  Project, 
-  getProjectsForSelect,
-  getBoqAanwijzingByAanwijzingId,
-  upsertBoqAanwijzing,
-  deleteBoqAanwijzingByAanwijzingId
-} from './db';
+import db, { getProjectsForSelect } from './db';
 
 export interface Aanwijzing {
   id: string;
@@ -55,9 +49,21 @@ export const upsertAanwijzing = db.prepare(`
     updated_at = CURRENT_TIMESTAMP
 `);
 
-export { 
-  getProjectsForSelect,
-  getBoqAanwijzingByAanwijzingId,
-  upsertBoqAanwijzing,
-  deleteBoqAanwijzingByAanwijzingId
-};
+export const getBoqAanwijzingByAanwijzingId = db.prepare('SELECT * FROM boq_aanwijzing WHERE aanwijzing_id = ?');
+
+export const upsertBoqAanwijzing = db.prepare(`
+  INSERT INTO boq_aanwijzing (
+    id, aanwijzing_id, nama_lop, id_ihld, full_data, created_at, updated_at
+  )
+  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ON CONFLICT(id) DO UPDATE SET
+    aanwijzing_id = excluded.aanwijzing_id,
+    nama_lop = excluded.nama_lop,
+    id_ihld = excluded.id_ihld,
+    full_data = excluded.full_data,
+    updated_at = CURRENT_TIMESTAMP
+`);
+
+export const deleteBoqAanwijzingByAanwijzingId = db.prepare('DELETE FROM boq_aanwijzing WHERE aanwijzing_id = ?');
+
+export { getProjectsForSelect };

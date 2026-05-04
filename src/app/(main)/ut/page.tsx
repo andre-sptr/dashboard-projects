@@ -96,9 +96,13 @@ export default function UTPage() {
   const fetchData = async () => {
     try {
       const res = await fetch('/api/ut');
-      const data = await res.json();
-      setProjects(data.projects || []);
-      setUtList(data.ut || []);
+      const response = await res.json();
+      if (response.success) {
+        setProjects(response.data.projects || []);
+        setUtList(response.data.ut || []);
+      } else {
+        showNotification('error', response.message || 'Gagal mengambil data');
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       showNotification('error', 'Gagal mengambil data');
@@ -134,18 +138,18 @@ export default function UTPage() {
     formDataUpload.append('file', file);
 
     try {
-      const res = await fetch('/api/boq-ut', {
+      const res = await fetch('/api/boq/parse', {
         method: 'POST',
         body: formDataUpload,
       });
 
-      const data = await res.json();
+      const response = await res.json();
 
-      if (res.ok) {
-        setBoqRows(data.data);
-        showNotification('success', 'File BoQ UT berhasil diuraikan');
+      if (response.success) {
+        setBoqRows(response.data);
+        showNotification('success', response.message || 'File BoQ UT berhasil diuraikan');
       } else {
-        showNotification('error', data.error || 'Gagal menguraikan file');
+        showNotification('error', response.message || 'Gagal menguraikan file');
       }
     } catch (error) {
       console.error('Error uploading BoQ UT:', error);
@@ -174,16 +178,16 @@ export default function UTPage() {
         }),
       });
 
-      const data = await res.json();
+      const response = await res.json();
 
-      if (res.ok) {
-        showNotification('success', editingId ? 'Data berhasil diperbarui' : 'Data berhasil disimpan');
+      if (response.success) {
+        showNotification('success', response.message || (editingId ? 'Data berhasil diperbarui' : 'Data berhasil disimpan'));
         resetForm();
         fetchData();
         setShowForm(false);
         setEditingId(null);
       } else {
-        showNotification('error', data.error || 'Gagal menyimpan data');
+        showNotification('error', response.message || 'Gagal menyimpan data');
       }
     } catch (error) {
       console.error('Error saving:', error);

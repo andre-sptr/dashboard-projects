@@ -1,3 +1,4 @@
+import db from './db';
 import * as XLSX from 'xlsx';
 
 export interface BoqRow {
@@ -66,3 +67,23 @@ export function parseBoQExcel(buffer: ArrayBuffer): BoqRow[] {
 
   return rows;
 }
+
+export const getAllBoq = db.prepare('SELECT * FROM boq ORDER BY created_at DESC');
+export const getBoqById = db.prepare('SELECT * FROM boq WHERE id = ?');
+export const deleteBoq = db.prepare('DELETE FROM boq WHERE id = ?');
+
+export const upsertBoq = db.prepare(`
+  INSERT INTO boq (
+    id, nama_lop, id_ihld, sto, batch_program, project_name, region, full_data, created_at, updated_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ON CONFLICT(id) DO UPDATE SET
+    nama_lop = excluded.nama_lop,
+    id_ihld = excluded.id_ihld,
+    sto = excluded.sto,
+    batch_program = excluded.batch_program,
+    project_name = excluded.project_name,
+    region = excluded.region,
+    full_data = excluded.full_data,
+    updated_at = CURRENT_TIMESTAMP
+`);

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import {
   getAllAanwijzing,
   upsertAanwijzing,
@@ -8,6 +8,7 @@ import {
   upsertBoqAanwijzing,
   deleteBoqAanwijzingByAanwijzingId
 } from '@/lib/aanwijzing';
+import { successResponse, errorResponse } from '@/lib/response';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,13 +26,13 @@ export async function GET() {
       return { ...a, boq_data: boq || null };
     });
 
-    return NextResponse.json({
+    return successResponse({
       aanwijzing: aanwijzingWithBoq,
       projects: projects
     });
   } catch (error) {
     console.error('Error fetching aanwijzing:', error);
-    return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 });
+    return errorResponse('Gagal mengambil data');
   }
 }
 
@@ -59,10 +60,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!nama_lop || !id_ihld || !tanggal_aanwijzing) {
-      return NextResponse.json(
-        { error: 'Nama LOP, ID IHLD, dan Tanggal AANWIJZING wajib diisi' },
-        { status: 400 }
-      );
+      return errorResponse('Nama LOP, ID IHLD, dan Tanggal AANWIJZING wajib diisi', 400);
     }
 
     const aanwijzingId = id || generateId();
@@ -96,14 +94,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      id: aanwijzingId,
-      message: 'Data AANWIJZING berhasil disimpan'
-    });
+    return successResponse({ id: aanwijzingId }, 'Data AANWIJZING berhasil disimpan');
   } catch (error) {
     console.error('Error saving aanwijzing:', error);
-    return NextResponse.json({ error: 'Gagal menyimpan data' }, { status: 500 });
+    return errorResponse('Gagal menyimpan data');
   }
 }
 
@@ -113,18 +107,15 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'ID diperlukan' }, { status: 400 });
+      return errorResponse('ID diperlukan', 400);
     }
 
     deleteAanwijzingById.run(id);
     deleteBoqAanwijzingByAanwijzingId.run(id);
 
-    return NextResponse.json({
-      success: true,
-      message: 'Data AANWIJZING berhasil dihapus'
-    });
+    return successResponse(null, 'Data AANWIJZING berhasil dihapus');
   } catch (error) {
     console.error('Error deleting aanwijzing:', error);
-    return NextResponse.json({ error: 'Gagal menghapus data' }, { status: 500 });
+    return errorResponse('Gagal menghapus data');
   }
 }

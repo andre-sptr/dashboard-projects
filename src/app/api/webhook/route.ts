@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getProjectByUid, upsertProject, Project } from '@/lib/db';
 import { downloadAndParseExcel } from '@/lib/parseExcel';
 import { HistoryEntry } from '@/utils/duration';
+import { successResponse, errorResponse } from '@/lib/response';
 
 function normalizeStatus(value: string): string {
   return value
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     const rows = await downloadAndParseExcel();
 
     if (!rows || rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Tidak ada data valid yang ditemukan.' }, { status: 400 });
+      return errorResponse('Tidak ada data valid yang ditemukan.', 400);
     }
 
     let processed = 0;
@@ -76,9 +77,9 @@ export async function POST(request: NextRequest) {
       processed++;
     }
 
-    return NextResponse.json({ success: true, processed, total: rows.length });
+    return successResponse({ processed, total: rows.length }, 'Sync project berhasil');
   } catch (error) {
     console.error('Webhook error:', error);
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    return errorResponse((error as Error).message);
   }
 }

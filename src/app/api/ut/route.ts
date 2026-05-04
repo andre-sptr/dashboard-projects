@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import {
   getAllUT,
   upsertUT,
@@ -8,6 +8,7 @@ import {
   upsertBoqUt,
   deleteBoqUtByUtId
 } from '@/lib/ut';
+import { successResponse, errorResponse } from '@/lib/response';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,13 +26,13 @@ export async function GET() {
       return { ...item, boq_data: boq || null };
     });
 
-    return NextResponse.json({
+    return successResponse({
       ut: utWithBoq,
       projects: projects
     });
   } catch (error) {
     console.error('Error fetching UT:', error);
-    return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 });
+    return errorResponse('Gagal mengambil data');
   }
 }
 
@@ -61,10 +62,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!nama_lop || !id_ihld || !tanggal_ct_ut) {
-      return NextResponse.json(
-        { error: 'Nama LOP, ID IHLD, dan Tanggal CT/UT wajib diisi' },
-        { status: 400 }
-      );
+      return errorResponse('Nama LOP, ID IHLD, dan Tanggal CT/UT wajib diisi', 400);
     }
 
     const utId = id || generateId();
@@ -100,14 +98,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      id: utId,
-      message: 'Data UT berhasil disimpan'
-    });
+    return successResponse({ id: utId }, 'Data UT berhasil disimpan');
   } catch (error) {
     console.error('Error saving UT:', error);
-    return NextResponse.json({ error: 'Gagal menyimpan data' }, { status: 500 });
+    return errorResponse('Gagal menyimpan data');
   }
 }
 
@@ -117,18 +111,15 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'ID diperlukan' }, { status: 400 });
+      return errorResponse('ID diperlukan', 400);
     }
 
     deleteUTById.run(id);
     deleteBoqUtByUtId.run(id);
 
-    return NextResponse.json({
-      success: true,
-      message: 'Data UT berhasil dihapus'
-    });
+    return successResponse(null, 'Data UT berhasil dihapus');
   } catch (error) {
     console.error('Error deleting UT:', error);
-    return NextResponse.json({ error: 'Gagal menghapus data' }, { status: 500 });
+    return errorResponse('Gagal menghapus data');
   }
 }

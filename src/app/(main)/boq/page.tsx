@@ -79,9 +79,13 @@ export default function BoqPage() {
   const fetchData = async () => {
     try {
       const res = await fetch('/api/boq');
-      const data = await res.json();
-      setBoqList(data.boq || []);
-      setProjects(data.projects || []);
+      const response = await res.json();
+      if (response.success) {
+        setBoqList(response.data.boq || []);
+        setProjects(response.data.projects || []);
+      } else {
+        showNotification('error', response.message || 'Gagal mengambil data');
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       showNotification('error', 'Gagal mengambil data');
@@ -134,15 +138,15 @@ export default function BoqPage() {
         body: submitData,
       });
 
-      const data = await res.json();
+      const response = await res.json();
 
-      if (res.ok) {
-        showNotification('success', data.message || 'Data BoQ berhasil diimport');
+      if (response.success) {
+        showNotification('success', response.message || 'Data BoQ berhasil diimport');
         resetForm();
         fetchData();
         setShowForm(false);
       } else {
-        showNotification('error', data.error || 'Gagal import data');
+        showNotification('error', response.message || 'Gagal import data');
       }
     } catch (error) {
       console.error('Error uploading:', error);

@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAllBoq, upsertBoq, deleteBoq, getProjectsForSelect } from '@/lib/db';
-import { parseBoQExcel } from '@/lib/boq';
+import { NextRequest } from 'next/server';
+import { getAllBoq, upsertBoq, deleteBoq, parseBoQExcel } from '@/lib/boq';
+import { getProjectsForSelect } from '@/lib/db';
+import { successResponse, errorResponse } from '@/lib/response';
 
 export async function GET() {
   try {
     const boqList = getAllBoq.all();
     const projects = getProjectsForSelect();
-    return NextResponse.json({ boq: boqList, projects: projects });
+    return successResponse({ boq: boqList, projects: projects });
   } catch (error) {
     console.error('Error fetching BoQ:', error);
-    return NextResponse.json({ error: 'Gagal mengambil data BoQ' }, { status: 500 });
+    return errorResponse('Gagal mengambil data BoQ');
   }
 }
 
@@ -21,22 +22,22 @@ export async function POST(request: NextRequest) {
     const id_ihld = formData.get('id_ihld') as string | null;
 
     if (!file) {
-      return NextResponse.json({ error: 'File tidak ditemukan' }, { status: 400 });
+      return errorResponse('File tidak ditemukan', 400);
     }
 
     if (!nama_lop || !id_ihld) {
-      return NextResponse.json({ error: 'Nama LOP dan ID IHLD wajib diisi' }, { status: 400 });
+      return errorResponse('Nama LOP dan ID IHLD wajib diisi', 400);
     }
 
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      return NextResponse.json({ error: 'Format file harus .xlsx atau .xls' }, { status: 400 });
+      return errorResponse('Format file harus .xlsx atau .xls', 400);
     }
 
     const buffer = await file.arrayBuffer();
     const rows = parseBoQExcel(buffer);
 
     if (rows.length === 0) {
-      return NextResponse.json({ error: 'Tidak ada data yang ditemukan di file Excel' }, { status: 400 });
+      return errorResponse('Tidak ada data yang ditemukan di file Excel', 400);
     }
 
     const uniqueId = `boq_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -58,18 +59,17 @@ export async function POST(request: NextRequest) {
       fullDataJson
     );
 
-    return NextResponse.json({
-      success: true,
-      message: `Berhasil import ${rows.length} baris data`,
-      data: {
+    return successResponse(
+      {
         id: uniqueId,
         nama_lop: nama_lop,
         row_count: rows.length,
       },
-    });
+      `Berhasil import ${rows.length} baris data`
+    );
   } catch (error) {
     console.error('Error uploading BoQ:', error);
-    return NextResponse.json({ error: 'Gagal mengupload file: ' + (error as Error).message }, { status: 500 });
+    return errorResponse('Gagal mengupload file: ' + (error as Error).message);
   }
 }
 
@@ -79,14 +79,14 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'ID tidak ditemukan' }, { status: 400 });
+      return errorResponse('ID tidak ditemukan', 400);
     }
 
     deleteBoq.run(id);
 
-    return NextResponse.json({ success: true, message: 'Data berhasil dihapus' });
+    return successResponse(null, 'Data berhasil dihapus');
   } catch (error) {
     console.error('Error deleting BoQ:', error);
-    return NextResponse.json({ error: 'Gagal menghapus data' }, { status: 500 });
+    return errorResponse('Gagal menghapus data');
   }
 }

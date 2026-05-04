@@ -81,28 +81,7 @@ if (!columns.includes('full_data')) {
   db.exec(`ALTER TABLE projects ADD COLUMN full_data TEXT DEFAULT '[]'`);
 }
 
-export const getProjectByUid = db.prepare('SELECT * FROM projects WHERE uid = ?');
-export const getAllProjects = db.prepare('SELECT * FROM projects WHERE region = ? ORDER BY last_changed_at DESC');
-export const upsertProject = db.prepare(`
-  INSERT INTO projects (
-    uid, id_ihld, batch_program, nama_lop, region, status, sub_status, full_data, last_changed_at, history
-  )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
-  ON CONFLICT(uid) DO UPDATE SET
-    id_ihld = excluded.id_ihld,
-    batch_program = excluded.batch_program,
-    nama_lop = excluded.nama_lop,
-    region = excluded.region,
-    status = excluded.status,
-    sub_status = excluded.sub_status,
-    full_data = excluded.full_data,
-    last_changed_at = CASE 
-      WHEN projects.sub_status != excluded.sub_status OR projects.status != excluded.status 
-      THEN CURRENT_TIMESTAMP 
-      ELSE projects.last_changed_at 
-    END,
-    history = excluded.history
-`);
+// --- Table Initializations ---
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS aanwijzing (
@@ -165,25 +144,6 @@ db.exec(`
   )
 `);
 
-export const getAllBoq = db.prepare('SELECT * FROM boq ORDER BY created_at DESC');
-export const getBoqById = db.prepare('SELECT * FROM boq WHERE id = ?');
-export const upsertBoq = db.prepare(`
-  INSERT INTO boq (
-    id, nama_lop, id_ihld, sto, batch_program, project_name, region, full_data, created_at, updated_at
-  )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  ON CONFLICT(id) DO UPDATE SET
-    nama_lop = excluded.nama_lop,
-    id_ihld = excluded.id_ihld,
-    sto = excluded.sto,
-    batch_program = excluded.batch_program,
-    project_name = excluded.project_name,
-    region = excluded.region,
-    full_data = excluded.full_data,
-    updated_at = CURRENT_TIMESTAMP
-`);
-export const deleteBoq = db.prepare('DELETE FROM boq WHERE id = ?');
-
 db.exec(`
   CREATE TABLE IF NOT EXISTS boq_aanwijzing (
     id TEXT PRIMARY KEY,
@@ -195,30 +155,6 @@ db.exec(`
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
-
-const boqAanwijzingTableInfo = db.pragma('table_info(boq_aanwijzing)') as { name: string }[];
-const boqAanwijzingColumns = boqAanwijzingTableInfo.map((c) => c.name);
-
-if (boqAanwijzingColumns.includes('boq_items') && !boqAanwijzingColumns.includes('full_data')) {
-  db.exec(`ALTER TABLE boq_aanwijzing RENAME COLUMN boq_items TO full_data`);
-} else if (!boqAanwijzingColumns.includes('full_data')) {
-  db.exec(`ALTER TABLE boq_aanwijzing ADD COLUMN full_data TEXT DEFAULT '[]'`);
-}
-
-export const getBoqAanwijzingByAanwijzingId = db.prepare('SELECT * FROM boq_aanwijzing WHERE aanwijzing_id = ?');
-export const upsertBoqAanwijzing = db.prepare(`
-  INSERT INTO boq_aanwijzing (
-    id, aanwijzing_id, nama_lop, id_ihld, full_data, created_at, updated_at
-  )
-  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  ON CONFLICT(id) DO UPDATE SET
-    aanwijzing_id = excluded.aanwijzing_id,
-    nama_lop = excluded.nama_lop,
-    id_ihld = excluded.id_ihld,
-    full_data = excluded.full_data,
-    updated_at = CURRENT_TIMESTAMP
-`);
-export const deleteBoqAanwijzingByAanwijzingId = db.prepare('DELETE FROM boq_aanwijzing WHERE aanwijzing_id = ?');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS boq_ut (
@@ -232,20 +168,40 @@ db.exec(`
   )
 `);
 
-export const getBoqUtByUtId = db.prepare('SELECT * FROM boq_ut WHERE ut_id = ?');
-export const upsertBoqUt = db.prepare(`
-  INSERT INTO boq_ut (
-    id, ut_id, nama_lop, id_ihld, full_data, created_at, updated_at
+// --- Migrations for boq_aanwijzing ---
+const boqAanwijzingTableInfo = db.pragma('table_info(boq_aanwijzing)') as { name: string }[];
+const boqAanwijzingColumns = boqAanwijzingTableInfo.map((c) => c.name);
+
+if (boqAanwijzingColumns.includes('boq_items') && !boqAanwijzingColumns.includes('full_data')) {
+  db.exec(`ALTER TABLE boq_aanwijzing RENAME COLUMN boq_items TO full_data`);
+} else if (!boqAanwijzingColumns.includes('full_data')) {
+  db.exec(`ALTER TABLE boq_aanwijzing ADD COLUMN full_data TEXT DEFAULT '[]'`);
+}
+
+// --- Prepare Statements ---
+
+export const getProjectByUid = db.prepare('SELECT * FROM projects WHERE uid = ?');
+export const getAllProjects = db.prepare('SELECT * FROM projects WHERE region = ? ORDER BY last_changed_at DESC');
+export const upsertProject = db.prepare(`
+  INSERT INTO projects (
+    uid, id_ihld, batch_program, nama_lop, region, status, sub_status, full_data, last_changed_at, history
   )
-  VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  ON CONFLICT(id) DO UPDATE SET
-    ut_id = excluded.ut_id,
-    nama_lop = excluded.nama_lop,
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+  ON CONFLICT(uid) DO UPDATE SET
     id_ihld = excluded.id_ihld,
+    batch_program = excluded.batch_program,
+    nama_lop = excluded.nama_lop,
+    region = excluded.region,
+    status = excluded.status,
+    sub_status = excluded.sub_status,
     full_data = excluded.full_data,
-    updated_at = CURRENT_TIMESTAMP
+    last_changed_at = CASE 
+      WHEN projects.sub_status != excluded.sub_status OR projects.status != excluded.status 
+      THEN CURRENT_TIMESTAMP 
+      ELSE projects.last_changed_at 
+    END,
+    history = excluded.history
 `);
-export const deleteBoqUtByUtId = db.prepare('DELETE FROM boq_ut WHERE ut_id = ?');
 
 export function getProjectsForSelect() {
   const projects = db.prepare("SELECT DISTINCT nama_lop, id_ihld FROM projects WHERE nama_lop IS NOT NULL AND nama_lop != '' ORDER BY nama_lop ASC").all() as { nama_lop: string; id_ihld: string }[];

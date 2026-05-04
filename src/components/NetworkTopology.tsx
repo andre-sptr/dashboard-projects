@@ -42,8 +42,14 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
     if (!initialData) {
       fetch('/api/topology')
         .then(res => res.json())
-        .then(d => {
-          setData(d);
+        .then(response => {
+          if (response.success) {
+            setData(response.data);
+          }
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error fetching topology:', err);
           setLoading(false);
         });
     }
