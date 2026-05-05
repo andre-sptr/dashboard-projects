@@ -14,6 +14,12 @@ interface Props {
 
 const ITEMS_PER_PAGE = 10;
 
+const areaBranchMap: Record<string, string[]> = {
+  'RIDAR': ['DUMAI', 'PEKANBARU'],
+  'RIKEP': ['BATAM'],
+  'SUMBAR': ['BUKIT TINGGI', 'PADANG']
+};
+
 export default function DashboardClient({ initialProjects }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,12 +28,6 @@ export default function DashboardClient({ initialProjects }: Props) {
   const [subStatusFilter, setSubStatusFilter] = useState<string>('');
   const [areaFilter, setAreaFilter] = useState<string>('');
   const [branchFilter, setBranchFilter] = useState<string>('');
-
-  const areaBranchMap: Record<string, string[]> = {
-    'RIDAR': ['DUMAI', 'PEKANBARU'],
-    'RIKEP': ['BATAM'],
-    'SUMBAR': ['BUKIT TINGGI', 'PADANG']
-  };
 
   const filterOptions = useMemo(() => {
     const statuses = new Set<string>();
@@ -67,14 +67,40 @@ export default function DashboardClient({ initialProjects }: Props) {
     };
   }, [initialProjects, areaFilter]);
 
-  React.useEffect(() => {
-    if (areaFilter && branchFilter) {
-      const mappedBranches = areaBranchMap[areaFilter.toUpperCase()];
-      if (mappedBranches && !mappedBranches.includes(branchFilter.toUpperCase())) {
-        setBranchFilter('');
-      }
-    }
-  }, [areaFilter]);
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (val: string) => {
+    setStatusFilter(val);
+    setCurrentPage(1);
+  };
+
+  const handleSubStatusFilterChange = (val: string) => {
+    setSubStatusFilter(val);
+    setCurrentPage(1);
+  };
+
+  const handleAreaFilterChange = (val: string) => {
+    setAreaFilter(val);
+    setBranchFilter('');
+    setCurrentPage(1);
+  };
+
+  const handleBranchFilterChange = (val: string) => {
+    setBranchFilter(val);
+    setCurrentPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('');
+    setSubStatusFilter('');
+    setAreaFilter('');
+    setBranchFilter('');
+    setCurrentPage(1);
+  };
 
   const filteredProjects = useMemo(() => {
     return initialProjects.filter((p) => {
@@ -104,9 +130,6 @@ export default function DashboardClient({ initialProjects }: Props) {
     return filteredProjects.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredProjects, currentPage]);
 
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, subStatusFilter, areaFilter, branchFilter]);
 
   const toggleRow = (id: string) => {
     setExpandedRow(expandedRow === id ? null : id);
@@ -124,15 +147,16 @@ export default function DashboardClient({ initialProjects }: Props) {
     <div className="w-full space-y-6">
       <FilterSection
         searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
+        setSearchQuery={handleSearchChange}
         statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
+        setStatusFilter={handleStatusFilterChange}
         subStatusFilter={subStatusFilter}
-        setSubStatusFilter={setSubStatusFilter}
+        setSubStatusFilter={handleSubStatusFilterChange}
         areaFilter={areaFilter}
-        setAreaFilter={setAreaFilter}
+        setAreaFilter={handleAreaFilterChange}
         branchFilter={branchFilter}
-        setBranchFilter={setBranchFilter}
+        setBranchFilter={handleBranchFilterChange}
+        resetFilters={handleResetFilters}
         filterOptions={filterOptions}
       />
 

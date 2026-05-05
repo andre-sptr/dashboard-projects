@@ -20,6 +20,7 @@ interface Props {
   setAreaFilter: (val: string) => void;
   branchFilter: string;
   setBranchFilter: (val: string) => void;
+  resetFilters: () => void;
   filterOptions: FilterOptions;
 }
 
@@ -34,17 +35,11 @@ export const FilterSection = ({
   setAreaFilter,
   branchFilter,
   setBranchFilter,
+  resetFilters,
   filterOptions
 }: Props) => {
   const hasActiveFilters = statusFilter || subStatusFilter || areaFilter || branchFilter || searchQuery;
 
-  const resetFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('');
-    setSubStatusFilter('');
-    setAreaFilter('');
-    setBranchFilter('');
-  };
 
   return (
     <div className="glass-panel p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">

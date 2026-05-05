@@ -10,41 +10,41 @@ import { ReportKpiGrid } from './ReportKpiGrid';
 
 // Dynamically import heavy chart components
 const PerformanceCharts = dynamic(() => import('./PerformanceCharts').then(mod => mod.PerformanceCharts), {
-  loading: () => <div className="h-[400px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />,
+  ssr: false
 });
 
 const BranchRanking = dynamic(() => import('./BranchRanking').then(mod => mod.BranchRanking), {
-  loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />,
+  ssr: false
 });
 
 interface Props {
   initialProjects: Project[];
 }
 
+interface TrendEntry {
+  name: string;
+  actual: number;
+  planned: number;
+  timestamp: number;
+}
+
+const areaBranchMap: Record<string, string[]> = {
+  'RIDAR': ['DUMAI', 'PEKANBARU'],
+  'RIKEP': ['BATAM'],
+  'SUMBAR': ['BUKIT TINGGI', 'PADANG']
+};
+
 export default function ReportClient({ initialProjects }: Props) {
   const [granularity, setGranularity] = useState<Granularity>('monthly');
   const [areaFilter, setAreaFilter] = useState<string>('');
   const [branchFilter, setBranchFilter] = useState<string>('');
-  const [isMounted, setIsMounted] = useState(false);
 
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  const areaBranchMap: Record<string, string[]> = {
-    'RIDAR': ['DUMAI', 'PEKANBARU'],
-    'RIKEP': ['BATAM'],
-    'SUMBAR': ['BUKIT TINGGI', 'PADANG']
+  const handleAreaFilterChange = (val: string) => {
+    setAreaFilter(val);
+    setBranchFilter('');
   };
-
-  React.useEffect(() => {
-    if (areaFilter && branchFilter) {
-      const mappedBranches = areaBranchMap[areaFilter.toUpperCase()];
-      if (mappedBranches && !mappedBranches.includes(branchFilter.toUpperCase())) {
-        setBranchFilter('');
-      }
-    }
-  }, [areaFilter]);
 
   const stats = useMemo(() => {
     const projects = initialProjects.filter(p => {
@@ -125,10 +125,11 @@ export default function ReportClient({ initialProjects }: Props) {
     const avgDelayDays = lateProjects > 0 ? Math.round(totalLeadTimeDays / lateProjects) : 0;
     const trendData = Array.from(timeSeriesMap.values()).sort((a, b) => a.timestamp - b.timestamp);
 
-    let cumulative = 0;
-    const velocityTrend = trendData.map(d => {
-      cumulative += d.actual;
-      return { ...d, cumulative };
+    const velocityTrend: (TrendEntry & { cumulative: number })[] = [];
+    let runningTotal = 0;
+    trendData.forEach(d => {
+      runningTotal += d.actual;
+      velocityTrend.push({ ...d, cumulative: runningTotal });
     });
 
     const branchData = Array.from(branchMap.values())
@@ -158,13 +159,6 @@ export default function ReportClient({ initialProjects }: Props) {
     };
   }, [initialProjects, granularity, areaFilter, branchFilter]);
 
-  if (!isMounted) {
-    return (
-      <div className="flex justify-center items-center h-64 text-gray-400 font-bold text-sm">
-        Memuat grafik laporan...
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 pb-10">
@@ -172,7 +166,7 @@ export default function ReportClient({ initialProjects }: Props) {
         granularity={granularity}
         setGranularity={setGranularity}
         areaFilter={areaFilter}
-        setAreaFilter={setAreaFilter}
+        setAreaFilter={handleAreaFilterChange}
         branchFilter={branchFilter}
         setBranchFilter={setBranchFilter}
         areaBranchMap={areaBranchMap}

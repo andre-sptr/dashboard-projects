@@ -1,7 +1,7 @@
 // Page for managing Aanwijzing (technical briefing) data
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Save, Trash2, Edit3, Plus, X, FileText, ChevronLeft, ChevronRight, Upload, Loader2, Eye } from 'lucide-react';
 
 interface ProjectOption {
@@ -31,21 +31,13 @@ interface AanwijzingData {
   created_at: string;
 }
 
-interface BoqItem {
-  no: string;
-  isSection: boolean;
-  isSummary: boolean;
-  designator: string;
-  deskripsiPekerjaan: string;
-  satuan: string;
-  materialSatuan: number;
-  jasaSatuan: number;
-  volume: number;
-  totalMaterial: number;
-  totalJasa: number;
-  totalHarga: number;
-  keterangan: string;
+interface BoqAanwijzingRow {
+  id_ihld: string;
+  batch_program: string;
+  full_data: string;
 }
+
+
 
 const ITEMS_PER_PAGE = 5;
 
@@ -58,7 +50,7 @@ export default function AanwijzingPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [boqRows, setBoqRows] = useState<any[]>([]);
+  const [boqRows, setBoqRows] = useState<unknown[]>([]);
   const [isUploadingBoq, setIsUploadingBoq] = useState(false);
   const [showBoqPreview, setShowBoqPreview] = useState(false);
 
@@ -97,11 +89,12 @@ export default function AanwijzingPage() {
     setShowDropdown(false);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     try {
       const res = await fetch('/api/aanwijzing');
       const response = await res.json();
@@ -117,21 +110,16 @@ export default function AanwijzingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
-  };
-
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedProject = projects.find(p => p.nama_lop === e.target.value);
-    setFormData({
-      ...formData,
-      nama_lop: e.target.value,
-      id_ihld: selectedProject?.id_ihld || '',
-    });
-  };
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (mounted) await fetchData();
+    };
+    load();
+    return () => { mounted = false; };
+  }, [fetchData]);
 
   const handleBoqUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -737,17 +725,18 @@ export default function AanwijzingPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {boqRows.map((row, idx) => {
-                      let fd: any[] = [];
+                    {(boqRows as BoqAanwijzingRow[]).map((row, idx) => {
+                      let fd: unknown[] = [];
                       try {
                         fd = JSON.parse(row.full_data || '[]');
-                      } catch (e) { }
-
+                      } catch (err) {
+                        console.error('Error parsing full_data:', err);
+                      }
                       return (
                         <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/20 transition-colors">
                           <td className="px-3 py-2 text-xs font-bold text-gray-900 dark:text-white">{row.id_ihld}</td>
                           <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400">{row.batch_program}</td>
-                          <td className="px-3 py-2 text-[10px] font-mono text-gray-400 truncate max-w-lg">{row.full_data}</td>
+                          <td className="px-3 py-2 text-[10px] font-mono text-gray-400 truncate max-w-lg">{JSON.stringify(fd)}</td>
                         </tr>
                       );
                     })}

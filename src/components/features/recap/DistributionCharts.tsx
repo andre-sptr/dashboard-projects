@@ -44,9 +44,20 @@ export const BarRow = ({
   );
 };
 
+interface PieEntry {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface SubStatusEntry {
+  name: string;
+  count: number;
+}
+
 interface DistributionChartsProps {
-  pieData: any[];
-  subStatusList: any[];
+  pieData: PieEntry[];
+  subStatusList: SubStatusEntry[];
   totalPorts: number;
 }
 
@@ -91,7 +102,7 @@ export const DistributionCharts = ({ pieData, subStatusList, totalPorts }: Distr
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: any) => typeof value === 'number' ? value.toLocaleString('id-ID') : value}
+                  formatter={(value: number | string) => typeof value === 'number' ? value.toLocaleString('id-ID') : value}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Legend verticalAlign="bottom" height={36} />

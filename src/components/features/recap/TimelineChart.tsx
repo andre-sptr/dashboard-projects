@@ -11,8 +11,13 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
+interface TimelineEntry {
+  name: string;
+  count: number;
+}
+
 interface TimelineChartProps {
-  goliveMonthList: any[];
+  goliveMonthList: TimelineEntry[];
   totalGolivePorts: number;
 }
 
@@ -48,7 +53,7 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
                 />
                 <Tooltip
                   cursor={{ fill: 'transparent' }}
-                  formatter={(value: any) => value.toLocaleString('id-ID')}
+                  formatter={(value: number) => value.toLocaleString('id-ID')}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Bar

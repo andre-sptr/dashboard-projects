@@ -1,6 +1,6 @@
 // Unit tests for Aanwijzing (technical briefing) repository
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AanwijzingRepository } from '@/repositories/AanwijzingRepository';
+import { AanwijzingRepository, BoqAanwijzing } from '@/repositories/AanwijzingRepository';
 import db from '@/lib/db';
 
 // Mock the database to use an in-memory instance for tests
@@ -61,7 +61,7 @@ describe('AanwijzingRepository', () => {
       full_data: '[]'
     });
 
-    const boq = AanwijzingRepository.getBoq('AAN001') as any;
+    const boq = AanwijzingRepository.getBoq('AAN001') as BoqAanwijzing;
     expect(boq).toBeDefined();
     expect(boq?.id).toBe('BOQ001');
 

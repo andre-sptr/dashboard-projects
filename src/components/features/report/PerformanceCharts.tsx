@@ -3,14 +3,30 @@ import React from 'react';
 import { BarChart3, Clock, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
 
+interface VelocityTrendEntry {
+  name: string;
+  cumulative: number;
+}
+
+interface SlaEntry {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface TrendEntry {
+  name: string;
+  actual: number;
+}
+
 interface PerformanceChartsProps {
-  velocityTrend: any[];
-  slaData: any[];
+  velocityTrend: VelocityTrendEntry[];
+  slaData: SlaEntry[];
   onTimeProjects: number;
   lateProjects: number;
   avgDelayDays: number;
   slaRate: number;
-  trendData: any[];
+  trendData: TrendEntry[];
   granularity: string;
 }
 
@@ -48,7 +64,7 @@ export const PerformanceCharts = ({
                 <YAxis fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => v.toLocaleString()} />
                 <Tooltip
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(v: any) => v.toLocaleString('id-ID')}
+                  formatter={(v: number) => v.toLocaleString('id-ID')}
                 />
                 <Area type="monotone" dataKey="cumulative" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorCumulative)" name="Cumulative Ports" />
               </AreaChart>
@@ -78,7 +94,7 @@ export const PerformanceCharts = ({
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: any) => `${v} Proyek`} />
+                  <Tooltip formatter={(v: number) => `${v} Proyek`} />
                   <Legend verticalAlign="bottom" iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
@@ -86,7 +102,7 @@ export const PerformanceCharts = ({
               <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
                 <Clock size={40} className="mb-2 opacity-20" />
                 <p className="text-[10px] font-bold uppercase tracking-widest">No SLA Data Found</p>
-                <p className="text-[9px] mt-1 text-center px-4 italic opacity-60">Pastikan "Target Golive" & "Golive Date" terisi di database</p>
+                <p className="text-[9px] mt-1 text-center px-4 italic opacity-60">Pastikan &quot;Target Golive&quot; &amp; &quot;Golive Date&quot; terisi di database</p>
               </div>
             )}
           </div>
@@ -119,7 +135,7 @@ export const PerformanceCharts = ({
               <Tooltip
                 cursor={{ fill: 'transparent' }}
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                formatter={(v: any) => v.toLocaleString('id-ID')}
+                formatter={(v: number) => v.toLocaleString('id-ID')}
               />
               <Bar
                 dataKey="actual"

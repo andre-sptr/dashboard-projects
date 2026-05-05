@@ -1,7 +1,7 @@
 // User Testing (UT) data entry and management page
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Save, Trash2, Edit3, Plus, X, FileText, ChevronLeft, ChevronRight, Upload, Loader2, Eye } from 'lucide-react';
 
 interface ProjectOption {
@@ -49,7 +49,7 @@ export default function UTPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [boqRows, setBoqRows] = useState<any[]>([]);
+  const [boqRows, setBoqRows] = useState<unknown[]>([]);
   const [isUploadingBoq, setIsUploadingBoq] = useState(false);
   const [showBoqPreview, setShowBoqPreview] = useState(false);
 
@@ -90,11 +90,12 @@ export default function UTPage() {
     setShowDropdown(false);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     try {
       const res = await fetch('/api/ut');
       const response = await res.json();
@@ -110,12 +111,16 @@ export default function UTPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
-  };
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (mounted) await fetchData();
+    };
+    load();
+    return () => { mounted = false; };
+  }, [fetchData]);
 
   const handleTemuanChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;

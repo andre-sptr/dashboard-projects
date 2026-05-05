@@ -1,5 +1,5 @@
 // Parse JSON with fallback on error
-export function safeJsonParse<T = any>(jsonString: string, fallback: T): T {
+export function safeJsonParse<T = unknown>(jsonString: string, fallback: T): T {
   try {
     return JSON.parse(jsonString) as T;
   } catch (error) {
@@ -9,9 +9,9 @@ export function safeJsonParse<T = any>(jsonString: string, fallback: T): T {
 }
 
 // Parse JSON with validation function
-export function safeJsonParseWithValidation<T = any>(
+export function safeJsonParseWithValidation<T = unknown>(
   jsonString: string,
-  validator: (value: any) => value is T,
+  validator: (value: unknown) => value is T,
   fallback: T
 ): T {
   try {
@@ -29,7 +29,7 @@ export function safeJsonParseWithValidation<T = any>(
 
 // Stringify object to JSON with error handling
 export function safeJsonStringify(
-  value: any,
+  value: unknown,
   fallback: string = '{}',
   pretty: boolean = false
 ): string {
@@ -42,13 +42,13 @@ export function safeJsonStringify(
 }
 
 // Parse JSON ensuring result is an array
-export function parseJsonArray<T = any>(jsonString: string, fallback: T[] = []): T[] {
+export function parseJsonArray<T = unknown>(jsonString: string, fallback: T[] = []): T[] {
   const parsed = safeJsonParse(jsonString, fallback);
   return Array.isArray(parsed) ? parsed : fallback;
 }
 
 // Parse JSON ensuring result is an object
-export function parseJsonObject<T extends Record<string, any> = Record<string, any>>(
+export function parseJsonObject<T extends Record<string, unknown> = Record<string, unknown>>(
   jsonString: string,
   fallback: T = {} as T
 ): T {
@@ -79,10 +79,10 @@ export function isValidJson(str: string): boolean {
 }
 
 // Merge multiple JSON objects (later overrides earlier)
-export function mergeJsonObjects<T extends Record<string, any> = Record<string, any>>(
+export function mergeJsonObjects<T extends Record<string, unknown> = Record<string, unknown>>(
   ...objects: (string | T)[]
 ): T {
-  const result: any = {};
+  const result: Record<string, unknown> = {};
 
   for (const obj of objects) {
     const parsed = typeof obj === 'string' ? parseJsonObject(obj, {}) : obj;
@@ -93,7 +93,7 @@ export function mergeJsonObjects<T extends Record<string, any> = Record<string, 
 }
 
 // Extract specific fields from JSON object
-export function extractFields<T extends Record<string, any>>(
+export function extractFields<T extends Record<string, unknown>>(
   jsonString: string | T,
   fields: string[]
 ): Partial<T> {
@@ -110,7 +110,7 @@ export function extractFields<T extends Record<string, any>>(
 }
 
 // Remove null and undefined values from object
-export function removeNullish<T extends Record<string, any>>(obj: T): Partial<T> {
+export function removeNullish<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const result: Partial<T> = {};
 
   for (const [key, value] of Object.entries(obj)) {
@@ -123,7 +123,7 @@ export function removeNullish<T extends Record<string, any>>(obj: T): Partial<T>
 }
 
 // Convert object to URL query string
-export function objectToQueryString(obj: Record<string, any>): string {
+export function objectToQueryString(obj: Record<string, unknown>): string {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(obj)) {

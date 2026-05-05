@@ -14,12 +14,11 @@ import {
   Minimize2,
   Filter
 } from 'lucide-react';
+import { 
+  TopologyHierarchy,
+  OltData
+} from '@/lib/topology';
 
-interface NodeProps {
-  data: any;
-  level: number;
-  isLast?: boolean;
-}
 
 const StatusBadge = ({ status }: { status: string }) => {
   const s = status.toLowerCase();
@@ -32,7 +31,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   return <span className="flex h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />;
 };
 
-export default function NetworkTopology({ initialData }: { initialData: any }) {
+export default function NetworkTopology({ initialData }: { initialData: TopologyHierarchy | null }) {
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(!initialData);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ 'ROOT': true });
@@ -147,7 +146,7 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
                 <div className="mt-12 w-full space-y-12">
                     {areas
                       .filter(a => !selectedArea || a === selectedArea)
-                      .map((area, aIdx) => (
+                      .map((area) => (
                         <div key={area} className="relative pl-8">
                             <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 to-transparent" />
                             
@@ -183,7 +182,7 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
                                             </div>
                                         </div>
 
-                                        {expandedNodes[`BRANCH-${branch}`] && Object.values(data[area][branch] as any).map((olt: any) => (
+                                        {expandedNodes[`BRANCH-${branch}`] && Object.values((data?.[area]?.[branch] as OltData) || {}).map((olt: OltData) => (
                                             <div key={olt.name} className="ml-8 mt-6">
                                                 <div className="flex items-center gap-4 mb-6">
                                                     <div className="relative group">
@@ -206,7 +205,7 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
                                                 </div>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-4">
-                                                    {Object.values(olt.odcs as any).map((odc: any) => (
+                                                    {Object.values(olt.odcs || {}).map((odc) => (
                                                         <div key={odc.name} className="relative p-4 bg-gray-50/50 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700 rounded-2xl hover:border-blue-500/50 transition-colors group">
                                                             <div className="flex items-center justify-between mb-3">
                                                                 <div className="flex items-center gap-2">
@@ -230,7 +229,7 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
                                                             </div>
 
                                                             <div className="flex flex-wrap gap-1.5">
-                                                                {odc.odps.slice(0, 12).map((odp: any) => (
+                                                                {odc.odps.slice(0, 12).map((odp) => (
                                                                     <div 
                                                                         key={odp.id} 
                                                                         className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all cursor-help

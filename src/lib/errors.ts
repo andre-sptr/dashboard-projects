@@ -109,8 +109,8 @@ export function getStatusCode(error: Error): number {
 }
 
 // Format error for logging
-export function formatErrorForLog(error: Error): Record<string, any> {
-  const baseLog: Record<string, any> = {
+export function formatErrorForLog(error: Error): Record<string, unknown> {
+  const baseLog: Record<string, unknown> = {
     message: error.message,
     stack: error.stack,
     name: error.name,
@@ -148,12 +148,12 @@ export function formatErrorForLog(error: Error): Record<string, any> {
 export function formatErrorForResponse(error: Error): {
   message: string;
   statusCode: number;
-  details?: any;
+  details?: unknown;
 } {
   const statusCode = getStatusCode(error);
   const message = error.message || 'An unexpected error occurred';
 
-  const response: { message: string; statusCode: number; details?: any } = {
+  const response: { message: string; statusCode: number; details?: unknown } = {
     message,
     statusCode,
   };

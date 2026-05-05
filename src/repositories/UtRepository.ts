@@ -22,6 +22,16 @@ export interface UT {
   updated_at: string;
 }
 
+export interface BoqUt {
+  id: string;
+  ut_id: string;
+  nama_lop: string;
+  id_ihld: string;
+  full_data: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Repository for Uji Terima (UT) records
 export class UtRepository {
   // Get all UT records
@@ -90,8 +100,8 @@ export class UtRepository {
   }
 
   // Get BoQ data for UT
-  static getBoq(utId: string) {
-    return db.prepare('SELECT * FROM boq_ut WHERE ut_id = ?').get(utId);
+  static getBoq(utId: string): BoqUt | undefined {
+    return db.prepare('SELECT * FROM boq_ut WHERE ut_id = ?').get(utId) as BoqUt | undefined;
   }
 
   // Insert or update BoQ for UT

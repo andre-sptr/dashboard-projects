@@ -3,6 +3,37 @@ import { AanwijzingRepository } from '@/repositories/AanwijzingRepository';
 
 import { parseJsonArray } from '@/utils/json';
 
+export interface OdpData {
+    id: string;
+    name: string;
+    type: 'ODP';
+    status: string;
+    plannedPorts: number;
+    realizedPorts: number;
+}
+
+export interface OdcData {
+    name: string;
+    type: 'ODC';
+    status: string;
+    plannedPorts: number;
+    realizedPorts: number;
+    odps: OdpData[];
+}
+
+export interface OltData {
+    name: string;
+    type: 'OLT';
+    status: string;
+    plannedPorts: number;
+    realizedPorts: number;
+    odcs: Record<string, OdcData>;
+}
+
+export type BranchData = Record<string, OltData>;
+export type AreaData = Record<string, BranchData>;
+export type TopologyHierarchy = Record<string, AreaData>;
+
 export interface TopologyNode {
     id: string;
     name: string;
@@ -24,11 +55,11 @@ const COLUMNS = {
 };
 
 // Build network hierarchy from projects and aanwijzing data
-export function getNetworkHierarchy() {
+export function getNetworkHierarchy(): TopologyHierarchy {
     const projects = ProjectRepository.findAllByRegion('SUMBAGTENG');
     const aanwijzing = AanwijzingRepository.findAll();
 
-    const hierarchy: any = {};
+    const hierarchy: TopologyHierarchy = {};
 
     projects.forEach(p => {
         const fd = parseJsonArray(p.full_data || '[]');

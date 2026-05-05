@@ -1,6 +1,6 @@
 // Unit tests for User Test (UT) documentation repository
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { UtRepository } from '@/repositories/UtRepository';
+import { UtRepository, BoqUt } from '@/repositories/UtRepository';
 import db from '@/lib/db';
 
 // Mock the database to use an in-memory instance for tests
@@ -63,7 +63,7 @@ describe('UtRepository', () => {
       full_data: '[]'
     });
 
-    const boq = UtRepository.getBoq('UT001') as any;
+    const boq = UtRepository.getBoq('UT001') as BoqUt;
     expect(boq).toBeDefined();
     expect(boq?.id).toBe('BOQUT001');
 

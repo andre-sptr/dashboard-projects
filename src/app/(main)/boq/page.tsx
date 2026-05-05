@@ -1,7 +1,7 @@
 // Bill of Quantity management and Excel import page
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Trash2, FileText, ChevronLeft, ChevronRight, X, Loader2, Eye, Plus, Save, ChevronDown } from 'lucide-react';
 
 interface ProjectOption {
@@ -73,11 +73,14 @@ export default function BoqPage() {
   const [searchLop, setSearchLop] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
 
-  useEffect(() => {
-    fetchData();
+
+
+  const showNotification = React.useCallback((type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 3000);
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     try {
       const res = await fetch('/api/boq');
       const response = await res.json();
@@ -93,12 +96,16 @@ export default function BoqPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
-  };
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (mounted) await fetchData();
+    };
+    load();
+    return () => { mounted = false; };
+  }, [fetchData]);
 
   const handleSelectLop = (project: ProjectOption) => {
     setFormData({
@@ -549,7 +556,7 @@ export default function BoqPage() {
           <div className="px-6 py-12 text-center">
             <FileText size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-gray-500 dark:text-gray-400 text-sm">
-              Belum ada data BoQ. Klik "Tambah" untuk memulai.
+              Belum ada data BoQ. Klik &quot;Tambah&quot; untuk memulai.
             </p>
           </div>
         )}

@@ -1,7 +1,6 @@
 // Webhook endpoint for syncing project data from external sources
-import { NextRequest } from 'next/server';
+
 import { ProjectRepository } from '@/repositories/ProjectRepository';
-import { Project } from '@/lib/db';
 import { downloadAndParseExcel } from '@/lib/parseExcel';
 import { HistoryEntry } from '@/utils/duration';
 import { successResponse, errorResponse } from '@/lib/response';
@@ -14,7 +13,7 @@ function normalizeStatus(value: string): string {
   );
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const rows = await downloadAndParseExcel();
 

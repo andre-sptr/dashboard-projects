@@ -1,5 +1,5 @@
 // Check if value is empty (null/undefined/empty string/array)
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim().length === 0;
   if (Array.isArray(value)) return value.length === 0;
@@ -54,7 +54,7 @@ export function matchesPattern(str: string, pattern: RegExp): boolean {
 
 // Validate required fields in object
 export function validateRequiredFields(
-  obj: Record<string, any>,
+  obj: Record<string, unknown>,
   requiredFields: string[]
 ): { valid: boolean; missing: string[] } {
   const missing: string[] = [];
@@ -82,18 +82,18 @@ export function isValidLength(
 }
 
 // Check if value is an integer
-export function isInteger(value: any): boolean {
+export function isInteger(value: unknown): boolean {
   return Number.isInteger(Number(value));
 }
 
 // Check if value is a positive number
-export function isPositiveNumber(value: any): boolean {
+export function isPositiveNumber(value: unknown): boolean {
   const num = Number(value);
   return !isNaN(num) && num > 0;
 }
 
 // Check if value is non-negative number
-export function isNonNegativeNumber(value: any): boolean {
+export function isNonNegativeNumber(value: unknown): boolean {
   const num = Number(value);
   return !isNaN(num) && num >= 0;
 }

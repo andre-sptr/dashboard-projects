@@ -63,7 +63,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       komitmen_penyelesaian: validated.komitmen_penyelesaian || ''
     });
 
-    const boq_data = (body as any).boq_data;
+    const boq_data = (body as { boq_data?: unknown[] }).boq_data;
     if (boq_data) {
       const boqId = `boqut_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       UtRepository.upsertBoq({

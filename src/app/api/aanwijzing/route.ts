@@ -1,5 +1,5 @@
 // API endpoints for managing Aanwijzing (technical briefing) data
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { AanwijzingRepository } from '@/repositories/AanwijzingRepository';
 import { ProjectRepository } from '@/repositories/ProjectRepository';
 import { successResponse, withErrorHandling } from '@/lib/response';
@@ -61,7 +61,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       ut: validated.ut || ''
     });
 
-    const boq_data = (body as any).boq_data;
+    const boq_data = (body as { boq_data?: unknown[] }).boq_data;
     if (boq_data) {
       const boqId = `boqa_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       AanwijzingRepository.upsertBoq({

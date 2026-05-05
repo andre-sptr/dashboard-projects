@@ -16,6 +16,15 @@ export interface Aanwijzing {
   port_akhir: number;
   wa_spang: string;
   ut: string;
+  updated_at: string;
+}
+
+export interface BoqAanwijzing {
+  id: string;
+  aanwijzing_id: string;
+  nama_lop: string;
+  id_ihld: string;
+  full_data: string;
   created_at: string;
   updated_at: string;
 }
@@ -84,8 +93,8 @@ export class AanwijzingRepository {
   }
 
   // Get BoQ data for aanwijzing
-  static getBoq(aanwijzingId: string) {
-    return db.prepare('SELECT * FROM boq_aanwijzing WHERE aanwijzing_id = ?').get(aanwijzingId);
+  static getBoq(aanwijzingId: string): BoqAanwijzing | undefined {
+    return db.prepare('SELECT * FROM boq_aanwijzing WHERE aanwijzing_id = ?').get(aanwijzingId) as BoqAanwijzing | undefined;
   }
 
   // Insert or update BoQ for aanwijzing

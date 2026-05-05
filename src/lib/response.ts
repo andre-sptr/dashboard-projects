@@ -6,12 +6,12 @@ import {
   isOperationalError,
 } from './errors';
 
-export type ApiResponse<T = any> = {
+export type ApiResponse<T = unknown> = {
   success: boolean;
   message?: string;
   data?: T;
   error?: string;
-  details?: any;
+  details?: unknown;
 };
 
 // Create successful API response
@@ -60,10 +60,10 @@ export function handleError(error: Error | AppError): NextResponse {
 }
 
 // Wrap async API handler with error handling
-export function withErrorHandling<T extends (...args: any[]) => Promise<NextResponse>>(
+export function withErrorHandling<T extends (...args: unknown[]) => Promise<NextResponse>>(
   handler: T
 ): T {
-  return (async (...args: any[]) => {
+  return (async (...args: unknown[]) => {
     try {
       return await handler(...args);
     } catch (error) {
