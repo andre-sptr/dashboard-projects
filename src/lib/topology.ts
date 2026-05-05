@@ -13,7 +13,6 @@ export interface TopologyNode {
     children: TopologyNode[];
 }
 
-// Column indices mapping for full_data array (0-based)
 const COLUMNS = {
     AREA: 4,
     STO: 5,
@@ -24,6 +23,7 @@ const COLUMNS = {
     REALIZED_PORTS: 29
 };
 
+// Build network hierarchy from projects and aanwijzing data
 export function getNetworkHierarchy() {
     const projects = ProjectRepository.findAllByRegion('SUMBAGTENG');
     const aanwijzing = AanwijzingRepository.findAll();

@@ -33,7 +33,6 @@ export const GET = withErrorHandling(async () => {
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const body = await request.json();
 
-  // Validate input
   const validationResult = utSchema.safeParse(body);
   if (!validationResult.success) {
     throw new ValidationError(formatValidationError(validationResult.error));
@@ -43,7 +42,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const utId = validated.id || generateId();
 
   try {
-    // Save UT data
     UtRepository.upsert({
       id: utId,
       nama_lop: validated.nama_lop,
@@ -64,7 +62,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       komitmen_penyelesaian: validated.komitmen_penyelesaian || ''
     });
 
-    // Save BoQ data if provided
     const boq_data = (body as any).boq_data;
     if (boq_data) {
       const boqId = `boqut_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -87,7 +84,6 @@ export const DELETE = withErrorHandling(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const params = { id: searchParams.get('id') };
 
-  // Validate query parameters
   const validationResult = utQuerySchema.safeParse(params);
   if (!validationResult.success) {
     throw new ValidationError(formatValidationError(validationResult.error));

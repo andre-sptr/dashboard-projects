@@ -1,11 +1,4 @@
-/**
- * Custom error types for the application
- * Provides structured error handling with proper HTTP status codes
- */
-
-/**
- * Base application error class
- */
+// Base application error with HTTP status codes
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
@@ -15,18 +8,12 @@ export class AppError extends Error {
     this.statusCode = statusCode;
     this.isOperational = isOperational;
 
-    // Maintains proper stack trace for where our error was thrown
     Error.captureStackTrace(this, this.constructor);
-
-    // Set the prototype explicitly to maintain instanceof checks
     Object.setPrototypeOf(this, AppError.prototype);
   }
 }
 
-/**
- * Validation error (400 Bad Request)
- * Used when input validation fails
- */
+// Validation error (400 Bad Request)
 export class ValidationError extends AppError {
   public readonly errors?: Record<string, string>;
 
@@ -37,10 +24,7 @@ export class ValidationError extends AppError {
   }
 }
 
-/**
- * Database error (500 Internal Server Error)
- * Used when database operations fail
- */
+// Database error (500 Internal Server Error)
 export class DatabaseError extends AppError {
   public readonly query?: string;
 
@@ -51,10 +35,7 @@ export class DatabaseError extends AppError {
   }
 }
 
-/**
- * Not found error (404 Not Found)
- * Used when a requested resource doesn't exist
- */
+// Not found error (404 Not Found)
 export class NotFoundError extends AppError {
   public readonly resource?: string;
 
@@ -65,10 +46,7 @@ export class NotFoundError extends AppError {
   }
 }
 
-/**
- * Unauthorized error (401 Unauthorized)
- * Used when authentication is required but not provided
- */
+// Unauthorized error (401 Unauthorized)
 export class UnauthorizedError extends AppError {
   constructor(message: string = 'Unauthorized access') {
     super(message, 401);
@@ -76,10 +54,7 @@ export class UnauthorizedError extends AppError {
   }
 }
 
-/**
- * Forbidden error (403 Forbidden)
- * Used when user doesn't have permission to access a resource
- */
+// Forbidden error (403 Forbidden)
 export class ForbiddenError extends AppError {
   constructor(message: string = 'Access forbidden') {
     super(message, 403);
@@ -87,10 +62,7 @@ export class ForbiddenError extends AppError {
   }
 }
 
-/**
- * Conflict error (409 Conflict)
- * Used when there's a conflict with the current state (e.g., duplicate entry)
- */
+// Conflict error (409 Conflict)
 export class ConflictError extends AppError {
   constructor(message: string = 'Resource conflict') {
     super(message, 409);
@@ -98,10 +70,7 @@ export class ConflictError extends AppError {
   }
 }
 
-/**
- * External service error (502 Bad Gateway)
- * Used when an external service fails
- */
+// External service error (502 Bad Gateway)
 export class ExternalServiceError extends AppError {
   public readonly service?: string;
 
@@ -112,10 +81,7 @@ export class ExternalServiceError extends AppError {
   }
 }
 
-/**
- * File processing error (422 Unprocessable Entity)
- * Used when file upload or processing fails
- */
+// File processing error (422 Unprocessable Entity)
 export class FileProcessingError extends AppError {
   public readonly filename?: string;
 
@@ -126,9 +92,7 @@ export class FileProcessingError extends AppError {
   }
 }
 
-/**
- * Check if an error is an operational error (expected error that we can handle)
- */
+// Check if error is operational (expected)
 export function isOperationalError(error: Error): boolean {
   if (error instanceof AppError) {
     return error.isOperational;
@@ -136,9 +100,7 @@ export function isOperationalError(error: Error): boolean {
   return false;
 }
 
-/**
- * Get HTTP status code from error
- */
+// Get HTTP status code from error
 export function getStatusCode(error: Error): number {
   if (error instanceof AppError) {
     return error.statusCode;
@@ -146,9 +108,7 @@ export function getStatusCode(error: Error): number {
   return 500;
 }
 
-/**
- * Format error for logging
- */
+// Format error for logging
 export function formatErrorForLog(error: Error): Record<string, any> {
   const baseLog: Record<string, any> = {
     message: error.message,
@@ -184,9 +144,7 @@ export function formatErrorForLog(error: Error): Record<string, any> {
   return baseLog;
 }
 
-/**
- * Format error for API response
- */
+// Format error for API response
 export function formatErrorForResponse(error: Error): {
   message: string;
   statusCode: number;
@@ -200,20 +158,16 @@ export function formatErrorForResponse(error: Error): {
     statusCode,
   };
 
-  // Add additional details for specific error types
   if (error instanceof ValidationError && error.errors) {
     response.details = { errors: error.errors };
   }
 
-  // Don't expose internal details in production
   if (process.env.NODE_ENV === 'production') {
-    // Only return generic message for 500 errors in production
     if (statusCode >= 500) {
       response.message = 'Internal server error';
       delete response.details;
     }
   } else {
-    // In development, include stack trace
     response.details = {
       ...response.details,
       stack: error.stack,

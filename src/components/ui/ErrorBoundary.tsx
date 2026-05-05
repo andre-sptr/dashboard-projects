@@ -23,21 +23,15 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console in development
     console.error('Error caught by boundary:', error, errorInfo);
-    
-    // In production, you might want to log to an error reporting service
-    // Example: logErrorToService(error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      // Render custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
@@ -141,5 +135,3 @@ export function ErrorFallback({ error, reset }: { error: Error; reset?: () => vo
     </div>
   );
 }
-
-// Made with Bob

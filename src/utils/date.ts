@@ -1,14 +1,4 @@
-/**
- * Date formatting and manipulation utilities
- * Provides consistent date handling across the application
- */
-
-/**
- * Format date to Indonesian locale string
- * @param date - Date string or Date object
- * @param options - Intl.DateTimeFormatOptions
- * @returns Formatted date string
- */
+// Format date to Indonesian locale with optional formatting
 export function formatDateID(
   date: string | Date,
   options?: Intl.DateTimeFormatOptions
@@ -29,11 +19,7 @@ export function formatDateID(
   return dateObj.toLocaleDateString('id-ID', defaultOptions);
 }
 
-/**
- * Format date to YYYY-MM-DD format
- * @param date - Date string or Date object
- * @returns Date string in YYYY-MM-DD format
- */
+// Convert date to ISO format (YYYY-MM-DD)
 export function formatDateISO(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
@@ -48,11 +34,7 @@ export function formatDateISO(date: string | Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Format date to DD/MM/YYYY format
- * @param date - Date string or Date object
- * @returns Date string in DD/MM/YYYY format
- */
+// Convert date to DD/MM/YYYY format
 export function formatDateDDMMYYYY(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
@@ -67,11 +49,7 @@ export function formatDateDDMMYYYY(date: string | Date): string {
   return `${day}/${month}/${year}`;
 }
 
-/**
- * Format date with time to Indonesian locale
- * @param date - Date string or Date object
- * @returns Formatted date and time string
- */
+// Format date and time in Indonesian locale
 export function formatDateTime(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
@@ -88,11 +66,7 @@ export function formatDateTime(date: string | Date): string {
   });
 }
 
-/**
- * Format date to relative time (e.g., "2 hari yang lalu")
- * @param date - Date string or Date object
- * @returns Relative time string in Indonesian
- */
+// Convert date to relative time (e.g., "2 hari yang lalu")
 export function formatRelativeTime(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
@@ -124,12 +98,7 @@ export function formatRelativeTime(date: string | Date): string {
   }
 }
 
-/**
- * Parse date string with various formats
- * Handles common date formats and normalizes them
- * @param dateStr - Date string to parse
- * @returns Date object or null if invalid
- */
+// Parse date string supporting multiple formats
 export function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
 
@@ -162,44 +131,27 @@ export function parseDate(dateStr: string): Date | null {
   return null;
 }
 
-/**
- * Check if a date string is valid
- * @param dateStr - Date string to validate
- * @returns true if valid, false otherwise
- */
+// Validate date string
 export function isValidDate(dateStr: string): boolean {
   const date = parseDate(dateStr);
   return date !== null && !isNaN(date.getTime());
 }
 
-/**
- * Get start of day for a date
- * @param date - Date string or Date object
- * @returns Date object set to start of day (00:00:00)
- */
+// Get date at start of day (00:00:00)
 export function startOfDay(date: string | Date): Date {
   const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
   dateObj.setHours(0, 0, 0, 0);
   return dateObj;
 }
 
-/**
- * Get end of day for a date
- * @param date - Date string or Date object
- * @returns Date object set to end of day (23:59:59)
- */
+// Get date at end of day (23:59:59)
 export function endOfDay(date: string | Date): Date {
   const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
   dateObj.setHours(23, 59, 59, 999);
   return dateObj;
 }
 
-/**
- * Calculate difference between two dates in days
- * @param date1 - First date
- * @param date2 - Second date
- * @returns Number of days between dates
- */
+// Calculate days between two dates
 export function daysBetween(date1: string | Date, date2: string | Date): number {
   const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
   const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
@@ -208,39 +160,24 @@ export function daysBetween(date1: string | Date, date2: string | Date): number 
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
-/**
- * Add days to a date
- * @param date - Date string or Date object
- * @param days - Number of days to add (can be negative)
- * @returns New Date object
- */
+// Add or subtract days from date
 export function addDays(date: string | Date, days: number): Date {
   const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
   dateObj.setDate(dateObj.getDate() + days);
   return dateObj;
 }
 
-/**
- * Get current date in YYYY-MM-DD format
- * @returns Current date string
- */
+// Get current date in ISO format
 export function getCurrentDateISO(): string {
   return formatDateISO(new Date());
 }
 
-/**
- * Get current timestamp in ISO format
- * @returns Current timestamp string
- */
+// Get current timestamp in ISO format
 export function getCurrentTimestamp(): string {
   return new Date().toISOString();
 }
 
-/**
- * Parses Excel serial date or string date to JS Date
- * @param value - Excel date value (serial number or string)
- * @returns Date object or null if invalid
- */
+// Parse Excel serial number or date string to Date
 export function parseExcelDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === '' || String(value).trim() === '#N/A') return null;
 
@@ -278,22 +215,14 @@ export function parseExcelDate(value: unknown): Date | null {
   return null;
 }
 
-/**
- * Formats Excel date for display in Indonesian format
- * @param value - Excel date value
- * @returns Formatted date string or '-'
- */
+// Format Excel date to Indonesian locale
 export function formatExcelDate(value: unknown): string {
   const date = parseExcelDate(value);
   if (!date) return '-';
   return formatDateID(date, { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-/**
- * Formats Excel date to short string (e.g. "Mei 2024")
- * @param value - Excel date value
- * @returns Formatted short date string or null
- */
+// Format Excel date to short format (e.g., "Mei 2024")
 export function formatExcelDateShort(value: unknown): string | null {
   const date = parseExcelDate(value);
   if (!date) return null;
@@ -304,4 +233,3 @@ export function formatExcelDateShort(value: unknown): string | null {
   });
 }
 
-// Made with Bob

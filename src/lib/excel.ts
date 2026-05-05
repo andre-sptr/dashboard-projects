@@ -12,11 +12,7 @@ export interface BoqRow {
   rowIndex: number;
 }
 
-/**
- * Parse BoQ Excel file buffer into structured rows
- * @param buffer - File buffer
- * @returns Array of BoqRow objects
- */
+// Parse BoQ Excel file to structured rows
 export function parseBoQExcel(buffer: ArrayBuffer): BoqRow[] {
   const workbook = XLSX.read(buffer, { type: 'array' });
 

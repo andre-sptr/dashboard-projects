@@ -13,34 +13,24 @@ export interface Boq {
   updated_at: string;
 }
 
-/**
- * Repository for managing Bill of Quantity (BoQ) records
- */
+// Repository for Bill of Quantity (BoQ) records
 export class BoqRepository {
-  /**
-   * Get all BoQ records
-   */
+  // Get all BoQ records
   static findAll(): Boq[] {
     return db.prepare('SELECT * FROM boq ORDER BY created_at DESC').all() as Boq[];
   }
 
-  /**
-   * Find BoQ by ID
-   */
+  // Find BoQ by ID
   static findById(id: string): Boq | undefined {
     return db.prepare('SELECT * FROM boq WHERE id = ?').get(id) as Boq | undefined;
   }
 
-  /**
-   * Delete BoQ by ID
-   */
+  // Delete BoQ by ID
   static delete(id: string) {
     return db.prepare('DELETE FROM boq WHERE id = ?').run(id);
   }
 
-  /**
-   * Insert or update BoQ
-   */
+  // Insert or update BoQ
   static upsert(data: Omit<Boq, 'created_at' | 'updated_at'>) {
     const stmt = db.prepare(`
       INSERT INTO boq (

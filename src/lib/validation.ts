@@ -1,33 +1,18 @@
 import { z } from 'zod';
 
-/**
- * Validation schemas for API routes
- * Using Zod for runtime type validation and error messages
- */
-
-// ============================================================================
-// Common Schemas
-// ============================================================================
-
-/**
- * Common ID validation (alphanumeric with hyphens)
- */
+// Common ID validation (alphanumeric with hyphens)
 export const idSchema = z
   .string()
   .min(1, 'ID tidak boleh kosong')
   .regex(/^[A-Z0-9-]+$/, 'ID harus berupa huruf kapital, angka, dan tanda hubung');
 
-/**
- * Common name validation
- */
+// Common name validation
 export const nameSchema = z
   .string()
   .min(1, 'Nama tidak boleh kosong')
   .max(255, 'Nama terlalu panjang (maksimal 255 karakter)');
 
-/**
- * Date string validation (YYYY-MM-DD format)
- */
+// Date string validation (YYYY-MM-DD)
 export const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal harus YYYY-MM-DD')
@@ -36,23 +21,13 @@ export const dateSchema = z
     return !isNaN(parsed.getTime());
   }, 'Tanggal tidak valid');
 
-/**
- * Optional text field
- */
+// Optional text field
 export const optionalTextSchema = z.string().optional().default('');
 
-/**
- * Optional integer field
- */
+// Optional integer field
 export const optionalIntSchema = z.coerce.number().int().optional().default(0);
 
-// ============================================================================
-// Aanwijzing Schemas
-// ============================================================================
-
-/**
- * Schema for creating/updating aanwijzing
- */
+// Schema for creating/updating aanwijzing
 export const aanwijzingSchema = z.object({
   id: idSchema.optional(),
   nama_lop: nameSchema,
@@ -73,16 +48,12 @@ export const aanwijzingSchema = z.object({
 
 export type AanwijzingInput = z.infer<typeof aanwijzingSchema>;
 
-/**
- * Schema for aanwijzing query parameters
- */
+// Schema for aanwijzing query parameters
 export const aanwijzingQuerySchema = z.object({
   id: idSchema,
 });
 
-/**
- * Schema for BoQ Aanwijzing
- */
+// Schema for BoQ Aanwijzing
 export const boqAanwijzingSchema = z.object({
   aanwijzing_id: idSchema,
   nama_lop: nameSchema,
@@ -92,13 +63,7 @@ export const boqAanwijzingSchema = z.object({
 
 export type BoqAanwijzingInput = z.infer<typeof boqAanwijzingSchema>;
 
-// ============================================================================
-// UT (User Testing) Schemas
-// ============================================================================
-
-/**
- * Schema for creating/updating UT
- */
+// Schema for creating/updating UT
 export const utSchema = z.object({
   id: idSchema.optional(),
   nama_lop: nameSchema,
@@ -121,16 +86,12 @@ export const utSchema = z.object({
 
 export type UtInput = z.infer<typeof utSchema>;
 
-/**
- * Schema for UT query parameters
- */
+// Schema for UT query parameters
 export const utQuerySchema = z.object({
   id: idSchema,
 });
 
-/**
- * Schema for BoQ UT
- */
+// Schema for BoQ UT
 export const boqUtSchema = z.object({
   ut_id: idSchema,
   nama_lop: nameSchema,
@@ -140,13 +101,7 @@ export const boqUtSchema = z.object({
 
 export type BoqUtInput = z.infer<typeof boqUtSchema>;
 
-// ============================================================================
-// BoQ (Bill of Quantities) Schemas
-// ============================================================================
-
-/**
- * Schema for BoQ file upload
- */
+// Schema for BoQ file upload
 export const boqUploadSchema = z.object({
   nama_lop: nameSchema,
   id_ihld: z.string().min(1, 'ID IHLD tidak boleh kosong'),
@@ -154,80 +109,44 @@ export const boqUploadSchema = z.object({
 
 export type BoqUploadInput = z.infer<typeof boqUploadSchema>;
 
-/**
- * Schema for BoQ query parameters
- */
+// Schema for BoQ query parameters
 export const boqQuerySchema = z.object({
   id: idSchema,
 });
 
-/**
- * Schema for file validation
- */
+// Schema for file validation
 export const fileSchema = z.object({
   name: z.string().min(1, 'Nama file tidak boleh kosong'),
   size: z.number().positive('Ukuran file harus lebih dari 0'),
   type: z.string().min(1, 'Tipe file tidak boleh kosong'),
 });
 
-/**
- * Validate Excel file extension
- */
+// Validate Excel file extension
 export function validateExcelFile(filename: string): boolean {
   return filename.endsWith('.xlsx') || filename.endsWith('.xls');
 }
 
-/**
- * Validate file size (max 10MB)
- */
+// Validate file size (max 10MB)
 export function validateFileSize(size: number, maxSizeMB: number = 10): boolean {
   const maxBytes = maxSizeMB * 1024 * 1024;
   return size <= maxBytes;
 }
 
-// ============================================================================
-// Webhook Schemas
-// ============================================================================
-
-/**
- * Schema for webhook request (no body required, but can validate headers)
- */
+// Schema for webhook request
 export const webhookSchema = z.object({
-  // No body validation needed for webhook sync
 });
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Parse and validate request body
- * @param schema - Zod schema to validate against
- * @param data - Data to validate
- * @returns Validated data
- * @throws {z.ZodError} If validation fails
- */
+// Parse and validate request body
 export function validateBody<T>(schema: z.ZodSchema<T>, data: unknown): T {
   return schema.parse(data);
 }
 
-/**
- * Parse and validate query parameters
- * @param schema - Zod schema to validate against
- * @param params - Query parameters to validate
- * @returns Validated parameters
- * @throws {z.ZodError} If validation fails
- */
+// Parse and validate query parameters
 export function validateQuery<T>(schema: z.ZodSchema<T>, params: unknown): T {
   return schema.parse(params);
 }
 
-/**
- * Safe parse with error handling
- * @param schema - Zod schema to validate against
- * @param data - Data to validate
- * @returns Result object with success flag and data or error
- */
+// Safe parse with error handling
 export function safeValidate<T>(
   schema: z.ZodSchema<T>,
   data: unknown
@@ -239,11 +158,7 @@ export function safeValidate<T>(
   return { success: false, error: result.error };
 }
 
-/**
- * Format Zod validation errors for API response
- * @param error - Zod validation error
- * @returns Formatted error message
- */
+// Format Zod validation errors for API response
 export function formatValidationError(error: z.ZodError): string {
   const errors = error.issues.map((issue) => {
     const path = issue.path.join('.');
@@ -252,11 +167,7 @@ export function formatValidationError(error: z.ZodError): string {
   return errors.join(', ');
 }
 
-/**
- * Format Zod validation errors as object
- * @param error - Zod validation error
- * @returns Object with field names as keys and error messages as values
- */
+// Format Zod validation errors as object
 export function formatValidationErrors(error: z.ZodError): Record<string, string> {
   const errors: Record<string, string> = {};
   error.issues.forEach((issue) => {
@@ -266,4 +177,3 @@ export function formatValidationErrors(error: z.ZodError): Record<string, string
   return errors;
 }
 
-// Made with Bob

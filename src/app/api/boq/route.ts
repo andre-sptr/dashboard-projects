@@ -24,12 +24,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const nama_lop = formData.get('nama_lop') as string | null;
   const id_ihld = formData.get('id_ihld') as string | null;
 
-  // Validate file presence
   if (!file) {
     throw new ValidationError('File tidak ditemukan');
   }
 
-  // Validate form data
   const validationResult = boqUploadSchema.safeParse({ nama_lop, id_ihld });
   if (!validationResult.success) {
     throw new ValidationError(formatValidationError(validationResult.error));
@@ -37,12 +35,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const validated = validationResult.data;
 
-  // Validate file extension
   if (!validateExcelFile(file.name)) {
     throw new ValidationError('Format file harus .xlsx atau .xls');
   }
 
-  // Validate file size (max 10MB)
   if (!validateFileSize(file.size, 10)) {
     throw new ValidationError('Ukuran file terlalu besar (maksimal 10MB)');
   }
@@ -94,7 +90,6 @@ export const DELETE = withErrorHandling(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const params = { id: searchParams.get('id') };
 
-  // Validate query parameters
   const validationResult = boqQuerySchema.safeParse(params);
   if (!validationResult.success) {
     throw new ValidationError(formatValidationError(validationResult.error));

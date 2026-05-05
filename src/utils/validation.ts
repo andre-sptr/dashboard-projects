@@ -1,13 +1,4 @@
-/**
- * Common validation helper functions
- * Provides reusable validation logic across the application
- */
-
-/**
- * Check if a value is empty (null, undefined, empty string, empty array)
- * @param value - Value to check
- * @returns true if empty, false otherwise
- */
+// Check if value is empty (null/undefined/empty string/array)
 export function isEmpty(value: any): boolean {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim().length === 0;
@@ -16,32 +7,19 @@ export function isEmpty(value: any): boolean {
   return false;
 }
 
-/**
- * Check if a string is a valid email
- * @param email - Email string to validate
- * @returns true if valid email, false otherwise
- */
+// Validate email format
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
-/**
- * Check if a string is a valid phone number (Indonesian format)
- * @param phone - Phone number to validate
- * @returns true if valid phone number, false otherwise
- */
+// Validate Indonesian phone number format
 export function isValidPhoneNumber(phone: string): boolean {
-  // Indonesian phone numbers: 08xx-xxxx-xxxx or +62xxx-xxxx-xxxx
   const phoneRegex = /^(\+62|62|0)[0-9]{9,12}$/;
   return phoneRegex.test(phone.replace(/[\s-]/g, ''));
 }
 
-/**
- * Check if a string is a valid URL
- * @param url - URL string to validate
- * @returns true if valid URL, false otherwise
- */
+// Validate URL format
 export function isValidUrl(url: string): boolean {
   try {
     new URL(url);
@@ -51,12 +29,7 @@ export function isValidUrl(url: string): boolean {
   }
 }
 
-/**
- * Sanitize string by removing special characters
- * @param str - String to sanitize
- * @param allowSpaces - Whether to allow spaces (default: true)
- * @returns Sanitized string
- */
+// Remove special characters from string
 export function sanitizeString(str: string, allowSpaces: boolean = true): string {
   if (allowSpaces) {
     return str.replace(/[^a-zA-Z0-9\s-_]/g, '');
@@ -64,43 +37,22 @@ export function sanitizeString(str: string, allowSpaces: boolean = true): string
   return str.replace(/[^a-zA-Z0-9-_]/g, '');
 }
 
-/**
- * Normalize whitespace in a string
- * Removes leading/trailing whitespace and collapses multiple spaces
- * @param str - String to normalize
- * @returns Normalized string
- */
+// Normalize whitespace (trim and collapse multiple spaces)
 export function normalizeWhitespace(str: string): string {
   return str.replace(/\s+/g, ' ').trim();
 }
 
-/**
- * Check if a number is within a range
- * @param value - Number to check
- * @param min - Minimum value (inclusive)
- * @param max - Maximum value (inclusive)
- * @returns true if within range, false otherwise
- */
+// Check if number is within range (inclusive)
 export function isInRange(value: number, min: number, max: number): boolean {
   return value >= min && value <= max;
 }
 
-/**
- * Check if a string matches a pattern
- * @param str - String to check
- * @param pattern - RegExp pattern
- * @returns true if matches, false otherwise
- */
+// Check if string matches regex pattern
 export function matchesPattern(str: string, pattern: RegExp): boolean {
   return pattern.test(str);
 }
 
-/**
- * Validate required fields in an object
- * @param obj - Object to validate
- * @param requiredFields - Array of required field names
- * @returns Object with validation result and missing fields
- */
+// Validate required fields in object
 export function validateRequiredFields(
   obj: Record<string, any>,
   requiredFields: string[]
@@ -119,13 +71,7 @@ export function validateRequiredFields(
   };
 }
 
-/**
- * Validate string length
- * @param str - String to validate
- * @param min - Minimum length (default: 0)
- * @param max - Maximum length (default: Infinity)
- * @returns true if valid length, false otherwise
- */
+// Check if string length is within bounds
 export function isValidLength(
   str: string,
   min: number = 0,
@@ -135,61 +81,35 @@ export function isValidLength(
   return length >= min && length <= max;
 }
 
-/**
- * Check if a value is a valid integer
- * @param value - Value to check
- * @returns true if valid integer, false otherwise
- */
+// Check if value is an integer
 export function isInteger(value: any): boolean {
   return Number.isInteger(Number(value));
 }
 
-/**
- * Check if a value is a valid positive number
- * @param value - Value to check
- * @returns true if positive number, false otherwise
- */
+// Check if value is a positive number
 export function isPositiveNumber(value: any): boolean {
   const num = Number(value);
   return !isNaN(num) && num > 0;
 }
 
-/**
- * Check if a value is a valid non-negative number
- * @param value - Value to check
- * @returns true if non-negative number, false otherwise
- */
+// Check if value is non-negative number
 export function isNonNegativeNumber(value: any): boolean {
   const num = Number(value);
   return !isNaN(num) && num >= 0;
 }
 
-/**
- * Truncate string to specified length with ellipsis
- * @param str - String to truncate
- * @param maxLength - Maximum length
- * @param ellipsis - Ellipsis string (default: '...')
- * @returns Truncated string
- */
+// Truncate string with ellipsis
 export function truncate(str: string, maxLength: number, ellipsis: string = '...'): string {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength - ellipsis.length) + ellipsis;
 }
 
-/**
- * Capitalize first letter of each word
- * @param str - String to capitalize
- * @returns Capitalized string
- */
+// Capitalize first letter of each word
 export function capitalizeWords(str: string): string {
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-/**
- * Convert string to slug format (lowercase, hyphenated)
- * @param str - String to convert
- * @returns Slug string
- */
+// Convert string to slug (lowercase, hyphenated)
 export function toSlug(str: string): string {
   return str
     .toLowerCase()
@@ -199,21 +119,12 @@ export function toSlug(str: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-/**
- * Remove duplicate values from array
- * @param arr - Array to deduplicate
- * @returns Array with unique values
- */
+// Remove duplicate values from array
 export function uniqueArray<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
 }
 
-/**
- * Check if two arrays have the same elements (order doesn't matter)
- * @param arr1 - First array
- * @param arr2 - Second array
- * @returns true if arrays have same elements, false otherwise
- */
+// Check if arrays have same elements (order independent)
 export function arraysEqual<T>(arr1: T[], arr2: T[]): boolean {
   if (arr1.length !== arr2.length) return false;
   const sorted1 = [...arr1].sort();
@@ -221,36 +132,19 @@ export function arraysEqual<T>(arr1: T[], arr2: T[]): boolean {
   return sorted1.every((val, idx) => val === sorted2[idx]);
 }
 
-/**
- * Clamp a number between min and max values
- * @param value - Number to clamp
- * @param min - Minimum value
- * @param max - Maximum value
- * @returns Clamped number
- */
+// Clamp number between min and max
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-/**
- * Format number with thousand separators
- * @param num - Number to format
- * @param locale - Locale string (default: 'id-ID')
- * @returns Formatted number string
- */
+// Format number with thousand separators
 export function formatNumber(num: number, locale: string = 'id-ID'): string {
   return num.toLocaleString(locale);
 }
 
-/**
- * Parse number from string with locale support
- * @param str - String to parse
- * @returns Parsed number or NaN
- */
+// Parse number from string (handles locale separators)
 export function parseNumber(str: string): number {
-  // Remove thousand separators and replace comma with dot
   const cleaned = str.replace(/\./g, '').replace(',', '.');
   return parseFloat(cleaned);
 }
 
-// Made with Bob

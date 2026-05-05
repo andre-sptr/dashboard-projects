@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
         const now = new Date();
         const durationMinutes = Math.max(0, Math.round((now.getTime() - prevChangedAt.getTime()) / 60000));
 
-        // Use safe JSON parsing utility
         history = parseJsonArray<HistoryEntry>(existing.history || '[]', []);
 
         if (prevStatus !== newStatus || prevSubStatus !== newSubStatus) {

@@ -1,23 +1,17 @@
 import { z } from 'zod';
 
-/**
- * Environment variable schema definition
- * Validates all required and optional environment variables on application startup
- */
+// Environment variable validation schema
 const envSchema = z.object({
-  // Node environment
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development')
     .describe('Application environment'),
 
-  // Database configuration
   DATABASE_PATH: z
     .string()
     .default('./data/projects.db')
     .describe('Path to SQLite database file'),
 
-  // Excel data source for webhook sync (Google Sheets)
   SPREADSHEET_ID: z
     .string()
     .optional()
@@ -28,13 +22,11 @@ const envSchema = z.object({
     .optional()
     .describe('Google Sheets sheet ID (gid) for webhook synchronization'),
 
-  // Optional API configuration
   API_KEY: z
     .string()
     .optional()
     .describe('API key for external service authentication'),
 
-  // Next.js built-in variables (optional validation)
   NEXT_PUBLIC_APP_URL: z
     .string()
     .url()
@@ -42,18 +34,11 @@ const envSchema = z.object({
     .describe('Public URL of the application'),
 });
 
-/**
- * Validated environment variables type
- */
 export type Env = z.infer<typeof envSchema>;
 
-/**
- * Parse and validate environment variables
- * @throws {Error} If validation fails with detailed error messages
- */
+// Parse and validate environment variables
 function validateEnv(): Env {
   try {
-    // Parse environment variables
     const parsed = envSchema.parse({
       NODE_ENV: process.env.NODE_ENV,
       DATABASE_PATH: process.env.DATABASE_PATH,
@@ -66,7 +51,6 @@ function validateEnv(): Env {
     return parsed;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // Format validation errors for better readability
       const errorMessages = error.issues.map((err) => {
         const path = err.path.join('.');
         return `  - ${path}: ${err.message}`;
@@ -87,70 +71,45 @@ function validateEnv(): Env {
   }
 }
 
-/**
- * Validated environment variables
- * Exported as a singleton to ensure validation happens once at startup
- */
 export const env = validateEnv();
 
-/**
- * Check if a specific environment variable is set
- * @param key - Environment variable name
- * @returns true if the variable is set and not empty
- */
+// Check if environment variable is set
 export function hasEnvVar(key: keyof Env): boolean {
   const value = env[key];
   return value !== undefined && value !== null && value !== '';
 }
 
-/**
- * Get environment variable with type safety
- * @param key - Environment variable name
- * @returns The environment variable value
- */
+// Get environment variable with type safety
 export function getEnvVar<K extends keyof Env>(key: K): Env[K] {
   return env[key];
 }
 
-/**
- * Check if running in development mode
- */
+// Check if running in development mode
 export function isDevelopment(): boolean {
   return env.NODE_ENV === 'development';
 }
 
-/**
- * Check if running in production mode
- */
+// Check if running in production mode
 export function isProduction(): boolean {
   return env.NODE_ENV === 'production';
 }
 
-/**
- * Check if running in test mode
- */
+// Check if running in test mode
 export function isTest(): boolean {
   return env.NODE_ENV === 'test';
 }
 
-/**
- * Check if Google Sheets credentials are configured for webhook sync
- */
+// Check if Google Sheets config is available
 export function hasGoogleSheetsConfig(): boolean {
   return hasEnvVar('SPREADSHEET_ID') && hasEnvVar('SHEET_ID');
 }
 
-/**
- * Get database path with fallback
- */
+// Get database path
 export function getDatabasePath(): string {
   return env.DATABASE_PATH;
 }
 
-/**
- * Get Google Sheets spreadsheet ID
- * @throws {Error} If SPREADSHEET_ID is not configured
- */
+// Get Google Sheets spreadsheet ID
 export function getSpreadsheetId(): string {
   if (!env.SPREADSHEET_ID) {
     throw new Error(
@@ -160,10 +119,7 @@ export function getSpreadsheetId(): string {
   return env.SPREADSHEET_ID;
 }
 
-/**
- * Get Google Sheets sheet ID (gid)
- * @throws {Error} If SHEET_ID is not configured
- */
+// Get Google Sheets sheet ID (gid)
 export function getSheetId(): string {
   if (!env.SHEET_ID) {
     throw new Error(
@@ -173,11 +129,9 @@ export function getSheetId(): string {
   return env.SHEET_ID;
 }
 
-// Log environment validation success in development
 if (isDevelopment()) {
   console.log('✅ Environment variables validated successfully');
   console.log(`📊 Database path: ${env.DATABASE_PATH}`);
   console.log(`🔗 Google Sheets configured: ${hasGoogleSheetsConfig() ? 'Yes' : 'No'}`);
 }
 
-// Made with Bob

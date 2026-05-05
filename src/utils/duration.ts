@@ -5,6 +5,7 @@ export interface HistoryEntry {
   ended_at: string;
 }
 
+// Format minutes to readable duration (e.g., "2 Hari 3 Jam")
 export function formatDuration(minutes: number): string {
   if (minutes < 0) minutes = 0;
 
@@ -20,6 +21,7 @@ export function formatDuration(minutes: number): string {
   return parts.join(' ');
 }
 
+// Calculate duration from last change to now
 export function calculateCurrentDuration(lastChangedAt: string): string {
   if (!lastChangedAt) return '0 Menit';
 
@@ -39,6 +41,7 @@ export function calculateCurrentDuration(lastChangedAt: string): string {
   return formatDuration(minutes);
 }
 
+// Format last 3 history entries for display
 export function formatHistory(history: HistoryEntry[]): string {
   return history.slice(-3).map((h, i) =>
     `${i + 1}. ${h.status}: ${formatDuration(h.duration_minutes)}`

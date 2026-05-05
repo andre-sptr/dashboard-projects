@@ -1,31 +1,18 @@
 import db, { Project } from '../lib/db';
 
-/**
- * Repository for managing Project entities in the database
- */
+// Repository for Project entities
 export class ProjectRepository {
-  /**
-   * Find a project by its unique identifier (UID)
-   * @param uid - The unique identifier of the project (id_ihld::batch_program)
-   * @returns The project or undefined if not found
-   */
+  // Find project by UID (id_ihld::batch_program)
   static findByUid(uid: string): Project | undefined {
     return db.prepare('SELECT * FROM projects WHERE uid = ?').get(uid) as Project | undefined;
   }
 
-  /**
-   * Get all projects for a specific region
-   * @param region - The region to filter by (e.g., 'SUMBAGTENG')
-   * @returns Array of projects
-   */
+  // Get all projects for region
   static findAllByRegion(region: string = 'SUMBAGTENG'): Project[] {
     return db.prepare('SELECT * FROM projects WHERE region = ? ORDER BY last_changed_at DESC').all(region) as Project[];
   }
 
-  /**
-   * Get a list of project names and IDs for selection inputs
-   * @returns Array of project identifier objects
-   */
+  // Get project names and IDs for select inputs
   static getForSelect(): { nama_lop: string; id_ihld: string }[] {
     return db.prepare(`
       SELECT DISTINCT nama_lop, id_ihld 
@@ -35,10 +22,7 @@ export class ProjectRepository {
     `).all() as { nama_lop: string; id_ihld: string }[];
   }
 
-  /**
-   * Insert or update a project record
-   * @param data - Project data to upsert
-   */
+  // Insert or update project with history tracking
   static upsert(data: {
     uid: string;
     id_ihld: string;

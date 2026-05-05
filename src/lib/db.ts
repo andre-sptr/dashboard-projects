@@ -4,7 +4,6 @@ import fs from 'fs';
 import { initializeSchema } from './schema';
 import { getDatabasePath } from './env';
 
-// Get database path from validated environment variables
 const dbPath = path.join(process.cwd(), getDatabasePath());
 const dbDir = path.dirname(dbPath);
 
@@ -15,7 +14,6 @@ if (!fs.existsSync(dbDir)) {
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
-// Initialize schema and migrations
 initializeSchema(db);
 
 export interface Project {

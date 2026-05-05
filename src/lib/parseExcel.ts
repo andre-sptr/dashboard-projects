@@ -18,12 +18,12 @@ export interface ExcelRow {
   rowIndex: number;
 }
 
+// Download Excel from Google Sheets and parse to rows
 export async function downloadAndParseExcel(): Promise<ExcelRow[]> {
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
-  // Get validated environment variables
   const SPREADSHEET_ID = getSpreadsheetId();
   const SHEET_ID = getSheetId();
 

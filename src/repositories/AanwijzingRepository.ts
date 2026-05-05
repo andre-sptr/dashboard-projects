@@ -20,34 +20,24 @@ export interface Aanwijzing {
   updated_at: string;
 }
 
-/**
- * Repository for managing Aanwijzing (technical briefing) records
- */
+// Repository for Aanwijzing (technical briefing) records
 export class AanwijzingRepository {
-  /**
-   * Get all aanwijzing records
-   */
+  // Get all aanwijzing records
   static findAll(): Aanwijzing[] {
     return db.prepare('SELECT * FROM aanwijzing ORDER BY created_at DESC').all() as Aanwijzing[];
   }
 
-  /**
-   * Find aanwijzing by ID
-   */
+  // Find aanwijzing by ID
   static findById(id: string): Aanwijzing | undefined {
     return db.prepare('SELECT * FROM aanwijzing WHERE id = ?').get(id) as Aanwijzing | undefined;
   }
 
-  /**
-   * Delete aanwijzing by ID
-   */
+  // Delete aanwijzing by ID
   static delete(id: string) {
     return db.prepare('DELETE FROM aanwijzing WHERE id = ?').run(id);
   }
 
-  /**
-   * Insert or update aanwijzing
-   */
+  // Insert or update aanwijzing
   static upsert(data: Omit<Aanwijzing, 'created_at' | 'updated_at'>) {
     const stmt = db.prepare(`
       INSERT INTO aanwijzing (
@@ -93,16 +83,12 @@ export class AanwijzingRepository {
     );
   }
 
-  /**
-   * Get BoQ data associated with an aanwijzing
-   */
+  // Get BoQ data for aanwijzing
   static getBoq(aanwijzingId: string) {
     return db.prepare('SELECT * FROM boq_aanwijzing WHERE aanwijzing_id = ?').get(aanwijzingId);
   }
 
-  /**
-   * Insert or update BoQ for an aanwijzing
-   */
+  // Insert or update BoQ for aanwijzing
   static upsertBoq(data: {
     id: string;
     aanwijzing_id: string;
@@ -132,9 +118,7 @@ export class AanwijzingRepository {
     );
   }
 
-  /**
-   * Delete BoQ records associated with an aanwijzing
-   */
+  // Delete BoQ records for aanwijzing
   static deleteBoqByAanwijzingId(aanwijzingId: string) {
     return db.prepare('DELETE FROM boq_aanwijzing WHERE aanwijzing_id = ?').run(aanwijzingId);
   }

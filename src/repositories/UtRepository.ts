@@ -22,34 +22,24 @@ export interface UT {
   updated_at: string;
 }
 
-/**
- * Repository for managing Uji Terima (UT) records
- */
+// Repository for Uji Terima (UT) records
 export class UtRepository {
-  /**
-   * Get all UT records
-   */
+  // Get all UT records
   static findAll(): UT[] {
     return db.prepare('SELECT * FROM ut ORDER BY created_at DESC').all() as UT[];
   }
 
-  /**
-   * Find UT by ID
-   */
+  // Find UT by ID
   static findById(id: string): UT | undefined {
     return db.prepare('SELECT * FROM ut WHERE id = ?').get(id) as UT | undefined;
   }
 
-  /**
-   * Delete UT by ID
-   */
+  // Delete UT by ID
   static delete(id: string) {
     return db.prepare('DELETE FROM ut WHERE id = ?').run(id);
   }
 
-  /**
-   * Insert or update UT
-   */
+  // Insert or update UT
   static upsert(data: Omit<UT, 'created_at' | 'updated_at'>) {
     const stmt = db.prepare(`
       INSERT INTO ut (
@@ -99,16 +89,12 @@ export class UtRepository {
     );
   }
 
-  /**
-   * Get BoQ data associated with a UT
-   */
+  // Get BoQ data for UT
   static getBoq(utId: string) {
     return db.prepare('SELECT * FROM boq_ut WHERE ut_id = ?').get(utId);
   }
 
-  /**
-   * Insert or update BoQ for a UT
-   */
+  // Insert or update BoQ for UT
   static upsertBoq(data: {
     id: string;
     ut_id: string;
@@ -138,9 +124,7 @@ export class UtRepository {
     );
   }
 
-  /**
-   * Delete BoQ records associated with a UT
-   */
+  // Delete BoQ records for UT
   static deleteBoqByUtId(utId: string) {
     return db.prepare('DELETE FROM boq_ut WHERE ut_id = ?').run(utId);
   }

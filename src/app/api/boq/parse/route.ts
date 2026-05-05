@@ -8,17 +8,14 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
-    // Validate file presence
     if (!file) {
       return errorResponse('File tidak ditemukan', 400);
     }
 
-    // Validate file extension
     if (!validateExcelFile(file.name)) {
       return errorResponse('Format file harus .xlsx atau .xls', 400);
     }
 
-    // Validate file size (max 10MB)
     if (!validateFileSize(file.size, 10)) {
       return errorResponse('Ukuran file terlalu besar (maksimal 10MB)', 400);
     }

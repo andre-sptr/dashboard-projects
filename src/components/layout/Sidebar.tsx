@@ -24,7 +24,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile backdrop */}
       <div
         className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-200 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
@@ -32,13 +31,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         aria-hidden="true"
       />
 
-      {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-50 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'
           }`}
       >
         <div className="flex flex-col h-full">
-          {/* Header / Brand */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
             <Link
               href="/dashboard"
@@ -67,7 +64,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </button>
           </div>
 
-          {/* Nav */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
@@ -91,7 +87,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             })}
           </nav>
 
-          {/* Footer */}
           <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
             <p className="text-[11px] text-gray-500 dark:text-gray-500">
               SLA Project Tracking

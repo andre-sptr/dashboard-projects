@@ -132,7 +132,6 @@ export default function DashboardRecap({ projects }: Props) {
 
   return (
     <div className="w-full space-y-6">
-      {/* KPI Grid */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 animate-in stagger-1">
         <KpiCard
           icon={Briefcase}
@@ -164,7 +163,6 @@ export default function DashboardRecap({ projects }: Props) {
         />
       </section>
 
-      {/* Distribusi Status & Sub Status */}
       <div className="animate-in stagger-2">
         <DistributionCharts 
           pieData={stats.pieData} 
@@ -173,7 +171,6 @@ export default function DashboardRecap({ projects }: Props) {
         />
       </div>
 
-      {/* Golive Month */}
       <div className="animate-in stagger-3">
         <TimelineChart 
           goliveMonthList={stats.goliveMonthList} 
@@ -181,7 +178,6 @@ export default function DashboardRecap({ projects }: Props) {
         />
       </div>
 
-      {/* Recent Changes */}
       <div className="animate-in stagger-4">
         <RecentChanges recent={stats.recent} />
       </div>

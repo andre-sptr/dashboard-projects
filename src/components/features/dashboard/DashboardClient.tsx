@@ -121,7 +121,6 @@ export default function DashboardClient({ initialProjects }: Props) {
 
   return (
     <div className="w-full space-y-6">
-      {/* Search & Filter Section */}
       <FilterSection
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -136,7 +135,6 @@ export default function DashboardClient({ initialProjects }: Props) {
         filterOptions={filterOptions}
       />
 
-      {/* Table Container */}
       <div className="glass-panel rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -173,7 +171,6 @@ export default function DashboardClient({ initialProjects }: Props) {
           </table>
         </div>
 
-        {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
             <div className="text-sm text-gray-500 dark:text-gray-400">
