@@ -1,19 +1,26 @@
 import { NextRequest } from 'next/server';
-import { parseBoQExcel } from '@/lib/boq';
+import { parseBoQExcel } from '@/lib/excel';
 import { successResponse, errorResponse } from '@/lib/response';
+import { validateExcelFile, validateFileSize } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
+    // Validate file presence
     if (!file) {
       return errorResponse('File tidak ditemukan', 400);
     }
 
-    const fileName = file.name.toLowerCase();
-    if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+    // Validate file extension
+    if (!validateExcelFile(file.name)) {
       return errorResponse('Format file harus .xlsx atau .xls', 400);
+    }
+
+    // Validate file size (max 10MB)
+    if (!validateFileSize(file.size, 10)) {
+      return errorResponse('Ukuran file terlalu besar (maksimal 10MB)', 400);
     }
 
     const buffer = await file.arrayBuffer();

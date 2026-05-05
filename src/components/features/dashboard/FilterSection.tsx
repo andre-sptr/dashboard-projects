@@ -56,6 +56,7 @@ export const FilterSection = ({
           placeholder="Cari ID IHLD, Nama LOP, Status..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Cari proyek"
           className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-shadow shadow-sm"
         />
       </div>
@@ -67,6 +68,7 @@ export const FilterSection = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter status"
             className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
           >
             <option value="">Semua</option>
@@ -82,6 +84,7 @@ export const FilterSection = ({
           <select
             value={subStatusFilter}
             onChange={(e) => setSubStatusFilter(e.target.value)}
+            aria-label="Filter sub status"
             className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
           >
             <option value="">Semua</option>
@@ -97,6 +100,7 @@ export const FilterSection = ({
           <select
             value={areaFilter}
             onChange={(e) => setAreaFilter(e.target.value)}
+            aria-label="Filter area"
             className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
           >
             <option value="">Semua</option>
@@ -112,6 +116,7 @@ export const FilterSection = ({
           <select
             value={branchFilter}
             onChange={(e) => setBranchFilter(e.target.value)}
+            aria-label="Filter branch"
             className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
           >
             <option value="">Semua</option>

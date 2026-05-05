@@ -1,7 +1,7 @@
 'use client';
 
 import { Menu } from 'lucide-react';
-import SyncButton from './SyncButton';
+import SyncButton from '@/components/ui/SyncButton';
 
 interface TopbarProps {
   title: string;

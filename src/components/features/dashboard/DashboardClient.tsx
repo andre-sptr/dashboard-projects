@@ -3,8 +3,9 @@
 import React, { useState, useMemo } from 'react';
 import { Project } from '@/lib/db';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { FilterSection } from './dashboard/FilterSection';
-import { ProjectRow } from './dashboard/ProjectRow';
+import { FilterSection } from './FilterSection';
+import { ProjectRow } from './ProjectRow';
+import { getFullDataArray } from '@/utils/project';
 
 interface Props {
   initialProjects: Project[];
@@ -37,13 +38,9 @@ export default function DashboardClient({ initialProjects }: Props) {
       if (p.status) statuses.add(p.status);
       if (p.sub_status) subStatuses.add(p.sub_status);
 
-      try {
-        const fd = JSON.parse(p.full_data || '[]');
-        if (Array.isArray(fd)) {
-          if (fd[4]) areas.add(String(fd[4]).toUpperCase());
-          if (fd[7]) branches.add(String(fd[7]).toUpperCase());
-        }
-      } catch { }
+      const fd = getFullDataArray(p);
+      if (fd[4]) areas.add(String(fd[4]).toUpperCase());
+      if (fd[7]) branches.add(String(fd[7]).toUpperCase());
     });
 
     const sortedAreas = Array.from(areas).sort();
@@ -89,10 +86,7 @@ export default function DashboardClient({ initialProjects }: Props) {
         p.sub_status.toLowerCase().includes(lowerQuery)
       );
 
-      let fd: unknown[] = [];
-      try {
-        fd = JSON.parse(p.full_data || '[]');
-      } catch { }
+      const fd = getFullDataArray(p);
 
       const matchesStatus = !statusFilter || p.status === statusFilter;
       const matchesSubStatus = !subStatusFilter || p.sub_status === subStatusFilter;
@@ -158,10 +152,11 @@ export default function DashboardClient({ initialProjects }: Props) {
             </thead>
             <tbody className="bg-white dark:bg-gray-900/50 divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedProjects.length > 0 ? (
-                paginatedProjects.map((project) => (
+                paginatedProjects.map((project, idx) => (
                   <ProjectRow
                     key={project.uid}
                     project={project}
+                    index={idx}
                     isExpanded={expandedRow === project.uid}
                     onToggle={() => toggleRow(project.uid)}
                     getStatusColor={getStatusColor}

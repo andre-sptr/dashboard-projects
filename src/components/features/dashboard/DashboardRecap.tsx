@@ -8,16 +8,24 @@ import {
   Loader2,
   XCircle,
 } from 'lucide-react';
-import { 
-  classifyStatus, 
-  getPortCount, 
-  getFullDataArray, 
-  formatExcelDateShort 
+import {
+  classifyStatus,
+  getPortCount,
+  getFullDataArray,
+  formatExcelDateShort
 } from '@/utils/project';
-import { KpiCard } from './recap/KpiCard';
-import { DistributionCharts } from './recap/DistributionCharts';
-import { TimelineChart } from './recap/TimelineChart';
-import { RecentChanges } from './recap/RecentChanges';
+import dynamic from 'next/dynamic';
+import { KpiCard } from '@/components/features/recap/KpiCard';
+import { RecentChanges } from '@/components/features/recap/RecentChanges';
+
+// Dynamically import heavy chart components
+const DistributionCharts = dynamic(() => import('@/components/features/recap/DistributionCharts').then(mod => mod.DistributionCharts), {
+  loading: () => <div className="h-[350px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />
+});
+
+const TimelineChart = dynamic(() => import('@/components/features/recap/TimelineChart').then(mod => mod.TimelineChart), {
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />
+});
 
 interface Props {
   projects: Project[];
@@ -125,7 +133,7 @@ export default function DashboardRecap({ projects }: Props) {
   return (
     <div className="w-full space-y-6">
       {/* KPI Grid */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 animate-in stagger-1">
         <KpiCard
           icon={Briefcase}
           label="Total Port Plan"
@@ -157,20 +165,26 @@ export default function DashboardRecap({ projects }: Props) {
       </section>
 
       {/* Distribusi Status & Sub Status */}
-      <DistributionCharts 
-        pieData={stats.pieData} 
-        subStatusList={stats.subStatusList} 
-        totalPorts={totalPorts} 
-      />
+      <div className="animate-in stagger-2">
+        <DistributionCharts 
+          pieData={stats.pieData} 
+          subStatusList={stats.subStatusList} 
+          totalPorts={totalPorts} 
+        />
+      </div>
 
       {/* Golive Month */}
-      <TimelineChart 
-        goliveMonthList={stats.goliveMonthList} 
-        totalGolivePorts={stats.totalGolivePorts} 
-      />
+      <div className="animate-in stagger-3">
+        <TimelineChart 
+          goliveMonthList={stats.goliveMonthList} 
+          totalGolivePorts={stats.totalGolivePorts} 
+        />
+      </div>
 
       {/* Recent Changes */}
-      <RecentChanges recent={stats.recent} />
+      <div className="animate-in stagger-4">
+        <RecentChanges recent={stats.recent} />
+      </div>
     </div>
   );
 }

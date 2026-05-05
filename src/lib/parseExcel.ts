@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import fs from 'fs';
 import path from 'path';
+import { getSpreadsheetId, getSheetId } from './env';
 
 const dataDir = path.join(process.cwd(), 'data');
 const xlsxPath = path.join(dataDir, 'latest.xlsx');
@@ -22,12 +23,9 @@ export async function downloadAndParseExcel(): Promise<ExcelRow[]> {
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
-  const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-  const SHEET_ID = process.env.SHEET_ID;
-
-  if (!SPREADSHEET_ID || !SHEET_ID) {
-    throw new Error('Environment variables SPREADSHEET_ID atau SHEET_ID belum diatur.');
-  }
+  // Get validated environment variables
+  const SPREADSHEET_ID = getSpreadsheetId();
+  const SHEET_ID = getSheetId();
 
   const EXPORT_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=xlsx&gid=${SHEET_ID}`;
 

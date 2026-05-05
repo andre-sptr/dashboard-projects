@@ -1,43 +1,58 @@
 import { NextRequest } from 'next/server';
-import { getAllBoq, upsertBoq, deleteBoq, parseBoQExcel } from '@/lib/boq';
-import { getProjectsForSelect } from '@/lib/db';
-import { successResponse, errorResponse } from '@/lib/response';
+import { BoqRepository } from '@/repositories/BoqRepository';
+import { ProjectRepository } from '@/repositories/ProjectRepository';
+import { parseBoQExcel } from '@/lib/excel';
+import { successResponse, withErrorHandling } from '@/lib/response';
+import {
+  boqUploadSchema,
+  boqQuerySchema,
+  validateExcelFile,
+  validateFileSize,
+  formatValidationError,
+} from '@/lib/validation';
+import { ValidationError, DatabaseError, FileProcessingError } from '@/lib/errors';
 
-export async function GET() {
-  try {
-    const boqList = getAllBoq.all();
-    const projects = getProjectsForSelect();
-    return successResponse({ boq: boqList, projects: projects });
-  } catch (error) {
-    console.error('Error fetching BoQ:', error);
-    return errorResponse('Gagal mengambil data BoQ');
+export const GET = withErrorHandling(async () => {
+  const boqList = BoqRepository.findAll();
+  const projects = ProjectRepository.getForSelect();
+  return successResponse({ boq: boqList, projects: projects });
+});
+
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const formData = await request.formData();
+  const file = formData.get('file') as File | null;
+  const nama_lop = formData.get('nama_lop') as string | null;
+  const id_ihld = formData.get('id_ihld') as string | null;
+
+  // Validate file presence
+  if (!file) {
+    throw new ValidationError('File tidak ditemukan');
   }
-}
 
-export async function POST(request: NextRequest) {
+  // Validate form data
+  const validationResult = boqUploadSchema.safeParse({ nama_lop, id_ihld });
+  if (!validationResult.success) {
+    throw new ValidationError(formatValidationError(validationResult.error));
+  }
+
+  const validated = validationResult.data;
+
+  // Validate file extension
+  if (!validateExcelFile(file.name)) {
+    throw new ValidationError('Format file harus .xlsx atau .xls');
+  }
+
+  // Validate file size (max 10MB)
+  if (!validateFileSize(file.size, 10)) {
+    throw new ValidationError('Ukuran file terlalu besar (maksimal 10MB)');
+  }
+
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
-    const nama_lop = formData.get('nama_lop') as string | null;
-    const id_ihld = formData.get('id_ihld') as string | null;
-
-    if (!file) {
-      return errorResponse('File tidak ditemukan', 400);
-    }
-
-    if (!nama_lop || !id_ihld) {
-      return errorResponse('Nama LOP dan ID IHLD wajib diisi', 400);
-    }
-
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      return errorResponse('Format file harus .xlsx atau .xls', 400);
-    }
-
     const buffer = await file.arrayBuffer();
     const rows = parseBoQExcel(buffer);
 
     if (rows.length === 0) {
-      return errorResponse('Tidak ada data yang ditemukan di file Excel', 400);
+      throw new FileProcessingError('Tidak ada data yang ditemukan di file Excel', file.name);
     }
 
     const uniqueId = `boq_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -48,45 +63,50 @@ export async function POST(request: NextRequest) {
       full_data: r.full_data,
     })));
 
-    upsertBoq.run(
-      uniqueId,
-      nama_lop,
-      id_ihld,
-      '',
-      rows[0]?.batch_program || '',
-      nama_lop,
-      'SUMBAGTENG',
-      fullDataJson
-    );
+    BoqRepository.upsert({
+      id: uniqueId,
+      nama_lop: validated.nama_lop,
+      id_ihld: validated.id_ihld,
+      sto: '',
+      batch_program: rows[0]?.batch_program || '',
+      project_name: validated.nama_lop,
+      region: 'SUMBAGTENG',
+      full_data: fullDataJson
+    });
 
     return successResponse(
       {
         id: uniqueId,
-        nama_lop: nama_lop,
+        nama_lop: validated.nama_lop,
         row_count: rows.length,
       },
       `Berhasil import ${rows.length} baris data`
     );
   } catch (error) {
-    console.error('Error uploading BoQ:', error);
-    return errorResponse('Gagal mengupload file: ' + (error as Error).message);
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return errorResponse('ID tidak ditemukan', 400);
+    if (error instanceof ValidationError || error instanceof FileProcessingError) {
+      throw error;
     }
-
-    deleteBoq.run(id);
-
-    return successResponse(null, 'Data berhasil dihapus');
-  } catch (error) {
-    console.error('Error deleting BoQ:', error);
-    return errorResponse('Gagal menghapus data');
+    throw new DatabaseError('Gagal mengupload file: ' + (error as Error).message);
   }
-}
+});
+
+export const DELETE = withErrorHandling(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url);
+  const params = { id: searchParams.get('id') };
+
+  // Validate query parameters
+  const validationResult = boqQuerySchema.safeParse(params);
+  if (!validationResult.success) {
+    throw new ValidationError(formatValidationError(validationResult.error));
+  }
+
+  const { id } = validationResult.data;
+
+  try {
+    BoqRepository.delete(id);
+  } catch (error) {
+    throw new DatabaseError(`Gagal menghapus data BoQ: ${(error as Error).message}`);
+  }
+
+  return successResponse(null, 'Data berhasil dihapus');
+});

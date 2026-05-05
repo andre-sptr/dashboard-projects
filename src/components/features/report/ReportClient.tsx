@@ -2,11 +2,19 @@
 
 import React, { useMemo, useState } from 'react';
 import { Project } from '@/lib/db';
-import { parseExcelDate } from '@/utils/project';
-import { ReportFilters, Granularity } from './report/ReportFilters';
-import { ReportKpiGrid } from './report/ReportKpiGrid';
-import { PerformanceCharts } from './report/PerformanceCharts';
-import { BranchRanking } from './report/BranchRanking';
+import { parseExcelDate, getFullDataArray } from '@/utils/project';
+import dynamic from 'next/dynamic';
+import { ReportFilters, Granularity } from './ReportFilters';
+import { ReportKpiGrid } from './ReportKpiGrid';
+
+// Dynamically import heavy chart components
+const PerformanceCharts = dynamic(() => import('./PerformanceCharts').then(mod => mod.PerformanceCharts), {
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />
+});
+
+const BranchRanking = dynamic(() => import('./BranchRanking').then(mod => mod.BranchRanking), {
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />
+});
 
 interface Props {
   initialProjects: Project[];
@@ -39,12 +47,10 @@ export default function ReportClient({ initialProjects }: Props) {
 
   const stats = useMemo(() => {
     const projects = initialProjects.filter(p => {
-      try {
-        const fd = JSON.parse(p.full_data || '[]');
-        const matchesArea = !areaFilter || fd[4] === areaFilter;
-        const matchesBranch = !branchFilter || fd[7] === branchFilter;
-        return matchesArea && matchesBranch;
-      } catch { return false; }
+      const fd = getFullDataArray(p);
+      const matchesArea = !areaFilter || fd[4] === areaFilter;
+      const matchesBranch = !branchFilter || fd[7] === branchFilter;
+      return matchesArea && matchesBranch;
     });
 
     let totalPlannedPorts = 0;
@@ -57,10 +63,7 @@ export default function ReportClient({ initialProjects }: Props) {
     const branchMap = new Map<string, { name: string; planned: number; actual: number }>();
 
     projects.forEach(p => {
-      let fd: unknown[] = [];
-      try {
-        fd = JSON.parse(p.full_data || '[]');
-      } catch { }
+      const fd = getFullDataArray(p);
 
       const planPort = Number(fd[10]) || 0;
       const realPort = Number(fd[29]) || 0;

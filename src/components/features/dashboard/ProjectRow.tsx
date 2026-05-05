@@ -2,11 +2,13 @@ import React from 'react';
 import { ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Project } from '@/lib/db';
 import { HistoryEntry, formatDuration } from '@/utils/duration';
-import { formatExcelDate } from '@/utils/project';
+import { formatExcelDate, getFullDataArray } from '@/utils/project';
+import { parseJsonArray } from '@/utils/json';
 import { DurationCounter } from './DurationCounter';
 
 interface Props {
   project: Project;
+  index: number;
   isExpanded: boolean;
   onToggle: () => void;
   getStatusColor: (status: string) => string;
@@ -22,25 +24,17 @@ export const RAW_DATA_HEADERS = [
 const DATE_COLUMN_INDICES = new Set([17, 18, 30]);
 const NUMBER_COLUMN_INDICES = new Set([12]);
 
-export const ProjectRow = ({ project, isExpanded, onToggle, getStatusColor }: Props) => {
-  let parsedHistory: HistoryEntry[] = [];
-  let fullData: unknown[] = [];
-
-  try {
-    parsedHistory = JSON.parse(project.history || '[]');
-  } catch { }
-
-  try {
-    const parsed = JSON.parse(project.full_data || '[]');
-    fullData = Array.isArray(parsed) ? parsed : [];
-  } catch { }
+export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColor }: Props) => {
+  const parsedHistory = parseJsonArray<HistoryEntry>(project.history || '[]');
+  const fullData = getFullDataArray(project);
 
   const displayTanggalGolive = formatExcelDate(fullData[30]);
+  const staggerClass = index < 10 ? `stagger-${(index % 4) + 1}` : '';
 
   return (
     <React.Fragment>
       <tr
-        className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${isExpanded ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
+        className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer animate-in ${staggerClass} ${isExpanded ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
         onClick={onToggle}
       >
         <td className="px-6 py-4">

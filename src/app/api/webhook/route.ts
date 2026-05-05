@@ -1,14 +1,16 @@
 import { NextRequest } from 'next/server';
-import { getProjectByUid, upsertProject, Project } from '@/lib/db';
+import { ProjectRepository } from '@/repositories/ProjectRepository';
+import { Project } from '@/lib/db';
 import { downloadAndParseExcel } from '@/lib/parseExcel';
 import { HistoryEntry } from '@/utils/duration';
 import { successResponse, errorResponse } from '@/lib/response';
+import { parseJsonArray } from '@/utils/json';
+import { normalizeWhitespace } from '@/utils/validation';
 
 function normalizeStatus(value: string): string {
-  return value
-    .replace(/[\u00A0\u200B\u200C\u200D\uFEFF\r\n\t]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return normalizeWhitespace(
+    value.replace(/[\u00A0\u200B\u200C\u200D\uFEFF\r\n\t]/g, ' ')
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -22,7 +24,7 @@ export async function POST(request: NextRequest) {
     let processed = 0;
 
     for (const row of rows) {
-      const existing = getProjectByUid.get(row.uid) as Project | undefined;
+      const existing = ProjectRepository.findByUid(row.uid);
       let history: HistoryEntry[] = [];
 
       if (existing) {
@@ -39,12 +41,8 @@ export async function POST(request: NextRequest) {
         const now = new Date();
         const durationMinutes = Math.max(0, Math.round((now.getTime() - prevChangedAt.getTime()) / 60000));
 
-        try {
-          const parsed = JSON.parse(existing.history || '[]');
-          history = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          history = [];
-        }
+        // Use safe JSON parsing utility
+        history = parseJsonArray<HistoryEntry>(existing.history || '[]', []);
 
         if (prevStatus !== newStatus || prevSubStatus !== newSubStatus) {
           const lastEntry = history[history.length - 1];
@@ -63,17 +61,17 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      upsertProject.run(
-        row.uid,
-        row.id_ihld,
-        row.batch_program,
-        row.nama_lop,
-        row.region,
-        row.status,
-        row.sub_status,
-        row.full_data,
-        JSON.stringify(history)
-      );
+      ProjectRepository.upsert({
+        uid: row.uid,
+        id_ihld: row.id_ihld,
+        batch_program: row.batch_program,
+        nama_lop: row.nama_lop,
+        region: row.region,
+        status: row.status,
+        sub_status: row.sub_status,
+        full_data: row.full_data,
+        history: JSON.stringify(history)
+      });
       processed++;
     }
 

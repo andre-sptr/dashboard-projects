@@ -1,5 +1,6 @@
-import { getAllProjects, Project } from '@/lib/db';
-import ReportClient from '@/components/ReportClient';
+import { ProjectRepository } from '@/repositories/ProjectRepository';
+import { Project } from '@/lib/db';
+import ReportClient from '@/components/features/report/ReportClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,7 +8,7 @@ export default async function ReportPage() {
   let projects: Project[] = [];
 
   try {
-    projects = getAllProjects.all('SUMBAGTENG') as Project[];
+    projects = ProjectRepository.findAllByRegion('SUMBAGTENG');
   } catch (error) {
     console.error('Failed to fetch projects from DB:', error);
     throw new Error('Gagal mengambil data dari database.');

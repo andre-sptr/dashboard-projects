@@ -1,6 +1,6 @@
 'use client';
 
-import NetworkTopology from '@/components/NetworkTopology';
+import NetworkTopology from '@/components/features/topology/NetworkTopology';
 
 export default function TopologyPage() {
   return (

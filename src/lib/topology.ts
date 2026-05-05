@@ -1,4 +1,7 @@
-import db from './db';
+import { ProjectRepository } from '@/repositories/ProjectRepository';
+import { AanwijzingRepository } from '@/repositories/AanwijzingRepository';
+
+import { parseJsonArray } from '@/utils/json';
 
 export interface TopologyNode {
     id: string;
@@ -22,16 +25,13 @@ const COLUMNS = {
 };
 
 export function getNetworkHierarchy() {
-    const projects = db.prepare('SELECT * FROM projects').all() as any[];
-    const aanwijzing = db.prepare('SELECT * FROM aanwijzing').all() as any[];
+    const projects = ProjectRepository.findAllByRegion('SUMBAGTENG');
+    const aanwijzing = AanwijzingRepository.findAll();
 
     const hierarchy: any = {};
 
     projects.forEach(p => {
-        let fd: any[] = [];
-        try {
-            fd = JSON.parse(p.full_data || '[]');
-        } catch { }
+        const fd = parseJsonArray(p.full_data || '[]');
 
         const sto = fd[COLUMNS.STO] || 'UNKNOWN STO';
         const area = fd[COLUMNS.AREA] || 'UNKNOWN AREA';
