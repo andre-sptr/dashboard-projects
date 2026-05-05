@@ -1,3 +1,4 @@
+// Test environment setup and global browser API mocks
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 

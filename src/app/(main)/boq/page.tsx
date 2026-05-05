@@ -1,3 +1,4 @@
+// Bill of Quantity management and Excel import page
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -310,7 +311,6 @@ export default function BoqPage() {
 
   return (
     <div className="w-full">
-      {/* Notification */}
       {notification && (
         <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in fade-in slide-in-from-right-4 ${notification.type === 'success'
             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
@@ -320,7 +320,6 @@ export default function BoqPage() {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">Bill of Quantity</h2>
@@ -339,7 +338,6 @@ export default function BoqPage() {
         )}
       </div>
 
-      {/* Form Section */}
       {showForm && (
         <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between mb-4">
@@ -380,7 +378,6 @@ export default function BoqPage() {
                   <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                 </div>
 
-                {/* Dropdown */}
                 {showDropdown && filteredProjects.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {filteredProjects.map((p, i) => (
@@ -468,7 +465,6 @@ export default function BoqPage() {
         </div>
       )}
 
-      {/* Data List */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {paginatedData.length > 0 ? (
           <>
@@ -525,7 +521,6 @@ export default function BoqPage() {
               </table>
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="bg-white dark:bg-gray-900 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
                 <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -560,12 +555,10 @@ export default function BoqPage() {
         )}
       </div>
 
-      {/* Detail Modal */}
       {selectedBoq && detailData.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={handleCloseDetails}></div>
           <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20">
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -583,7 +576,6 @@ export default function BoqPage() {
               </button>
             </div>
 
-            {/* Modal Content */}
             <div className="overflow-hidden flex flex-col max-h-[calc(95vh-140px)]">
               <div className="overflow-auto flex-1 p-6">
                 <div className="space-y-6">
@@ -715,7 +707,6 @@ export default function BoqPage() {
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="px-6 py-1.5 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 dark:text-gray-400">

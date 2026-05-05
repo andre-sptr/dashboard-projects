@@ -1,3 +1,4 @@
+// User Testing (UT) data entry and management page
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -293,7 +294,6 @@ export default function UTPage() {
 
   return (
     <div className="w-full">
-      {/* Notification */}
       {notification && (
         <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in fade-in slide-in-from-right-4 ${notification.type === 'success'
             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
@@ -303,7 +303,6 @@ export default function UTPage() {
         </div>
       )}
 
-      {/* Header & Toggle Form Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -325,7 +324,6 @@ export default function UTPage() {
         )}
       </div>
 
-      {/* Form Section */}
       {showForm && (
         <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between mb-4">
@@ -342,7 +340,6 @@ export default function UTPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Nama LOP & ID IHLD */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="relative">
                 <label className={labelClass}>Nama LOP <span className="text-red-500">*</span></label>
@@ -367,7 +364,6 @@ export default function UTPage() {
                   <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                 </div>
 
-                {/* Dropdown */}
                 {showDropdown && filteredProjects.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {filteredProjects.map((p, i) => (
@@ -401,7 +397,6 @@ export default function UTPage() {
               </div>
             </div>
 
-            {/* WITEL & TEMATIK */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>WITEL</label>
@@ -425,7 +420,6 @@ export default function UTPage() {
               </div>
             </div>
 
-            {/* STO & TIM UT */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>STO</label>
@@ -449,7 +443,6 @@ export default function UTPage() {
               </div>
             </div>
 
-            {/* COMMTEST/UT & Tanggal CT/UT */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>COMMTEST/UT</label>
@@ -476,7 +469,6 @@ export default function UTPage() {
               </div>
             </div>
 
-            {/* JUMLAH ODP & JUMLAH PORT */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>JUMLAH ODP</label>
@@ -502,7 +494,6 @@ export default function UTPage() {
               </div>
             </div>
 
-            {/* Temuan */}
             <div>
               <label className={labelClass}>Temuan</label>
               <textarea
@@ -514,7 +505,6 @@ export default function UTPage() {
               <p className="text-[10px] text-gray-400 mt-1">Gunakan format: 1. ... 2. ... 3. ...</p>
             </div>
 
-            {/* Follow Up dari Mitra & Mitra */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 pt-6">
                 <input
@@ -540,7 +530,6 @@ export default function UTPage() {
               </div>
             </div>
 
-            {/* Jumlah Temuan & WA SPANG TA */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Jumlah Temuan</label>
@@ -566,7 +555,6 @@ export default function UTPage() {
               </div>
             </div>
 
-            {/* BoQ-UT */}
             <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -618,7 +606,6 @@ export default function UTPage() {
               </div>
             </div>
 
-            {/* Komitment penyelesaian */}
             <div>
               <label className={labelClass}>Komitment penyelesaian</label>
               <input
@@ -629,7 +616,6 @@ export default function UTPage() {
               />
             </div>
 
-            {/* Submit Button */}
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
@@ -655,7 +641,6 @@ export default function UTPage() {
         </div>
       )}
 
-      {/* Data List */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {paginatedData.length > 0 ? (
           <>
@@ -718,7 +703,6 @@ export default function UTPage() {
               </table>
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="bg-white dark:bg-gray-900 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
                 <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -753,7 +737,6 @@ export default function UTPage() {
         )}
       </div>
 
-      {/* BoQ Preview Modal */}
       {showBoqPreview && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowBoqPreview(false)} />

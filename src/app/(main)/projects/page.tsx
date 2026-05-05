@@ -1,3 +1,4 @@
+// Comprehensive project tracking and data management page
 import { Project } from '@/lib/db';
 import { ProjectRepository } from '@/repositories/ProjectRepository';
 import DashboardClient from '@/components/features/dashboard/DashboardClient';

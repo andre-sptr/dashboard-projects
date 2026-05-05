@@ -1,3 +1,4 @@
+// Countdown or duration display for project sub-status
 import React, { useState, useEffect } from 'react';
 import { calculateCurrentDuration } from '@/utils/duration';
 

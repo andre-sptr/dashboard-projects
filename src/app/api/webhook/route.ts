@@ -1,3 +1,4 @@
+// Webhook endpoint for syncing project data from external sources
 import { NextRequest } from 'next/server';
 import { ProjectRepository } from '@/repositories/ProjectRepository';
 import { Project } from '@/lib/db';

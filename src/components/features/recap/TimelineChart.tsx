@@ -1,3 +1,4 @@
+// Trend chart showing project progress over time
 import React from 'react';
 import { Calendar } from 'lucide-react';
 import {

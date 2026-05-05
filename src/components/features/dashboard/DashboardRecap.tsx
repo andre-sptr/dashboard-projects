@@ -1,3 +1,4 @@
+// Summary cards for project status counts
 'use client';
 
 import { useMemo } from 'react';

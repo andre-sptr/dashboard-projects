@@ -1,3 +1,4 @@
+// Pie/Bar charts showing project distribution by category
 import React from 'react';
 import { TrendingUp, Layers } from 'lucide-react';
 import {

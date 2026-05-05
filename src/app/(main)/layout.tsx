@@ -1,3 +1,4 @@
+// Authenticated layout with sidebar and topbar navigation
 'use client';
 
 import { useState } from 'react';

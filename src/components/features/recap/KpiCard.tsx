@@ -1,3 +1,4 @@
+// Metric card for Key Performance Indicators
 import React from 'react';
 
 interface KpiCardProps {

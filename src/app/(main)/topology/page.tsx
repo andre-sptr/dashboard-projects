@@ -1,3 +1,4 @@
+// Network topology visualization page
 'use client';
 
 import NetworkTopology from '@/components/features/topology/NetworkTopology';

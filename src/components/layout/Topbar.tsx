@@ -1,3 +1,4 @@
+// Global application header with sync action
 'use client';
 
 import { Menu } from 'lucide-react';

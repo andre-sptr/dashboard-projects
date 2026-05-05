@@ -1,3 +1,4 @@
+// Global error handling page
 'use client';
 
 import { useEffect } from 'react';

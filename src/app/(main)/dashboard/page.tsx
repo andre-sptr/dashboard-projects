@@ -1,3 +1,4 @@
+// Main performance dashboard with project status summaries
 import { ProjectRepository } from '@/repositories/ProjectRepository';
 import { Project } from '@/lib/db';
 import DashboardRecap from '@/components/features/dashboard/DashboardRecap';

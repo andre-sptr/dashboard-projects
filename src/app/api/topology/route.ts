@@ -1,3 +1,4 @@
+// API endpoint for retrieving network topology hierarchy
 import { getNetworkHierarchy } from '@/lib/topology';
 import { successResponse, errorResponse } from '@/lib/response';
 

@@ -1,3 +1,4 @@
+// API endpoints for managing Aanwijzing (technical briefing) data
 import { NextRequest, NextResponse } from 'next/server';
 import { AanwijzingRepository } from '@/repositories/AanwijzingRepository';
 import { ProjectRepository } from '@/repositories/ProjectRepository';

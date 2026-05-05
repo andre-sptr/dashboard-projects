@@ -1,3 +1,4 @@
+// Dashboard table with filtering, pagination, and project rows
 'use client';
 
 import React, { useState, useMemo } from 'react';

@@ -1,3 +1,4 @@
+// Grid of KPI cards specifically for report views
 import React from 'react';
 import { Target, TrendingUp, CheckCircle2, AlertCircle } from 'lucide-react';
 

@@ -1,3 +1,4 @@
+// Loading placeholders for UI elements
 import React from 'react';
 
 interface SkeletonProps {

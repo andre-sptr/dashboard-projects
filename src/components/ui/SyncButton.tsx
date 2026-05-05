@@ -1,3 +1,4 @@
+// Manual data synchronization trigger
 'use client';
 
 import { useState } from 'react';

@@ -1,6 +1,7 @@
+// Catch and handle runtime errors gracefully
 'use client';
 
-import { Component, ReactNode } from 'react';
+import React, { Component, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -12,10 +13,6 @@ interface State {
   error?: Error;
 }
 
-/**
- * Error Boundary component to catch React errors
- * Prevents the entire app from crashing when a component throws an error
- */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -95,9 +92,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-/**
- * Simple error fallback component
- */
 export function ErrorFallback({ error, reset }: { error: Error; reset?: () => void }) {
   return (
     <div className="min-h-[400px] flex items-center justify-center p-4">

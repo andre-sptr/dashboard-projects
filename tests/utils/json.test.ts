@@ -1,3 +1,4 @@
+// Unit tests for safe JSON parsing and array handling utilities
 import { describe, it, expect } from 'vitest';
 import { parseJsonArray, safeJsonParse } from '@/utils/json';
 

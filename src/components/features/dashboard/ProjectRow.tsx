@@ -1,3 +1,4 @@
+// Expandable table row for individual project data
 import React from 'react';
 import { ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Project } from '@/lib/db';
@@ -82,14 +83,12 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
           </button>
         </td>
       </tr>
-      {/* Expanded Content */}
       {isExpanded && (
         <tr>
           <td colSpan={6} className="px-0 py-0 bg-gray-50/50 dark:bg-gray-800/30">
             <div className="px-6 py-6 border-b border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-6">
-                  {/* Riwayat Status */}
+                  <div className="flex flex-col gap-6">
                   <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                       <Info size={16} className="text-blue-500" />
@@ -137,7 +136,6 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
                     </div>
                   </div>
 
-                  {/* Riwayat Sub Status */}
                   <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                       <Info size={16} className="text-indigo-500" />
@@ -169,7 +167,6 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
                   </div>
                 </div>
 
-                {/* Raw Data A-AF */}
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                     <Info size={16} className="text-purple-500" />

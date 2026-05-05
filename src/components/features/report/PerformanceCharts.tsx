@@ -1,3 +1,4 @@
+// Analytics charts for regional performance reports
 import React from 'react';
 import { BarChart3, Clock, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -25,9 +26,7 @@ export const PerformanceCharts = ({
 }: PerformanceChartsProps) => {
   return (
     <div className="space-y-6">
-      {/* Velocity and SLA Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cumulative Trend */}
         <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -57,7 +56,6 @@ export const PerformanceCharts = ({
           </div>
         </div>
 
-        {/* SLA Distribution Card */}
         <div className="glass-panel p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
           <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
             <Clock size={18} className="text-indigo-600" />
@@ -105,7 +103,6 @@ export const PerformanceCharts = ({
         </div>
       </div>
 
-      {/* Distribution Chart */}
       <div className="glass-panel p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">

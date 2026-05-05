@@ -1,3 +1,4 @@
+// Unit tests for Aanwijzing (technical briefing) repository
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AanwijzingRepository } from '@/repositories/AanwijzingRepository';
 import db from '@/lib/db';

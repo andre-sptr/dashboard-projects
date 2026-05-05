@@ -1,3 +1,4 @@
+// Main report page container with data fetching logic
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -167,7 +168,6 @@ export default function ReportClient({ initialProjects }: Props) {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Filters */}
       <ReportFilters
         granularity={granularity}
         setGranularity={setGranularity}
@@ -178,10 +178,8 @@ export default function ReportClient({ initialProjects }: Props) {
         areaBranchMap={areaBranchMap}
       />
 
-      {/* KPI Cards */}
       <ReportKpiGrid stats={stats} />
 
-      {/* Main Charts Row */}
       <PerformanceCharts
         velocityTrend={stats.velocityTrend}
         slaData={stats.slaData}
@@ -193,7 +191,6 @@ export default function ReportClient({ initialProjects }: Props) {
         granularity={granularity}
       />
 
-      {/* Branch Table */}
       <BranchRanking branchData={stats.branchData} />
     </div>
   );

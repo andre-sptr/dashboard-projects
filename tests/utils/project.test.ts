@@ -1,3 +1,4 @@
+// Unit tests for project-specific calculations and status classification
 import { describe, it, expect } from 'vitest';
 import { classifyStatus, parseNumber, getPortCount } from '@/utils/project';
 

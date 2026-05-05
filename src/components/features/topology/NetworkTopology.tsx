@@ -1,3 +1,4 @@
+// Visual representation of network node hierarchy
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -75,7 +76,6 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
 
   return (
     <div className="space-y-6">
-      {/* Filters & Control */}
       <div className="flex flex-wrap items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl">
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 rounded-xl text-white">
@@ -128,10 +128,8 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
         </div>
       </div>
 
-      {/* Topology Canvas */}
       <div className="glass-panel p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden min-h-[600px] bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.05),transparent)]">
         <div className="relative max-w-4xl mx-auto">
-            {/* Root Node (The Cloud/Backbone) */}
             <div className="flex flex-col items-center">
                 <div className="relative group cursor-pointer">
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
@@ -146,13 +144,11 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
                     </div>
                 </div>
 
-                {/* Tree Branches */}
                 <div className="mt-12 w-full space-y-12">
                     {areas
                       .filter(a => !selectedArea || a === selectedArea)
                       .map((area, aIdx) => (
                         <div key={area} className="relative pl-8">
-                            {/* Vertical Line for Area */}
                             <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 to-transparent" />
                             
                             <div className="flex items-center gap-3 mb-6">
@@ -172,7 +168,6 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
                                 .filter(b => !selectedBranch || b === selectedBranch)
                                 .map((branch) => (
                                     <div key={branch} className="ml-8 mb-8 relative">
-                                        {/* Vertical Line for Branch */}
                                         <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
                                         
                                         <div className="flex items-center gap-3 mb-4">
@@ -190,7 +185,6 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
 
                                         {expandedNodes[`BRANCH-${branch}`] && Object.values(data[area][branch] as any).map((olt: any) => (
                                             <div key={olt.name} className="ml-8 mt-6">
-                                                {/* OLT Node */}
                                                 <div className="flex items-center gap-4 mb-6">
                                                     <div className="relative group">
                                                         <div className="absolute -inset-0.5 bg-emerald-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
@@ -208,11 +202,9 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
                                                         </div>
                                                     </div>
                                                     
-                                                    {/* Connector Line to ODCs */}
                                                     <div className="flex-1 h-px bg-gradient-to-r from-emerald-500/50 to-transparent" />
                                                 </div>
 
-                                                {/* ODC Children */}
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-4">
                                                     {Object.values(olt.odcs as any).map((odc: any) => (
                                                         <div key={odc.name} className="relative p-4 bg-gray-50/50 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700 rounded-2xl hover:border-blue-500/50 transition-colors group">
@@ -237,7 +229,6 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
                                                                 </div>
                                                             </div>
 
-                                                            {/* ODP Mini Nodes */}
                                                             <div className="flex flex-wrap gap-1.5">
                                                                 {odc.odps.slice(0, 12).map((odp: any) => (
                                                                     <div 
@@ -272,7 +263,6 @@ export default function NetworkTopology({ initialData }: { initialData: any }) {
         </div>
       </div>
 
-      {/* Legend */}
       <div className="flex items-center justify-center gap-8 py-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-emerald-500" />

@@ -1,3 +1,4 @@
+// Search bar and filter dropdowns for dashboard
 import React from 'react';
 import { Search } from 'lucide-react';
 
@@ -62,7 +63,6 @@ export const FilterSection = ({
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {/* Status Filter */}
         <div className="space-y-1">
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Status</label>
           <select
@@ -78,7 +78,6 @@ export const FilterSection = ({
           </select>
         </div>
 
-        {/* Sub Status Filter */}
         <div className="space-y-1">
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Sub Status</label>
           <select
@@ -94,7 +93,6 @@ export const FilterSection = ({
           </select>
         </div>
 
-        {/* Area Filter */}
         <div className="space-y-1">
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Area</label>
           <select
@@ -110,7 +108,6 @@ export const FilterSection = ({
           </select>
         </div>
 
-        {/* Branch Filter */}
         <div className="space-y-1">
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Branch</label>
           <select

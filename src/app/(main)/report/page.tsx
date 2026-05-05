@@ -1,3 +1,4 @@
+// Detailed KPI analytics and reporting interface
 import { ProjectRepository } from '@/repositories/ProjectRepository';
 import { Project } from '@/lib/db';
 import ReportClient from '@/components/features/report/ReportClient';
