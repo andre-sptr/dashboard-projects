@@ -53,17 +53,17 @@ export function handleError(error: Error | AppError): NextResponse {
     {
       success: false,
       error: message,
-      ...(details && { details }),
+      ...(details ? { details } : {}),
     },
     { status: statusCode }
   );
 }
 
 // Wrap async API handler with error handling
-export function withErrorHandling<T extends (...args: unknown[]) => Promise<NextResponse>>(
+export function withErrorHandling<T extends (...args: any[]) => Promise<NextResponse>>(
   handler: T
 ): T {
-  return (async (...args: unknown[]) => {
+  return (async (...args: any[]) => {
     try {
       return await handler(...args);
     } catch (error) {

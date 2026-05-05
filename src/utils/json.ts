@@ -102,7 +102,7 @@ export function extractFields<T extends Record<string, unknown>>(
 
   for (const field of fields) {
     if (field in obj) {
-      result[field as keyof T] = obj[field];
+      result[field as keyof T] = obj[field as keyof T] as any;
     }
   }
 
@@ -115,7 +115,7 @@ export function removeNullish<T extends Record<string, unknown>>(obj: T): Partia
 
   for (const [key, value] of Object.entries(obj)) {
     if (value !== null && value !== undefined) {
-      result[key as keyof T] = value;
+      result[key as keyof T] = value as any;
     }
   }
 

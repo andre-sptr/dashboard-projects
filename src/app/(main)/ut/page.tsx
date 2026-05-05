@@ -33,6 +33,12 @@ interface UTData {
   created_at: string;
 }
 
+interface BoqUtRow {
+  id_ihld: string;
+  batch_program: string;
+  full_data: string;
+}
+
 const ITEMS_PER_PAGE = 5;
 
 const COMMTEST_UT_OPTIONS = [
@@ -770,7 +776,7 @@ export default function UTPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {boqRows.map((row, idx) => {
+                    {(boqRows as BoqUtRow[]).map((row, idx) => {
                       return (
                         <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/20 transition-colors">
                           <td className="px-3 py-2 text-xs font-bold text-gray-900 dark:text-white">{row.id_ihld}</td>

@@ -62,7 +62,7 @@ export function getNetworkHierarchy(): TopologyHierarchy {
     const hierarchy: TopologyHierarchy = {};
 
     projects.forEach(p => {
-        const fd = parseJsonArray(p.full_data || '[]');
+        const fd = parseJsonArray<any>(p.full_data || '[]');
 
         const sto = fd[COLUMNS.STO] || 'UNKNOWN STO';
         const area = fd[COLUMNS.AREA] || 'UNKNOWN AREA';

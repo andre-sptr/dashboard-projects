@@ -104,7 +104,7 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
                         className="bg-transparent border-none text-xs font-bold focus:ring-0 cursor-pointer"
                     >
                         <option value="">ALL BRANCHES</option>
-                        {Object.keys(data[selectedArea] || {}).map(b => <option key={b} value={b}>{b}</option>)}
+                        {Object.keys((data?.[selectedArea] || {})).map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                 </div>
             )}
@@ -163,7 +163,7 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
                                 </div>
                             </div>
 
-                            {expandedNodes[`AREA-${area}`] && Object.keys(data[area])
+                            {expandedNodes[`AREA-${area}`] && Object.keys(data?.[area] || {})
                                 .filter(b => !selectedBranch || b === selectedBranch)
                                 .map((branch) => (
                                     <div key={branch} className="ml-8 mb-8 relative">
@@ -182,7 +182,7 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
                                             </div>
                                         </div>
 
-                                        {expandedNodes[`BRANCH-${branch}`] && Object.values((data?.[area]?.[branch] as OltData) || {}).map((olt: OltData) => (
+                                        {expandedNodes[`BRANCH-${branch}`] && (Object.values((data?.[area]?.[branch] as any) || {}) as OltData[]).map((olt: OltData) => (
                                             <div key={olt.name} className="ml-8 mt-6">
                                                 <div className="flex items-center gap-4 mb-6">
                                                     <div className="relative group">

@@ -64,7 +64,7 @@ export const PerformanceCharts = ({
                 <YAxis fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => v.toLocaleString()} />
                 <Tooltip
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(v: number) => v.toLocaleString('id-ID')}
+                  formatter={(v: any) => (v as number).toLocaleString('id-ID')}
                 />
                 <Area type="monotone" dataKey="cumulative" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorCumulative)" name="Cumulative Ports" />
               </AreaChart>
@@ -94,7 +94,7 @@ export const PerformanceCharts = ({
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `${v} Proyek`} />
+                  <Tooltip formatter={(v: any) => `${v} Proyek`} />
                   <Legend verticalAlign="bottom" iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
@@ -132,11 +132,11 @@ export const PerformanceCharts = ({
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} />
               <YAxis fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => v.toLocaleString()} />
-              <Tooltip
-                cursor={{ fill: 'transparent' }}
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                formatter={(v: number) => v.toLocaleString('id-ID')}
-              />
+                <Tooltip
+                  cursor={{ fill: 'transparent' }}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  formatter={(v: any) => (v as number).toLocaleString('id-ID')}
+                />
               <Bar
                 dataKey="actual"
                 fill="#10b981"

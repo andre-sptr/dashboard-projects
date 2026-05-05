@@ -169,7 +169,7 @@ export function formatErrorForResponse(error: Error): {
     }
   } else {
     response.details = {
-      ...response.details,
+      ...(typeof response.details === 'object' && response.details !== null ? response.details : {}),
       stack: error.stack,
     };
   }
