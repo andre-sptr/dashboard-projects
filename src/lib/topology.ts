@@ -105,30 +105,37 @@ export function getNetworkHierarchy(): TopologyHierarchy {
             olt.odcs[odcName].realizedPorts += realizedPorts;
         }
 
+        const odc = olt.odcs[odcName];
         const odpData = fd[COLUMNS.ODP_DATA] || '';
+        
         if (odpData && typeof odpData === 'string' && odpData.includes('#')) {
             const odpIds = odpData.split('#');
             odpIds.forEach(id => {
-                olt.odcs[odcName].odps.push({
-                    id: id,
-                    name: `ODP-${id}`,
-                    type: 'ODP',
-                    status: status,
-                    plannedPorts: 8,
-                    realizedPorts: status.toLowerCase().includes('done') ? 8 : 0
-                });
+                if (!odc.odps.some(o => o.id === id)) {
+                    odc.odps.push({
+                        id: id,
+                        name: `ODP-${id}`,
+                        type: 'ODP',
+                        status: status,
+                        plannedPorts: 8,
+                        realizedPorts: status.toLowerCase().includes('done') ? 8 : 0
+                    });
+                }
             });
         } else {
             const odpCount = Number(fd[COLUMNS.ODP_COUNT]) || 1;
             for (let i = 1; i <= odpCount; i++) {
-                olt.odcs[odcName].odps.push({
-                    id: `${p.id_ihld}-${i}`,
-                    name: `ODP-${sto}-${i}`,
-                    type: 'ODP',
-                    status: status,
-                    plannedPorts: 8,
-                    realizedPorts: status.toLowerCase().includes('done') ? 8 : 0
-                });
+                const odpId = `${p.id_ihld}-${i}`;
+                if (!odc.odps.some(o => o.id === odpId)) {
+                    odc.odps.push({
+                        id: odpId,
+                        name: `ODP-${sto}-${i}`,
+                        type: 'ODP',
+                        status: status,
+                        plannedPorts: 8,
+                        realizedPorts: status.toLowerCase().includes('done') ? 8 : 0
+                    });
+                }
             }
         }
     });

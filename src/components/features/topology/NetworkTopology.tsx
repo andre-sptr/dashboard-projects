@@ -229,9 +229,9 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
                                                             </div>
 
                                                             <div className="flex flex-wrap gap-1.5">
-                                                                {odc.odps.slice(0, 12).map((odp) => (
+                                                                {odc.odps.slice(0, 12).map((odp, idx) => (
                                                                     <div 
-                                                                        key={odp.id} 
+                                                                        key={`${odp.id}-${idx}`} 
                                                                         className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all cursor-help
                                                                             ${odp.status.toLowerCase().includes('done') 
                                                                                 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500/30 text-emerald-600' 
