@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Box, Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
 import { FormModal } from '@/components/ui/FormModal';
 import { OdcForm } from '@/components/features/odc/OdcForm';
+import { ExportButton } from '@/components/ui/ExportButton';
+import { exportToExcel, exportToCSV } from '@/utils/export';
 import { useToast } from '@/hooks/useToast';
 import { useConfirm } from '@/hooks/useConfirm';
 import type { OdcFormData } from '@/lib/validation';
@@ -147,6 +149,33 @@ export default function OdcInventoryPage() {
     }
   };
 
+  const handleExport = (format: 'excel' | 'csv') => {
+    const columns = [
+      { key: 'odc_name' as keyof OdcDevice, label: 'ODC Name' },
+      { key: 'regional' as keyof OdcDevice, label: 'Regional' },
+      { key: 'witel' as keyof OdcDevice, label: 'Witel' },
+      { key: 'datel' as keyof OdcDevice, label: 'Datel' },
+      { key: 'sto' as keyof OdcDevice, label: 'STO' },
+      { key: 'splitter_type' as keyof OdcDevice, label: 'Splitter Type' },
+      { key: 'max_capacity' as keyof OdcDevice, label: 'Max Capacity' },
+      { key: 'used_capacity' as keyof OdcDevice, label: 'Used Capacity' },
+      { key: 'available_capacity' as keyof OdcDevice, label: 'Available Capacity' },
+      { key: 'status' as keyof OdcDevice, label: 'Status' },
+      { key: 'polygon_status' as keyof OdcDevice, label: 'Polygon Status' },
+    ];
+
+    if (format === 'excel') {
+      exportToExcel(filteredOdcs, columns, 'odc-inventory');
+    } else {
+      exportToCSV(filteredOdcs, columns, 'odc-inventory');
+    }
+
+    showToast({
+      type: 'success',
+      message: `Data exported successfully as ${format.toUpperCase()}`,
+    });
+  };
+
   const filteredOdcs = odcs.filter(odc =>
     odc.odc_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     odc.sto.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -196,13 +225,19 @@ export default function OdcInventoryPage() {
             Manage Optical Distribution Cabinets
           </p>
         </div>
-        <button
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          onClick={handleAddOdc}
-        >
-          <Plus size={18} />
-          Add ODC
-        </button>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            onExport={handleExport}
+            disabled={filteredOdcs.length === 0}
+          />
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={handleAddOdc}
+          >
+            <Plus size={18} />
+            Add ODC
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}

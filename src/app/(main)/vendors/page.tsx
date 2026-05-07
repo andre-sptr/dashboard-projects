@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Users, Plus, Search, Filter, Star, Edit, Trash2 } from 'lucide-react';
 import { FormModal } from '@/components/ui/FormModal';
 import { VendorForm } from '@/components/features/vendors/VendorForm';
+import { ExportButton } from '@/components/ui/ExportButton';
+import { exportToExcel, exportToCSV } from '@/utils/export';
 import { useToast } from '@/hooks/useToast';
 import { useConfirm } from '@/hooks/useConfirm';
 import type { VendorFormData } from '@/lib/validation';
@@ -146,6 +148,33 @@ export default function VendorManagementPage() {
     }
   };
 
+  const handleExport = (format: 'excel' | 'csv') => {
+    const columns = [
+      { key: 'vendor_name' as keyof Vendor, label: 'Vendor Name' },
+      { key: 'vendor_code' as keyof Vendor, label: 'Vendor Code' },
+      { key: 'contact_person' as keyof Vendor, label: 'Contact Person' },
+      { key: 'phone' as keyof Vendor, label: 'Phone' },
+      { key: 'email' as keyof Vendor, label: 'Email' },
+      { key: 'rating' as keyof Vendor, label: 'Rating' },
+      { key: 'total_projects' as keyof Vendor, label: 'Total Projects' },
+      { key: 'completed_projects' as keyof Vendor, label: 'Completed Projects' },
+      { key: 'on_time_delivery_rate' as keyof Vendor, label: 'On-Time Delivery (%)' },
+      { key: 'quality_score' as keyof Vendor, label: 'Quality Score (%)' },
+      { key: 'status' as keyof Vendor, label: 'Status' },
+    ];
+
+    if (format === 'excel') {
+      exportToExcel(filteredVendors, columns, 'vendor-list');
+    } else {
+      exportToCSV(filteredVendors, columns, 'vendor-list');
+    }
+
+    showToast({
+      type: 'success',
+      message: `Data exported successfully as ${format.toUpperCase()}`,
+    });
+  };
+
   const filteredVendors = vendors.filter(vendor =>
     vendor.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (vendor.vendor_code && vendor.vendor_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -202,13 +231,19 @@ export default function VendorManagementPage() {
             Manage vendors and track performance
           </p>
         </div>
-        <button
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          onClick={handleAddVendor}
-        >
-          <Plus size={18} />
-          Add Vendor
-        </button>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            onExport={handleExport}
+            disabled={filteredVendors.length === 0}
+          />
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={handleAddVendor}
+          >
+            <Plus size={18} />
+            Add Vendor
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}

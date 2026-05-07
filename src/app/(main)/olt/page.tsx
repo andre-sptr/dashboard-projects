@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Server, Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
 import { FormModal } from '@/components/ui/FormModal';
 import { OltForm } from '@/components/features/olt/OltForm';
+import { ExportButton } from '@/components/ui/ExportButton';
+import { exportToExcel, exportToCSV } from '@/utils/export';
 import { useToast } from '@/hooks/useToast';
 import { useConfirm } from '@/hooks/useConfirm';
 import type { OltFormData } from '@/lib/validation';
@@ -145,6 +147,31 @@ export default function OltInventoryPage() {
     }
   };
 
+  const handleExport = (format: 'excel' | 'csv') => {
+    const columns = [
+      { key: 'hostname' as keyof OltDevice, label: 'Hostname' },
+      { key: 'ip_address' as keyof OltDevice, label: 'IP Address' },
+      { key: 'area' as keyof OltDevice, label: 'Area' },
+      { key: 'branch' as keyof OltDevice, label: 'Branch' },
+      { key: 'sto' as keyof OltDevice, label: 'STO' },
+      { key: 'total_ports' as keyof OltDevice, label: 'Total Ports' },
+      { key: 'used_ports' as keyof OltDevice, label: 'Used Ports' },
+      { key: 'available_ports' as keyof OltDevice, label: 'Available Ports' },
+      { key: 'status' as keyof OltDevice, label: 'Status' },
+    ];
+
+    if (format === 'excel') {
+      exportToExcel(filteredOlts, columns, 'olt-inventory');
+    } else {
+      exportToCSV(filteredOlts, columns, 'olt-inventory');
+    }
+
+    showToast({
+      type: 'success',
+      message: `Data exported successfully as ${format.toUpperCase()}`,
+    });
+  };
+
   const filteredOlts = olts.filter(olt =>
     olt.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     olt.ip_address.includes(searchTerm) ||
@@ -183,13 +210,19 @@ export default function OltInventoryPage() {
             Manage and monitor OLT devices
           </p>
         </div>
-        <button
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          onClick={handleAddOlt}
-        >
-          <Plus size={18} />
-          Add OLT
-        </button>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            onExport={handleExport}
+            disabled={filteredOlts.length === 0}
+          />
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={handleAddOlt}
+          >
+            <Plus size={18} />
+            Add OLT
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
