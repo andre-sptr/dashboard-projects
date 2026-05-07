@@ -74,7 +74,7 @@ export class FileStorage {
         return fs.statSync(fullPath);
       }
       return null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

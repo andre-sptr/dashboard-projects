@@ -1,18 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   History, 
   User, 
   Tag, 
-  Calendar, 
-  Info, 
-  ChevronRight, 
   Search,
-  Filter,
   Loader2,
   Clock,
-  ArrowRight
 } from 'lucide-react';
 
 interface AuditLog {
@@ -32,11 +27,7 @@ export default function AuditTimeline() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
 
-  useEffect(() => {
-    fetchLogs();
-  }, []);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/audit-logs?limit=100');
@@ -48,7 +39,15 @@ export default function AuditTimeline() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchLogs();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [fetchLogs]);
 
   const filteredLogs = logs.filter(log => {
     const matchesSearch = 

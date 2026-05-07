@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { KPIOverview } from '@/components/features/analytics/KPIOverview';
 import { StatusChart } from '@/components/features/analytics/StatusChart';
 import { TrendChart } from '@/components/features/analytics/TrendChart';
@@ -10,12 +10,42 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { RefreshCw, Download } from 'lucide-react';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
+interface AnalyticsData {
+  kpis: React.ComponentProps<typeof KPIOverview>['data'];
+  distribution: React.ComponentProps<typeof StatusChart>['data'];
+  trends: React.ComponentProps<typeof TrendChart>['data'];
+  durations: React.ComponentProps<typeof DurationChart>['data'];
+  predictions: React.ComponentProps<typeof PredictivePanel>['data'];
+}
+
+const EMPTY_ANALYTICS: AnalyticsData = {
+  kpis: {
+    totalProjects: 0,
+    completedProjects: 0,
+    onTrackProjects: 0,
+    atRiskProjects: 0,
+    slaComplianceRate: 0,
+    totalBoqValue: 0,
+    avgCompletionPercentage: 0,
+  },
+  distribution: [],
+  trends: [],
+  durations: [],
+  predictions: {
+    avgMonthlyCompletion: '0',
+    remainingProjects: 0,
+    estimatedMonthsToFinish: '0',
+    confidenceScore: 0,
+  },
+};
+
 export default function AnalyticsPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AnalyticsData>(EMPTY_ANALYTICS);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { subscribe, unsubscribe } = useWebSocket();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setRefreshing(true);
       const res = await fetch('/api/analytics');
@@ -29,16 +59,30 @@ export default function AnalyticsPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
   }, []);
 
-  // Listen for sync completion to refresh charts
-  useWebSocket('sync.completed', () => {
-    fetchData();
-  });
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchData();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [fetchData]);
+
+  useEffect(() => {
+    const handleSyncCompleted = () => {
+      void fetchData();
+    };
+
+    subscribe('sync.completed', handleSyncCompleted);
+    return () => {
+      unsubscribe('sync.completed', handleSyncCompleted);
+    };
+  }, [fetchData, subscribe, unsubscribe]);
+
+  const handleRefresh = () => {
+    void fetchData();
+  };
 
   if (loading) {
     return (
@@ -75,7 +119,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={fetchData}
+            onClick={handleRefresh}
             disabled={refreshing}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
           >

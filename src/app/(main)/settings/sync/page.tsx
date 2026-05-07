@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   RefreshCw, 
   CheckCircle2, 
@@ -30,15 +30,20 @@ interface SyncLog {
   error_message?: string;
 }
 
+interface SyncStatus {
+  isRunning?: boolean;
+  latestSync?: SyncLog;
+}
+
 export default function SyncSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [status, setStatus] = useState<any>(null);
+  const [status, setStatus] = useState<SyncStatus | null>(null);
   const [history, setHistory] = useState<SyncLog[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { subscribe, unsubscribe } = useWebSocket();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [statusRes, historyRes] = await Promise.all([
@@ -48,27 +53,30 @@ export default function SyncSettingsPage() {
 
       if (statusRes.success) setStatus(statusRes.data);
       if (historyRes.success) setHistory(historyRes.data);
-    } catch (err) {
+    } catch {
       setError('Gagal mengambil data sinkronisasi');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
+    const timeoutId = window.setTimeout(() => {
+      void fetchData();
+    }, 0);
 
-    const handleSyncCompleted = (data: any) => {
+    const handleSyncCompleted = (data: Record<string, unknown>) => {
       console.log('[SyncSettings] Sync completed event:', data);
-      fetchData();
+      void fetchData();
       setSyncing(false);
     };
 
     subscribe('sync.completed', handleSyncCompleted);
     return () => {
+      window.clearTimeout(timeoutId);
       unsubscribe('sync.completed', handleSyncCompleted);
     };
-  }, [subscribe, unsubscribe]);
+  }, [fetchData, subscribe, unsubscribe]);
 
   const handleManualSync = async () => {
     if (syncing) return;
@@ -78,11 +86,11 @@ export default function SyncSettingsPage() {
       const res = await fetch('/api/sync', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        fetchData();
+        void fetchData();
       } else {
         setError(data.message || 'Gagal memulai sinkronisasi');
       }
-    } catch (err) {
+    } catch {
       setError('Terjadi kesalahan jaringan');
     } finally {
       setSyncing(false);

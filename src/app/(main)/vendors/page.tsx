@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Search, Filter, Star, Edit, Trash2 } from 'lucide-react';
 import { FormModal } from '@/components/ui/FormModal';
 import { VendorForm } from '@/components/features/vendors/VendorForm';
@@ -33,6 +33,25 @@ interface VendorStats {
   total_contract_value: number;
 }
 
+const VENDOR_STATUSES: VendorFormData['status'][] = ['active', 'inactive'];
+
+function getVendorInitialData(vendor: Vendor | null): Partial<VendorFormData> | undefined {
+  if (!vendor) return undefined;
+  const status = VENDOR_STATUSES.includes(vendor.status as VendorFormData['status'])
+    ? (vendor.status as VendorFormData['status'])
+    : 'active';
+
+  return {
+    vendor_name: vendor.vendor_name,
+    vendor_code: vendor.vendor_code || '',
+    contact_person: vendor.contact_person || '',
+    phone: vendor.phone || '',
+    email: vendor.email || '',
+    rating: vendor.rating,
+    status,
+  };
+}
+
 export default function VendorManagementPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [stats, setStats] = useState<VendorStats | null>(null);
@@ -45,11 +64,7 @@ export default function VendorManagementPage() {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
 
-  useEffect(() => {
-    fetchVendors();
-  }, []);
-
-  const fetchVendors = async () => {
+  const fetchVendors = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/vendors');
@@ -71,7 +86,15 @@ export default function VendorManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchVendors();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [fetchVendors]);
 
   const handleAddVendor = () => {
     setEditingVendor(null);
@@ -106,7 +129,7 @@ export default function VendorManagementPage() {
         message: `Vendor ${vendor.vendor_name} deleted successfully`,
       });
 
-      fetchVendors();
+      void fetchVendors();
     } catch (err) {
       showToast({
         type: 'error',
@@ -138,7 +161,7 @@ export default function VendorManagementPage() {
 
       setIsModalOpen(false);
       setEditingVendor(null);
-      fetchVendors();
+      void fetchVendors();
     } catch (err) {
       showToast({
         type: 'error',
@@ -452,7 +475,7 @@ export default function VendorManagementPage() {
         title={editingVendor ? 'Edit Vendor' : 'Add New Vendor'}
       >
         <VendorForm
-          initialData={editingVendor as any}
+          initialData={getVendorInitialData(editingVendor)}
           onSubmit={handleSubmitVendor}
           onCancel={() => {
             setIsModalOpen(false);

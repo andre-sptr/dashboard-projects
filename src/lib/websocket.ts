@@ -40,7 +40,7 @@ export class WebSocketServer {
     return this.io!;
   }
 
-  static emit(event: string, data: any, room?: string) {
+  static emit(event: string, data: unknown, room?: string) {
     if (!this.io) return;
     if (room) {
       this.io.to(room).emit(event, data);

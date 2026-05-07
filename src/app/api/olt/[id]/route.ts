@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { OltRepository } from '@/repositories/OltRepository';
-import { oltUpdateSchema, safeValidate, formatValidationError } from '@/lib/validation';
+import { oltUpdateSchema, safeValidate, formatValidationError, type OltUpdateInput } from '@/lib/validation';
 import { successResponse, errorResponse } from '@/lib/response';
 
 /**
@@ -79,7 +79,7 @@ export async function PUT(
     }
 
     // Calculate available ports if total_ports or used_ports changed
-    const updateData: any = { ...data };
+    const updateData: OltUpdateInput = { ...data };
     if (data.total_ports !== undefined || data.used_ports !== undefined) {
       const totalPorts = data.total_ports ?? existing.total_ports;
       const usedPorts = data.used_ports ?? existing.used_ports;

@@ -40,7 +40,7 @@ export class DocumentRepository {
 
   static update(id: string, data: Partial<Omit<Document, 'id' | 'project_uid'>>) {
     const sets: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined) {

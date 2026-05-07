@@ -4,7 +4,20 @@ import fs from 'fs';
 import { initializeSchema } from './schema';
 import { getDatabasePath } from './env';
 
-const dbPath = path.join(process.cwd(), getDatabasePath());
+function resolveDatabasePath(configuredPath: string): string {
+  if (path.isAbsolute(configuredPath)) {
+    return configuredPath;
+  }
+
+  const normalizedPath = configuredPath.replace(/^[./\\]+/, '').replace(/\\/g, '/');
+  if (normalizedPath === 'data/projects.db') {
+    return path.join(process.cwd(), 'data', 'projects.db');
+  }
+
+  return path.join(/* turbopackIgnore: true */ process.cwd(), configuredPath);
+}
+
+const dbPath = resolveDatabasePath(getDatabasePath());
 const dbDir = path.dirname(dbPath);
 
 if (!fs.existsSync(dbDir)) {

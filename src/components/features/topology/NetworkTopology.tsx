@@ -182,7 +182,7 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
                                             </div>
                                         </div>
 
-                                        {expandedNodes[`BRANCH-${branch}`] && (Object.values((data?.[area]?.[branch] as any) || {}) as OltData[]).map((olt: OltData) => (
+                                        {expandedNodes[`BRANCH-${branch}`] && (Object.values(data?.[area]?.[branch] || {}) as OltData[]).map((olt: OltData) => (
                                             <div key={olt.name} className="ml-8 mt-6">
                                                 <div className="flex items-center gap-4 mb-6">
                                                     <div className="relative group">

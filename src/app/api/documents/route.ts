@@ -14,8 +14,9 @@ export async function GET(request: NextRequest) {
   try {
     const documents = DocumentRepository.getByProjectId(projectUid);
     return NextResponse.json(documents);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch documents';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -60,8 +61,9 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json(document);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Upload error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to upload document';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

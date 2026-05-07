@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   File, 
   Upload, 
@@ -44,23 +44,27 @@ export default function DocumentManager({ projectUid }: Props) {
   });
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch(`/api/documents?projectUid=${projectUid}`);
       if (!res.ok) throw new Error('Failed to fetch documents');
       const data = await res.json();
       setDocuments(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch documents');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [projectUid]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [projectUid]);
+    const timeoutId = window.setTimeout(() => {
+      void fetchDocuments();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [fetchDocuments]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -96,8 +100,8 @@ export default function DocumentManager({ projectUid }: Props) {
       await fetchDocuments();
       setShowUploadModal(false);
       setUploadData({ category: 'General', notes: '', file: null });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);
     }
@@ -110,8 +114,8 @@ export default function DocumentManager({ projectUid }: Props) {
       const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete document');
       setDocuments(documents.filter(doc => doc.id !== id));
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete document');
     }
   };
 

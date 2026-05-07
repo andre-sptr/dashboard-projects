@@ -60,6 +60,14 @@ export interface OltCapacityStats {
   utilization_percentage: number;
 }
 
+interface OltCapacityStatsRow {
+  total_devices: number | null;
+  active_devices: number | null;
+  total_ports: number | null;
+  used_ports: number | null;
+  available_ports: number | null;
+}
+
 /**
  * Repository for OLT Inventory management
  * Handles all database operations for OLT devices
@@ -70,7 +78,7 @@ export class OltRepository {
    */
   static findAll(filters?: OltFilters): OltInventory[] {
     let query = 'SELECT * FROM olt_inventory WHERE 1=1';
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (filters?.area) {
       query += ' AND area = ?';
@@ -195,7 +203,7 @@ export class OltRepository {
     if (!existing) return undefined;
 
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     // Build dynamic update query
     Object.entries(data).forEach(([key, value]) => {
@@ -257,7 +265,7 @@ export class OltRepository {
       FROM olt_inventory
       WHERE 1=1
     `;
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (filters?.area) {
       query += ' AND area = ?';
@@ -269,18 +277,18 @@ export class OltRepository {
       params.push(filters.status);
     }
 
-    const result = db.prepare(query).get(...params) as any;
+    const result = db.prepare(query).get(...params) as OltCapacityStatsRow | undefined;
 
-    const totalPorts = result.total_ports || 0;
-    const usedPorts = result.used_ports || 0;
+    const totalPorts = result?.total_ports || 0;
+    const usedPorts = result?.used_ports || 0;
     const utilizationPercentage = totalPorts > 0 ? (usedPorts / totalPorts) * 100 : 0;
 
     return {
-      total_devices: result.total_devices || 0,
-      active_devices: result.active_devices || 0,
+      total_devices: result?.total_devices || 0,
+      active_devices: result?.active_devices || 0,
       total_ports: totalPorts,
       used_ports: usedPorts,
-      available_ports: result.available_ports || 0,
+      available_ports: result?.available_ports || 0,
       utilization_percentage: Math.round(utilizationPercentage * 100) / 100,
     };
   }

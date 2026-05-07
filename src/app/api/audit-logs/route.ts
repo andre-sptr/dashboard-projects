@@ -10,8 +10,9 @@ export async function GET(request: Request) {
   try {
     const logs = await AuditLogRepository.getRecentLogs(limit, offset, projectUid);
     return NextResponse.json(logs);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[API Audit Logs] Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to fetch audit logs';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

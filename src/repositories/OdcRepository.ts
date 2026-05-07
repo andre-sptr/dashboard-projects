@@ -53,6 +53,19 @@ export interface OdcCapacityStats {
   utilization_percentage: number;
 }
 
+interface OdcCapacityStatsRow {
+  total_odcs: number | null;
+  active_odcs: number | null;
+  total_capacity: number | null;
+  used_capacity: number | null;
+  available_capacity: number | null;
+}
+
+export interface OdcWithOlt extends OdcInventory {
+  olt_hostname: string | null;
+  olt_ip_address: string | null;
+}
+
 /**
  * Repository for ODC Inventory management
  * Handles all database operations for ODC devices
@@ -63,7 +76,7 @@ export class OdcRepository {
    */
   static findAll(filters?: OdcFilters): OdcInventory[] {
     let query = 'SELECT * FROM odc_inventory WHERE 1=1';
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (filters?.regional) {
       query += ' AND regional = ?';
@@ -191,7 +204,7 @@ export class OdcRepository {
     if (!existing) return undefined;
 
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     // Build dynamic update query
     Object.entries(data).forEach(([key, value]) => {
@@ -253,7 +266,7 @@ export class OdcRepository {
       FROM odc_inventory
       WHERE 1=1
     `;
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (filters?.sto) {
       query += ' AND sto = ?';
@@ -270,18 +283,18 @@ export class OdcRepository {
       params.push(filters.status);
     }
 
-    const result = db.prepare(query).get(...params) as any;
+    const result = db.prepare(query).get(...params) as OdcCapacityStatsRow | undefined;
 
-    const totalCapacity = result.total_capacity || 0;
-    const usedCapacity = result.used_capacity || 0;
+    const totalCapacity = result?.total_capacity || 0;
+    const usedCapacity = result?.used_capacity || 0;
     const utilizationPercentage = totalCapacity > 0 ? (usedCapacity / totalCapacity) * 100 : 0;
 
     return {
-      total_odcs: result.total_odcs || 0,
-      active_odcs: result.active_odcs || 0,
+      total_odcs: result?.total_odcs || 0,
+      active_odcs: result?.active_odcs || 0,
       total_capacity: totalCapacity,
       used_capacity: usedCapacity,
-      available_capacity: result.available_capacity || 0,
+      available_capacity: result?.available_capacity || 0,
       utilization_percentage: Math.round(utilizationPercentage * 100) / 100,
     };
   }
@@ -357,7 +370,7 @@ export class OdcRepository {
   /**
    * Get ODCs with OLT information (joined query)
    */
-  static findAllWithOlt(filters?: OdcFilters): any[] {
+  static findAllWithOlt(filters?: OdcFilters): OdcWithOlt[] {
     let query = `
       SELECT 
         odc.*,
@@ -367,7 +380,7 @@ export class OdcRepository {
       LEFT JOIN olt_inventory olt ON odc.olt_id = olt.id
       WHERE 1=1
     `;
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (filters?.sto) {
       query += ' AND odc.sto = ?';
@@ -387,7 +400,7 @@ export class OdcRepository {
 
     query += ' ORDER BY odc.created_at DESC';
 
-    return db.prepare(query).all(...params);
+    return db.prepare(query).all(...params) as OdcWithOlt[];
   }
 }
 

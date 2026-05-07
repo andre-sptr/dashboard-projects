@@ -53,7 +53,10 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
                 />
                 <Tooltip
                   cursor={{ fill: 'transparent' }}
-                  formatter={(value: any) => (value as number).toLocaleString('id-ID')}
+                  formatter={(value) => {
+                    const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
+                    return numericValue.toLocaleString('id-ID');
+                  }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Bar

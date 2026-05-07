@@ -29,12 +29,25 @@ export interface TrendData {
   completed: number;
 }
 
+interface ProjectAnalyticsRow {
+  status: string;
+  boq_value: number | null;
+  completion_percentage: number | null;
+  golive_target: string | null;
+  golive_actual: string | null;
+}
+
+interface HistoryStatusEntry {
+  status?: string;
+  timestamp?: string;
+}
+
 export class AnalyticsService {
   /**
    * Get high-level KPI overview
    */
   static async getKPIs(): Promise<KPIStats> {
-    const projects = db.prepare('SELECT status, boq_value, completion_percentage, golive_target, golive_actual FROM projects').all() as any[];
+    const projects = db.prepare('SELECT status, boq_value, completion_percentage, golive_target, golive_actual FROM projects').all() as ProjectAnalyticsRow[];
     
     const totalProjects = projects.length;
     const completedProjects = projects.filter(p => p.status === 'DONE' || p.status === 'GOLIVE').length;
@@ -44,7 +57,10 @@ export class AnalyticsService {
       : 0;
 
     // SLA Compliance: Actual <= Target for completed projects
-    const completedWithDates = projects.filter(p => p.golive_actual && p.golive_target);
+    const completedWithDates = projects.filter(
+      (p): p is ProjectAnalyticsRow & { golive_actual: string; golive_target: string } =>
+        Boolean(p.golive_actual && p.golive_target)
+    );
     const compliantCount = completedWithDates.filter(p => new Date(p.golive_actual) <= new Date(p.golive_target)).length;
     const slaComplianceRate = completedWithDates.length > 0 ? (compliantCount / completedWithDates.length) * 100 : 0;
 
@@ -103,12 +119,12 @@ export class AnalyticsService {
 
     projects.forEach(p => {
       try {
-        const history = JSON.parse(p.history);
+        const history = JSON.parse(p.history) as unknown;
         if (!Array.isArray(history) || history.length < 2) return;
 
         for (let i = 0; i < history.length - 1; i++) {
-          const current = history[i];
-          const next = history[i + 1];
+          const current = history[i] as HistoryStatusEntry;
+          const next = history[i + 1] as HistoryStatusEntry;
           
           if (current.status && current.timestamp && next.timestamp) {
             const duration = (new Date(next.timestamp).getTime() - new Date(current.timestamp).getTime()) / (1000 * 60 * 60 * 24);
@@ -118,7 +134,7 @@ export class AnalyticsService {
             }
           }
         }
-      } catch (e) {
+      } catch {
         // Ignore parse errors
       }
     });

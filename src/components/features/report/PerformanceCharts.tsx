@@ -40,6 +40,11 @@ export const PerformanceCharts = ({
   trendData,
   granularity
 }: PerformanceChartsProps) => {
+  const formatNumber = (value: unknown) => {
+    const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
+    return numericValue.toLocaleString('id-ID');
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -64,7 +69,7 @@ export const PerformanceCharts = ({
                 <YAxis fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => v.toLocaleString()} />
                 <Tooltip
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(v: any) => (v as number).toLocaleString('id-ID')}
+                  formatter={formatNumber}
                 />
                 <Area type="monotone" dataKey="cumulative" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorCumulative)" name="Cumulative Ports" />
               </AreaChart>
@@ -94,7 +99,7 @@ export const PerformanceCharts = ({
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: any) => `${v} Proyek`} />
+                  <Tooltip formatter={(value) => `${value} Proyek`} />
                   <Legend verticalAlign="bottom" iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
@@ -135,7 +140,7 @@ export const PerformanceCharts = ({
                 <Tooltip
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(v: any) => (v as number).toLocaleString('id-ID')}
+                  formatter={formatNumber}
                 />
               <Bar
                 dataKey="actual"

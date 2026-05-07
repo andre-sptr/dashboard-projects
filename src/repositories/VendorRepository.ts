@@ -52,6 +52,20 @@ export interface VendorPerformanceMetrics {
   active_contract: boolean;
 }
 
+interface VendorProjectStatsRow {
+  total: number | null;
+  completed: number | null;
+  in_progress: number | null;
+}
+
+interface VendorOverallStatsRow {
+  total_vendors: number | null;
+  active_vendors: number | null;
+  inactive_vendors: number | null;
+  average_rating: number | null;
+  total_contract_value: number | null;
+}
+
 /**
  * Repository for Vendor management
  * Handles all database operations for vendors/mitras
@@ -62,7 +76,7 @@ export class VendorRepository {
    */
   static findAll(filters?: VendorFilters): Vendor[] {
     let query = 'SELECT * FROM vendors WHERE 1=1';
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (filters?.status) {
       query += ' AND status = ?';
@@ -158,7 +172,7 @@ export class VendorRepository {
     if (!existing) return undefined;
 
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     // Build dynamic update query
     Object.entries(data).forEach(([key, value]) => {
@@ -258,7 +272,7 @@ export class VendorRepository {
         SUM(CASE WHEN status != 'UJI TERIMA' THEN 1 ELSE 0 END) as in_progress
       FROM projects
       WHERE vendor_id = ?
-    `).get(id) as any;
+    `).get(id) as VendorProjectStatsRow | undefined;
 
     const totalProjects = projectStats?.total || vendor.total_projects;
     const completedProjects = projectStats?.completed || vendor.completed_projects;
@@ -348,14 +362,14 @@ export class VendorRepository {
         AVG(rating) as average_rating,
         SUM(contract_value) as total_contract_value
       FROM vendors
-    `).get() as any;
+    `).get() as VendorOverallStatsRow | undefined;
 
     return {
-      total_vendors: result.total_vendors || 0,
-      active_vendors: result.active_vendors || 0,
-      inactive_vendors: result.inactive_vendors || 0,
-      average_rating: Math.round((result.average_rating || 0) * 100) / 100,
-      total_contract_value: result.total_contract_value || 0,
+      total_vendors: result?.total_vendors || 0,
+      active_vendors: result?.active_vendors || 0,
+      inactive_vendors: result?.inactive_vendors || 0,
+      average_rating: Math.round((result?.average_rating || 0) * 100) / 100,
+      total_contract_value: result?.total_contract_value || 0,
     };
   }
 }

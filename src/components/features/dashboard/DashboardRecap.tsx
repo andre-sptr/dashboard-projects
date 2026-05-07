@@ -65,11 +65,6 @@ export default function DashboardRecap({ projects }: Props) {
       }
     }
 
-    const toSortedArr = (m: Map<string, number>) =>
-      Array.from(m.entries())
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count);
-
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();

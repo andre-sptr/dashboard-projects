@@ -50,7 +50,7 @@ export class AuditLogRepository {
 
   static getRecentLogs(limit: number = 50, offset: number = 0, entityId?: string): AuditLog[] {
     let query = 'SELECT * FROM audit_logs';
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (entityId) {
       query += ' WHERE entity_id = ?';

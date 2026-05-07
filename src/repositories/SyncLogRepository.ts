@@ -28,7 +28,7 @@ export class SyncLogRepository {
     details?: string;
   }) {
     const sets: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined) {

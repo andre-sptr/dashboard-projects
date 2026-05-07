@@ -60,10 +60,10 @@ export function handleError(error: Error | AppError): NextResponse {
 }
 
 // Wrap async API handler with error handling
-export function withErrorHandling<T extends (...args: any[]) => Promise<NextResponse>>(
-  handler: T
-): T {
-  return (async (...args: any[]) => {
+export function withErrorHandling<Args extends unknown[]>(
+  handler: (...args: Args) => Promise<NextResponse>
+): (...args: Args) => Promise<NextResponse> {
+  return async (...args: Args) => {
     try {
       return await handler(...args);
     } catch (error) {
@@ -72,5 +72,5 @@ export function withErrorHandling<T extends (...args: any[]) => Promise<NextResp
       }
       return errorResponse('An unexpected error occurred', 500);
     }
-  }) as T;
+  };
 }

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { OdcRepository } from '@/repositories/OdcRepository';
-import { odcUpdateSchema, safeValidate, formatValidationError } from '@/lib/validation';
+import { odcUpdateSchema, safeValidate, formatValidationError, type OdcUpdateInput } from '@/lib/validation';
 import { successResponse, errorResponse } from '@/lib/response';
 
 /**
@@ -61,7 +61,7 @@ export async function PUT(
     }
 
     // Calculate available capacity if max_capacity or used_capacity changed
-    const updateData: any = { ...data };
+    const updateData: OdcUpdateInput = { ...data };
     if (data.max_capacity !== undefined || data.used_capacity !== undefined) {
       const maxCapacity = data.max_capacity ?? existing.max_capacity;
       const usedCapacity = data.used_capacity ?? existing.used_capacity;

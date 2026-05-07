@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Check, Trash2, Clock, X } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Bell, Trash2, Clock, X } from 'lucide-react';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface Notification {
@@ -18,8 +18,9 @@ export const NotificationBell: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { subscribe, unsubscribe } = useWebSocket();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch('/api/notifications?userId=system');
       const json = await res.json();
@@ -30,10 +31,12 @@ export const NotificationBell: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchNotifications();
+    const timeoutId = window.setTimeout(() => {
+      void fetchNotifications();
+    }, 0);
 
     // Close dropdown on click outside
     const handleClickOutside = (event: MouseEvent) => {
@@ -42,14 +45,23 @@ export const NotificationBell: React.FC = () => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    return () => {
+      window.clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [fetchNotifications]);
 
-  // Listen for new notifications via WebSocket
-  useWebSocket('notification.new', (data: any) => {
-    setNotifications(prev => [data, ...prev].slice(0, 20));
-    setUnreadCount(prev => prev + 1);
-  });
+  useEffect(() => {
+    const handleNewNotification = (data: Notification) => {
+      setNotifications(prev => [data, ...prev].slice(0, 20));
+      setUnreadCount(prev => prev + 1);
+    };
+
+    subscribe('notification.new', handleNewNotification);
+    return () => {
+      unsubscribe('notification.new', handleNewNotification);
+    };
+  }, [subscribe, unsubscribe]);
 
   const markAsRead = async (id: string) => {
     try {

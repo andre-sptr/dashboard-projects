@@ -35,7 +35,7 @@ export default function DashboardClient({ initialProjects }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    const handleSyncCompleted = (data: any) => {
+    const handleSyncCompleted = (data: Record<string, unknown>) => {
       console.log('[Dashboard] Sync completed, refreshing data...', data);
       setIsRefreshing(true);
       router.refresh();

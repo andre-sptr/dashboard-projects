@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Box, Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
 import { FormModal } from '@/components/ui/FormModal';
 import { OdcForm } from '@/components/features/odc/OdcForm';
@@ -34,6 +34,31 @@ interface OdcStats {
   utilization_percentage: number;
 }
 
+const ODC_STATUSES: OdcFormData['status'][] = ['active', 'inactive', 'maintenance'];
+const ODC_POLYGON_STATUSES: OdcFormData['polygon_status'][] = ['planned', 'surveyed', 'approved', 'deployed'];
+
+function getOdcInitialData(odc: OdcDevice | null): Partial<OdcFormData> | undefined {
+  if (!odc) return undefined;
+  const status = ODC_STATUSES.includes(odc.status as OdcFormData['status'])
+    ? (odc.status as OdcFormData['status'])
+    : 'active';
+  const polygonStatus = ODC_POLYGON_STATUSES.includes(odc.polygon_status as OdcFormData['polygon_status'])
+    ? (odc.polygon_status as OdcFormData['polygon_status'])
+    : 'planned';
+
+  return {
+    odc_name: odc.odc_name,
+    regional: odc.regional || '',
+    witel: odc.witel || '',
+    datel: odc.datel || '',
+    sto: odc.sto,
+    splitter_type: odc.splitter_type || '',
+    max_capacity: odc.max_capacity,
+    status,
+    polygon_status: polygonStatus,
+  };
+}
+
 export default function OdcInventoryPage() {
   const [odcs, setOdcs] = useState<OdcDevice[]>([]);
   const [stats, setStats] = useState<OdcStats | null>(null);
@@ -46,11 +71,7 @@ export default function OdcInventoryPage() {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
 
-  useEffect(() => {
-    fetchOdcs();
-  }, []);
-
-  const fetchOdcs = async () => {
+  const fetchOdcs = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/odc');
@@ -72,7 +93,15 @@ export default function OdcInventoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchOdcs();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [fetchOdcs]);
 
   const handleAddOdc = () => {
     setEditingOdc(null);
@@ -107,7 +136,7 @@ export default function OdcInventoryPage() {
         message: `ODC ${odc.odc_name} deleted successfully`,
       });
 
-      fetchOdcs();
+      void fetchOdcs();
     } catch (err) {
       showToast({
         type: 'error',
@@ -139,7 +168,7 @@ export default function OdcInventoryPage() {
 
       setIsModalOpen(false);
       setEditingOdc(null);
-      fetchOdcs();
+      void fetchOdcs();
     } catch (err) {
       showToast({
         type: 'error',
@@ -445,7 +474,7 @@ export default function OdcInventoryPage() {
         title={editingOdc ? 'Edit ODC' : 'Add New ODC'}
       >
         <OdcForm
-          initialData={editingOdc as any}
+          initialData={getOdcInitialData(editingOdc)}
           onSubmit={handleSubmitOdc}
           onCancel={() => {
             setIsModalOpen(false);

@@ -44,6 +44,8 @@ export interface TopologyNode {
     children: TopologyNode[];
 }
 
+type FullDataCell = string | number | boolean | null;
+
 const COLUMNS = {
     AREA: 4,
     STO: 5,
@@ -62,11 +64,11 @@ export function getNetworkHierarchy(): TopologyHierarchy {
     const hierarchy: TopologyHierarchy = {};
 
     projects.forEach(p => {
-        const fd = parseJsonArray<any>(p.full_data || '[]');
+        const fd = parseJsonArray<FullDataCell>(p.full_data || '[]');
 
-        const sto = fd[COLUMNS.STO] || 'UNKNOWN STO';
-        const area = fd[COLUMNS.AREA] || 'UNKNOWN AREA';
-        const branch = fd[COLUMNS.BRANCH] || 'UNKNOWN BRANCH';
+        const sto = String(fd[COLUMNS.STO] || 'UNKNOWN STO');
+        const area = String(fd[COLUMNS.AREA] || 'UNKNOWN AREA');
+        const branch = String(fd[COLUMNS.BRANCH] || 'UNKNOWN BRANCH');
 
         const matchAan = aanwijzing.find(a => a.id_ihld === p.id_ihld);
         const oltName = matchAan?.gpon || `OLT-${sto}`;

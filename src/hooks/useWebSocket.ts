@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
+export type WebSocketPayload = Record<string, unknown>;
+export type WebSocketCallback<T = WebSocketPayload> = (data: T) => void;
+
 export function useWebSocket() {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -24,30 +27,34 @@ export function useWebSocket() {
       setIsConnected(false);
     });
 
-    setSocket(socketInstance);
+    socketRef.current = socketInstance;
 
     return () => {
       socketInstance.disconnect();
+      socketRef.current = null;
     };
   }, []);
 
-  const subscribe = useCallback((event: string, callback: (data: any) => void) => {
+  const subscribe = useCallback(<T = WebSocketPayload>(event: string, callback: WebSocketCallback<T>) => {
+    const socket = socketRef.current;
     if (socket) {
-      socket.on(event, callback);
+      socket.on(event, callback as WebSocketCallback);
     }
-  }, [socket]);
+  }, []);
 
-  const unsubscribe = useCallback((event: string, callback?: (data: any) => void) => {
+  const unsubscribe = useCallback(<T = WebSocketPayload>(event: string, callback?: WebSocketCallback<T>) => {
+    const socket = socketRef.current;
     if (socket) {
-      socket.off(event, callback);
+      socket.off(event, callback as WebSocketCallback | undefined);
     }
-  }, [socket]);
+  }, []);
 
-  const emit = useCallback((event: string, data: any) => {
+  const emit = useCallback((event: string, data: WebSocketPayload) => {
+    const socket = socketRef.current;
     if (socket) {
       socket.emit(event, data);
     }
-  }, [socket]);
+  }, []);
 
-  return { socket, isConnected, subscribe, unsubscribe, emit };
+  return { isConnected, subscribe, unsubscribe, emit };
 }

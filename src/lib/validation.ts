@@ -58,7 +58,7 @@ export const boqAanwijzingSchema = z.object({
   aanwijzing_id: idSchema,
   nama_lop: nameSchema,
   id_ihld: z.string().min(1, 'ID IHLD tidak boleh kosong'),
-  boq_items: z.array(z.any()).optional().default([]),
+  boq_items: z.array(z.unknown()).optional().default([]),
 });
 
 export type BoqAanwijzingInput = z.infer<typeof boqAanwijzingSchema>;
@@ -96,7 +96,7 @@ export const boqUtSchema = z.object({
   ut_id: idSchema,
   nama_lop: nameSchema,
   id_ihld: z.string().min(1, 'ID IHLD tidak boleh kosong'),
-  boq_items: z.array(z.any()).optional().default([]),
+  boq_items: z.array(z.unknown()).optional().default([]),
 });
 
 export type BoqUtInput = z.infer<typeof boqUtSchema>;

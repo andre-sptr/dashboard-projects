@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Server, Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
 import { FormModal } from '@/components/ui/FormModal';
 import { OltForm } from '@/components/features/olt/OltForm';
@@ -32,6 +32,25 @@ interface OltStats {
   utilization_percentage: number;
 }
 
+const OLT_STATUSES: OltFormData['status'][] = ['active', 'inactive', 'maintenance'];
+
+function getOltInitialData(olt: OltDevice | null): Partial<OltFormData> | undefined {
+  if (!olt) return undefined;
+  const status = OLT_STATUSES.includes(olt.status as OltFormData['status'])
+    ? (olt.status as OltFormData['status'])
+    : 'active';
+
+  return {
+    hostname: olt.hostname,
+    ip_address: olt.ip_address,
+    area: olt.area || '',
+    branch: olt.branch || '',
+    sto: olt.sto || '',
+    total_ports: olt.total_ports,
+    status,
+  };
+}
+
 export default function OltInventoryPage() {
   const [olts, setOlts] = useState<OltDevice[]>([]);
   const [stats, setStats] = useState<OltStats | null>(null);
@@ -44,11 +63,7 @@ export default function OltInventoryPage() {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
 
-  useEffect(() => {
-    fetchOlts();
-  }, []);
-
-  const fetchOlts = async () => {
+  const fetchOlts = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/olt');
@@ -70,7 +85,15 @@ export default function OltInventoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchOlts();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [fetchOlts]);
 
   const handleAddOlt = () => {
     setEditingOlt(null);
@@ -105,7 +128,7 @@ export default function OltInventoryPage() {
         message: `OLT device ${olt.hostname} deleted successfully`,
       });
 
-      fetchOlts();
+      void fetchOlts();
     } catch (err) {
       showToast({
         type: 'error',
@@ -137,7 +160,7 @@ export default function OltInventoryPage() {
 
       setIsModalOpen(false);
       setEditingOlt(null);
-      fetchOlts();
+      void fetchOlts();
     } catch (err) {
       showToast({
         type: 'error',
@@ -421,7 +444,7 @@ export default function OltInventoryPage() {
         title={editingOlt ? 'Edit OLT Device' : 'Add New OLT Device'}
       >
         <OltForm
-          initialData={editingOlt as any}
+          initialData={getOltInitialData(editingOlt)}
           onSubmit={handleSubmitOlt}
           onCancel={() => {
             setIsModalOpen(false);

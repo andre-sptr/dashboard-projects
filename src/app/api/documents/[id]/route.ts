@@ -5,25 +5,26 @@ import { AuditLogger } from '@/lib/audit-logger';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
   try {
     const document = DocumentRepository.findById(id);
     if (!document) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
     return NextResponse.json(document);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch document';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId') || 'System';
 
@@ -50,16 +51,17 @@ export async function DELETE(
     );
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete document';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
   try {
     const data = await request.json();
     const document = DocumentRepository.findById(id);
@@ -82,7 +84,8 @@ export async function PATCH(
     );
 
     return NextResponse.json(updated);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update document';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

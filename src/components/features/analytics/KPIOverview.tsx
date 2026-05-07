@@ -4,7 +4,6 @@ import React from 'react';
 import { 
   BarChart3, 
   CheckCircle2, 
-  Clock, 
   AlertTriangle, 
   Target, 
   TrendingUp,

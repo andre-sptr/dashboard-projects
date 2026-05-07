@@ -6,7 +6,7 @@ import { Edit, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 export interface Column<T> {
   key: keyof T | string;
   label: string;
-  render?: (value: any, row: T) => ReactNode;
+  render?: (value: unknown, row: T) => ReactNode;
   sortable?: boolean;
   width?: string;
 }
@@ -21,7 +21,7 @@ interface DataTableProps<T> {
   emptyMessage?: string;
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   data,
   columns,
   onEdit,

@@ -1,6 +1,6 @@
 // Expandable table row for individual project data
 import React from 'react';
-import { ChevronDown, ChevronUp, Info, FileText, Activity, Database } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Activity, Database } from 'lucide-react';
 import { Project } from '@/lib/db';
 import { HistoryEntry, formatDuration } from '@/utils/duration';
 import { formatExcelDate, getFullDataArray } from '@/utils/project';
@@ -97,10 +97,12 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
   );
 };
 
-const ProjectDetailTabs = ({ project, fullData, parsedHistory }: { project: Project, fullData: any[], parsedHistory: HistoryEntry[] }) => {
+type ProjectDetailTab = 'info' | 'history' | 'documents';
+
+const ProjectDetailTabs = ({ project, fullData, parsedHistory }: { project: Project, fullData: unknown[], parsedHistory: HistoryEntry[] }) => {
   const [activeTab, setActiveTab] = React.useState<'info' | 'history' | 'documents'>('info');
 
-  const tabs = [
+  const tabs: { id: ProjectDetailTab; label: string; icon: React.ReactNode }[] = [
     { id: 'info', label: 'Informasi Proyek', icon: <Database size={16} /> },
     { id: 'history', label: 'Riwayat Status', icon: <Activity size={16} /> },
     { id: 'documents', label: 'Dokumen', icon: <FileText size={16} /> },
@@ -112,7 +114,7 @@ const ProjectDetailTabs = ({ project, fullData, parsedHistory }: { project: Proj
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
               activeTab === tab.id
                 ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'

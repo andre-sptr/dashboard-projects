@@ -4,6 +4,7 @@ import React from 'react';
 import {
   PieChart,
   Pie,
+  PieLabelRenderProps,
   Cell,
   ResponsiveContainer,
   Tooltip,
@@ -30,6 +31,12 @@ const COLORS = [
 ];
 
 export const StatusChart: React.FC<StatusChartProps> = ({ data }) => {
+  const renderLabel = ({ payload }: PieLabelRenderProps) => {
+    const entry = payload as StatusChartProps['data'][number] | undefined;
+    if (!entry) return '';
+    return `${entry.status} (${entry.percentage.toFixed(0)}%)`;
+  };
+
   return (
     <div className="h-full w-full min-h-[400px] flex flex-col">
       <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">
@@ -47,7 +54,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({ data }) => {
               paddingAngle={5}
               dataKey="count"
               nameKey="status"
-              label={({ status, percentage }) => `${status} (${percentage.toFixed(0)}%)`}
+              label={renderLabel}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       notifications,
       unreadCount
     });
-  } catch (error) {
+  } catch {
     return errorResponse('Gagal mengambil notifikasi', 500);
   }
 }
@@ -32,7 +32,7 @@ export async function PATCH(request: Request) {
     }
 
     return successResponse(null, 'Berhasil memperbarui status notifikasi');
-  } catch (error) {
+  } catch {
     return errorResponse('Gagal memperbarui notifikasi', 500);
   }
 }
@@ -46,7 +46,7 @@ export async function DELETE(request: Request) {
     
     NotificationRepository.delete(id);
     return successResponse(null, 'Berhasil menghapus notifikasi');
-  } catch (error) {
+  } catch {
     return errorResponse('Gagal menghapus notifikasi', 500);
   }
 }

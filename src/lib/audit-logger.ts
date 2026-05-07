@@ -6,8 +6,8 @@ export class AuditLogger {
     action: 'CREATE' | 'UPDATE' | 'DELETE' | 'SYNC' | 'UPLOAD',
     entityType: string,
     entityId: string,
-    oldValue: any = {},
-    newValue: any = {}
+    oldValue: unknown = {},
+    newValue: unknown = {}
   ) {
     try {
       AuditLogRepository.create({

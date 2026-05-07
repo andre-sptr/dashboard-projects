@@ -1,7 +1,7 @@
 // Unit tests for Bill of Quantity (BoQ) repository
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BoqRepository } from '@/repositories/BoqRepository';
-import db from '@/lib/db';
+import { db } from '@/lib/db';
 
 // Mock the database to use an in-memory instance for tests
 vi.mock('@/lib/db', async () => {
@@ -10,7 +10,7 @@ vi.mock('@/lib/db', async () => {
   const mockDb = new Database(':memory:');
   runMigrations(mockDb);
   return {
-    default: mockDb,
+    db: mockDb,
   };
 });
 

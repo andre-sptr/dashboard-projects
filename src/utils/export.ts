@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 export interface ExportColumn<T> {
   key: keyof T;
   label: string;
-  format?: (value: any) => string;
+  format?: (value: T[keyof T]) => string;
 }
 
 export function exportToExcel<T>(
@@ -13,7 +13,7 @@ export function exportToExcel<T>(
 ): void {
   // Transform data
   const exportData = data.map(row => {
-    const exportRow: Record<string, any> = {};
+    const exportRow: Record<string, unknown> = {};
     columns.forEach(col => {
       const value = row[col.key];
       exportRow[col.label] = col.format ? col.format(value) : value;
@@ -44,7 +44,7 @@ export function exportToCSV<T>(
 ): void {
   // Transform data
   const exportData = data.map(row => {
-    const exportRow: Record<string, any> = {};
+    const exportRow: Record<string, unknown> = {};
     columns.forEach(col => {
       const value = row[col.key];
       exportRow[col.label] = col.format ? col.format(value) : value;

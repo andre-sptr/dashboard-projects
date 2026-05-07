@@ -21,14 +21,6 @@ interface DurationChartProps {
   }[];
 }
 
-const COLORS = [
-  '#ef4444', // Red for bottlenecks
-  '#f59e0b', 
-  '#3b82f6', 
-  '#10b981', 
-  '#8b5cf6'
-];
-
 export const DurationChart: React.FC<DurationChartProps> = ({ data }) => {
   return (
     <div className="h-full w-full min-h-[400px] flex flex-col">
@@ -56,7 +48,10 @@ export const DurationChart: React.FC<DurationChartProps> = ({ data }) => {
                 border: 'none',
                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
               }}
-              formatter={(value: number) => [`${value.toFixed(1)} Hari`, 'Rata-rata']}
+              formatter={(value) => {
+                const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
+                return [`${numericValue.toFixed(1)} Hari`, 'Rata-rata'];
+              }}
             />
             <Bar dataKey="avgDays" radius={[0, 4, 4, 0]}>
               {data.map((entry, index) => (
