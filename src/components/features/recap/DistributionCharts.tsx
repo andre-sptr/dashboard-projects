@@ -57,11 +57,11 @@ interface SubStatusEntry {
 
 interface DistributionChartsProps {
   pieData: PieEntry[];
-  subStatusList: SubStatusEntry[];
+  statusList: SubStatusEntry[];
   totalPorts: number;
 }
 
-export const DistributionCharts = ({ pieData, subStatusList, totalPorts }: DistributionChartsProps) => {
+export const DistributionCharts = ({ pieData, statusList, totalPorts }: DistributionChartsProps) => {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
       <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm flex flex-col min-h-[350px]">
@@ -118,12 +118,12 @@ export const DistributionCharts = ({ pieData, subStatusList, totalPorts }: Distr
         <div className="flex items-center gap-2 mb-4 shrink-0">
           <Layers size={18} className="text-indigo-600" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Top Sub Status (by Port)
+            Status
           </h3>
         </div>
-        {subStatusList.length ? (
+        {statusList.length ? (
           <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
-            {subStatusList.map((s) => (
+            {statusList.map((s) => (
               <BarRow
                 key={s.name}
                 label={s.name}

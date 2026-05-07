@@ -41,7 +41,6 @@ export default function DashboardRecap({ projects }: Props) {
     let otherPorts = 0;
 
     const statusMap = new Map<string, number>();
-    const subStatusMap = new Map<string, number>();
     const goliveMonthMap = new Map<string, number>();
     let totalGolivePorts = 0;
 
@@ -58,9 +57,6 @@ export default function DashboardRecap({ projects }: Props) {
 
       const st = p.status || '-';
       statusMap.set(st, (statusMap.get(st) || 0) + ports);
-
-      const sub = p.sub_status || '-';
-      subStatusMap.set(sub, (subStatusMap.get(sub) || 0) + ports);
 
       const goliveStr = formatExcelDateShort(fd[30]);
       if (goliveStr && bucket === 'done') {
@@ -102,17 +98,6 @@ export default function DashboardRecap({ projects }: Props) {
       { name: 'Other', value: otherPorts, color: '#f59e0b' },
     ].filter(d => d.value > 0);
 
-    const subStatusList = Array.from(subStatusMap.entries())
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => {
-        const aNum = parseFloat(a.name);
-        const bNum = parseFloat(b.name);
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          return bNum - aNum;
-        }
-        return b.name.localeCompare(a.name);
-      });
-
     return {
       total: projects.length,
       totalPorts,
@@ -121,7 +106,6 @@ export default function DashboardRecap({ projects }: Props) {
       cancelledPorts,
       otherPorts,
       statusList: toSortedArr(statusMap),
-      subStatusList: subStatusList,
       totalGolivePorts,
       goliveMonthList: chronologicalGolive,
       recent,
@@ -167,7 +151,7 @@ export default function DashboardRecap({ projects }: Props) {
       <div className="animate-in stagger-2">
         <DistributionCharts 
           pieData={stats.pieData} 
-          subStatusList={stats.subStatusList} 
+          statusList={stats.statusList} 
           totalPorts={totalPorts} 
         />
       </div>
