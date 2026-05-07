@@ -125,6 +125,169 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_boq_ut_uid ON boq_ut(ut_id);
       `);
     }
+  },
+  {
+    id: 4,
+    name: 'create_olt_inventory_table',
+    run: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS olt_inventory (
+          id TEXT PRIMARY KEY,
+          ip_address TEXT UNIQUE NOT NULL,
+          hostname TEXT NOT NULL,
+          brand TEXT DEFAULT '',
+          model TEXT DEFAULT '',
+          software_version TEXT DEFAULT '',
+          serial_number TEXT UNIQUE,
+          location_name TEXT DEFAULT '',
+          latitude REAL,
+          longitude REAL,
+          area TEXT DEFAULT '',
+          branch TEXT DEFAULT '',
+          sto TEXT DEFAULT '',
+          uplink_config TEXT DEFAULT '{}',
+          dualhoming_enabled INTEGER DEFAULT 0,
+          dualhoming_pair TEXT,
+          total_ports INTEGER DEFAULT 0,
+          used_ports INTEGER DEFAULT 0,
+          available_ports INTEGER DEFAULT 0,
+          cacti_integrated INTEGER DEFAULT 0,
+          cacti_device_id TEXT,
+          nms_integrated INTEGER DEFAULT 0,
+          nms_device_id TEXT,
+          status TEXT DEFAULT 'active',
+          installation_date TEXT,
+          last_maintenance_date TEXT,
+          next_maintenance_date TEXT,
+          notes TEXT DEFAULT '',
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_olt_ip ON olt_inventory(ip_address);
+        CREATE INDEX IF NOT EXISTS idx_olt_hostname ON olt_inventory(hostname);
+        CREATE INDEX IF NOT EXISTS idx_olt_area ON olt_inventory(area);
+        CREATE INDEX IF NOT EXISTS idx_olt_status ON olt_inventory(status);
+      `);
+    }
+  },
+  {
+    id: 5,
+    name: 'create_odc_inventory_table',
+    run: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS odc_inventory (
+          id TEXT PRIMARY KEY,
+          odc_name TEXT UNIQUE NOT NULL,
+          regional TEXT DEFAULT '',
+          witel TEXT DEFAULT '',
+          datel TEXT DEFAULT '',
+          sto TEXT NOT NULL,
+          olt_id TEXT,
+          splitter_type TEXT DEFAULT '',
+          max_capacity INTEGER DEFAULT 0,
+          used_capacity INTEGER DEFAULT 0,
+          available_capacity INTEGER DEFAULT 0,
+          latitude REAL,
+          longitude REAL,
+          polygon_coordinates TEXT DEFAULT '[]',
+          polygon_status TEXT DEFAULT 'planned',
+          installation_date TEXT,
+          status TEXT DEFAULT 'active',
+          notes TEXT DEFAULT '',
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (olt_id) REFERENCES olt_inventory(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_odc_name ON odc_inventory(odc_name);
+        CREATE INDEX IF NOT EXISTS idx_odc_sto ON odc_inventory(sto);
+        CREATE INDEX IF NOT EXISTS idx_odc_olt ON odc_inventory(olt_id);
+        CREATE INDEX IF NOT EXISTS idx_odc_status ON odc_inventory(status);
+      `);
+    }
+  },
+  {
+    id: 6,
+    name: 'create_vendors_table',
+    run: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS vendors (
+          id TEXT PRIMARY KEY,
+          vendor_name TEXT UNIQUE NOT NULL,
+          vendor_code TEXT UNIQUE,
+          contact_person TEXT DEFAULT '',
+          phone TEXT DEFAULT '',
+          email TEXT DEFAULT '',
+          address TEXT DEFAULT '',
+          contract_start_date TEXT,
+          contract_end_date TEXT,
+          contract_value REAL DEFAULT 0,
+          rating REAL DEFAULT 0,
+          total_projects INTEGER DEFAULT 0,
+          completed_projects INTEGER DEFAULT 0,
+          on_time_delivery_rate REAL DEFAULT 0,
+          quality_score REAL DEFAULT 0,
+          status TEXT DEFAULT 'active',
+          notes TEXT DEFAULT '',
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_vendor_name ON vendors(vendor_name);
+        CREATE INDEX IF NOT EXISTS idx_vendor_status ON vendors(status);
+      `);
+    }
+  },
+  {
+    id: 7,
+    name: 'enhance_projects_table',
+    run: (db) => {
+      // Check existing columns to avoid duplicate additions
+      const tableInfo = db.pragma('table_info(projects)') as { name: string }[];
+      const columns = tableInfo.map((c) => c.name);
+
+      const columnsToAdd = [
+        { name: 'area', type: 'TEXT DEFAULT ""' },
+        { name: 'witel', type: 'TEXT DEFAULT ""' },
+        { name: 'datel', type: 'TEXT DEFAULT ""' },
+        { name: 'sto', type: 'TEXT DEFAULT ""' },
+        { name: 'branch', type: 'TEXT DEFAULT ""' },
+        { name: 'mitra', type: 'TEXT DEFAULT ""' },
+        { name: 'vendor_id', type: 'TEXT' },
+        { name: 'olt_id', type: 'TEXT' },
+        { name: 'odc_id', type: 'TEXT' },
+        { name: 'odp_planned', type: 'INTEGER DEFAULT 0' },
+        { name: 'odp_realized', type: 'INTEGER DEFAULT 0' },
+        { name: 'port_planned', type: 'INTEGER DEFAULT 0' },
+        { name: 'port_realized', type: 'INTEGER DEFAULT 0' },
+        { name: 'boq_value', type: 'REAL DEFAULT 0' },
+        { name: 'boq_currency', type: 'TEXT DEFAULT "IDR"' },
+        { name: 'golive_target', type: 'TEXT' },
+        { name: 'golive_actual', type: 'TEXT' },
+        { name: 'project_manager', type: 'TEXT DEFAULT ""' },
+        { name: 'technical_lead', type: 'TEXT DEFAULT ""' },
+        { name: 'priority', type: 'TEXT DEFAULT "medium"' },
+        { name: 'risk_level', type: 'TEXT DEFAULT "low"' },
+        { name: 'completion_percentage', type: 'REAL DEFAULT 0' },
+      ];
+
+      for (const col of columnsToAdd) {
+        if (!columns.includes(col.name)) {
+          db.exec(`ALTER TABLE projects ADD COLUMN ${col.name} ${col.type}`);
+        }
+      }
+
+      // Add indexes for new columns
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_projects_vendor ON projects(vendor_id);
+        CREATE INDEX IF NOT EXISTS idx_projects_olt ON projects(olt_id);
+        CREATE INDEX IF NOT EXISTS idx_projects_odc ON projects(odc_id);
+        CREATE INDEX IF NOT EXISTS idx_projects_area ON projects(area);
+        CREATE INDEX IF NOT EXISTS idx_projects_sto ON projects(sto);
+        CREATE INDEX IF NOT EXISTS idx_projects_priority ON projects(priority);
+      `);
+    }
   }
 ];
 

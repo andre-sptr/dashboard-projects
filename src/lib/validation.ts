@@ -177,3 +177,198 @@ export function formatValidationErrors(error: z.ZodError): Record<string, string
   return errors;
 }
 
+// ============================================================================
+// OLT Inventory Validation Schemas
+// ============================================================================
+
+export const oltSchema = z.object({
+  id: z.string().uuid('ID harus berupa UUID yang valid').optional(),
+  ip_address: z.string().regex(
+    /^(\d{1,3}\.){3}\d{1,3}$/,
+    'IP address harus berupa IPv4 yang valid'
+  ).refine((ip) => {
+    const parts = ip.split('.');
+    return parts.every(part => {
+      const num = parseInt(part, 10);
+      return num >= 0 && num <= 255;
+    });
+  }, 'IP address tidak valid (setiap oktet harus 0-255)'),
+  hostname: nameSchema,
+  brand: optionalTextSchema,
+  model: optionalTextSchema,
+  software_version: optionalTextSchema,
+  serial_number: z.string().optional().nullable(),
+  location_name: optionalTextSchema,
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  area: optionalTextSchema,
+  branch: optionalTextSchema,
+  sto: optionalTextSchema,
+  uplink_config: z.string().optional().default('{}'),
+  dualhoming_enabled: z.number().int().min(0).max(1).optional().default(0),
+  dualhoming_pair: z.string().optional().nullable(),
+  total_ports: z.number().int().min(0).optional().default(0),
+  used_ports: z.number().int().min(0).optional().default(0),
+  available_ports: z.number().int().min(0).optional().default(0),
+  cacti_integrated: z.number().int().min(0).max(1).optional().default(0),
+  cacti_device_id: z.string().optional().nullable(),
+  nms_integrated: z.number().int().min(0).max(1).optional().default(0),
+  nms_device_id: z.string().optional().nullable(),
+  status: z.enum(['active', 'inactive', 'maintenance']).optional().default('active'),
+  installation_date: z.string().optional().nullable(),
+  last_maintenance_date: z.string().optional().nullable(),
+  next_maintenance_date: z.string().optional().nullable(),
+  notes: optionalTextSchema,
+});
+
+export type OltInput = z.infer<typeof oltSchema>;
+
+// Schema for OLT update (all fields optional except id)
+export const oltUpdateSchema = oltSchema.partial().required({ id: true });
+
+export type OltUpdateInput = z.infer<typeof oltUpdateSchema>;
+
+// Schema for OLT query/filter parameters
+export const oltQuerySchema = z.object({
+  area: z.string().optional(),
+  branch: z.string().optional(),
+  sto: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'maintenance']).optional(),
+  search: z.string().optional(),
+});
+
+export type OltQueryInput = z.infer<typeof oltQuerySchema>;
+
+// ============================================================================
+// ODC Inventory Validation Schemas
+// ============================================================================
+
+export const odcSchema = z.object({
+  id: z.string().uuid('ID harus berupa UUID yang valid').optional(),
+  odc_name: nameSchema,
+  regional: optionalTextSchema,
+  witel: optionalTextSchema,
+  datel: optionalTextSchema,
+  sto: z.string().min(1, 'STO tidak boleh kosong'),
+  olt_id: z.string().uuid('OLT ID harus berupa UUID yang valid').optional().nullable(),
+  splitter_type: z.enum(['48', '144', '288', '']).optional().default(''),
+  max_capacity: z.number().int().min(0).optional().default(0),
+  used_capacity: z.number().int().min(0).optional().default(0),
+  available_capacity: z.number().int().min(0).optional().default(0),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  polygon_coordinates: z.string().optional().default('[]'),
+  polygon_status: z.enum(['planned', 'active', 'inactive']).optional().default('planned'),
+  installation_date: z.string().optional().nullable(),
+  status: z.enum(['active', 'inactive']).optional().default('active'),
+  notes: optionalTextSchema,
+});
+
+export type OdcInput = z.infer<typeof odcSchema>;
+
+// Schema for ODC update (all fields optional except id)
+export const odcUpdateSchema = odcSchema.partial().required({ id: true });
+
+export type OdcUpdateInput = z.infer<typeof odcUpdateSchema>;
+
+// Schema for ODC query/filter parameters
+export const odcQuerySchema = z.object({
+  regional: z.string().optional(),
+  witel: z.string().optional(),
+  datel: z.string().optional(),
+  sto: z.string().optional(),
+  olt_id: z.string().uuid().optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+  polygon_status: z.enum(['planned', 'active', 'inactive']).optional(),
+  search: z.string().optional(),
+});
+
+export type OdcQueryInput = z.infer<typeof odcQuerySchema>;
+
+// ============================================================================
+// Vendor Management Validation Schemas
+// ============================================================================
+
+export const vendorSchema = z.object({
+  id: z.string().uuid('ID harus berupa UUID yang valid').optional(),
+  vendor_name: nameSchema,
+  vendor_code: z.string().optional().nullable(),
+  contact_person: optionalTextSchema,
+  phone: z.string().optional().default(''),
+  email: z.string().email('Email tidak valid').optional().or(z.literal('')).default(''),
+  address: optionalTextSchema,
+  contract_start_date: z.string().optional().nullable(),
+  contract_end_date: z.string().optional().nullable(),
+  contract_value: z.number().min(0, 'Nilai kontrak tidak boleh negatif').optional().default(0),
+  rating: z.number().min(0).max(5, 'Rating harus antara 0-5').optional().default(0),
+  total_projects: z.number().int().min(0).optional().default(0),
+  completed_projects: z.number().int().min(0).optional().default(0),
+  on_time_delivery_rate: z.number().min(0).max(100, 'Persentase harus antara 0-100').optional().default(0),
+  quality_score: z.number().min(0).max(100, 'Skor kualitas harus antara 0-100').optional().default(0),
+  status: z.enum(['active', 'inactive']).optional().default('active'),
+  notes: optionalTextSchema,
+});
+
+export type VendorInput = z.infer<typeof vendorSchema>;
+
+// Schema for Vendor update (all fields optional except id)
+export const vendorUpdateSchema = vendorSchema.partial().required({ id: true });
+
+export type VendorUpdateInput = z.infer<typeof vendorUpdateSchema>;
+
+// Schema for Vendor query/filter parameters
+export const vendorQuerySchema = z.object({
+  status: z.enum(['active', 'inactive']).optional(),
+  search: z.string().optional(),
+  min_rating: z.number().min(0).max(5).optional(),
+});
+
+export type VendorQueryInput = z.infer<typeof vendorQuerySchema>;
+
+// ============================================================================
+// Validation Helper Functions for New Schemas
+// ============================================================================
+
+/**
+ * Validate IP address format
+ */
+export function validateIpAddress(ip: string): boolean {
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (!ipv4Regex.test(ip)) return false;
+  
+  const parts = ip.split('.');
+  return parts.every(part => {
+    const num = parseInt(part, 10);
+    return num >= 0 && num <= 255;
+  });
+}
+
+/**
+ * Validate coordinates (latitude, longitude)
+ */
+export function validateCoordinates(lat: number, lon: number): boolean {
+  return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+}
+
+/**
+ * Validate UUID format
+ */
+export function validateUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
+
+/**
+ * Validate port number range
+ */
+export function validatePortRange(start: number, end: number, total: number): boolean {
+  return start >= 0 && end >= start && end <= total;
+}
+
+/**
+ * Validate capacity values
+ */
+export function validateCapacity(used: number, max: number): boolean {
+  return used >= 0 && used <= max;
+}
+
