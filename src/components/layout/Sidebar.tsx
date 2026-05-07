@@ -12,11 +12,11 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/analytics', label: 'Advanced Analytics', icon: BarChart3 },
   { href: '/projects', label: 'Projects Data', icon: Database },
   { href: '/boq', label: 'BoQ Plan', icon: Receipt },
   { href: '/aanwijzing', label: 'Catatan AANWIJZING', icon: FileText },
   { href: '/ut', label: 'Rekap UT', icon: ClipboardList },
-  { href: '/report', label: 'KPI Report', icon: BarChart3 },
   { href: '/topology', label: 'Topology', icon: Network },
   { href: '/olt', label: 'OLT Inventory', icon: Server },
   { href: '/odc', label: 'ODC Inventory', icon: Box },

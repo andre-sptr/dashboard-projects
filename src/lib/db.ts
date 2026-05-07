@@ -11,7 +11,7 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
-const db = new Database(dbPath);
+export const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
 initializeSchema(db);
@@ -85,4 +85,3 @@ export interface AuditLog {
   created_at: string;
 }
 
-export default db;

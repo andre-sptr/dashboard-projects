@@ -3,6 +3,7 @@
 
 import { Menu } from 'lucide-react';
 import SyncButton from '@/components/ui/SyncButton';
+import { NotificationBell } from '@/components/features/notifications/NotificationBell';
 
 interface TopbarProps {
   title: string;
@@ -33,7 +34,8 @@ export default function Topbar({ title, subtitle, onMenuClick }: TopbarProps) {
           )}
         </div>
 
-        <div className="shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          <NotificationBell />
           <SyncButton />
         </div>
       </div>
