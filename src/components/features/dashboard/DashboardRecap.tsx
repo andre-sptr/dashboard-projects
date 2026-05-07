@@ -105,7 +105,13 @@ export default function DashboardRecap({ projects }: Props) {
       progressPorts,
       cancelledPorts,
       otherPorts,
-      statusList: toSortedArr(statusMap),
+      statusList: Array.from(statusMap.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => {
+          const aNum = parseFloat(a.name) || 0;
+          const bNum = parseFloat(b.name) || 0;
+          return bNum - aNum;
+        }),
       totalGolivePorts,
       goliveMonthList: chronologicalGolive,
       recent,
