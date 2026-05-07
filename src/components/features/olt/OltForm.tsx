@@ -17,9 +17,23 @@ export function OltForm({ initialData, onSubmit, onCancel }: OltFormProps) {
     formState: { errors, isSubmitting }
   } = useForm<OltFormData>({
     resolver: zodResolver(oltFormSchema),
-    defaultValues: initialData || {
-      status: 'active',
-      total_ports: 48
+    defaultValues: {
+      hostname: initialData?.hostname || '',
+      ip_address: initialData?.ip_address || '',
+      brand: initialData?.brand || '',
+      model: initialData?.model || '',
+      software_version: initialData?.software_version || '',
+      serial_number: initialData?.serial_number || '',
+      location_name: initialData?.location_name || '',
+      latitude: initialData?.latitude || '',
+      longitude: initialData?.longitude || '',
+      area: initialData?.area || '',
+      branch: initialData?.branch || '',
+      sto: initialData?.sto || '',
+      total_ports: initialData?.total_ports || 48,
+      status: initialData?.status || 'active',
+      installation_date: initialData?.installation_date || '',
+      notes: initialData?.notes || '',
     }
   });
 

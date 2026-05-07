@@ -391,20 +391,20 @@ export const oltFormSchema = z.object({
         return num >= 0 && num <= 255;
       });
     }, 'Invalid IP address (each octet must be 0-255)'),
-  brand: z.string().optional(),
-  model: z.string().optional(),
-  software_version: z.string().optional(),
-  serial_number: z.string().optional(),
-  location_name: z.string().optional(),
-  latitude: z.string().optional(),
-  longitude: z.string().optional(),
-  area: z.string().optional(),
-  branch: z.string().optional(),
-  sto: z.string().optional(),
+  brand: z.string(),
+  model: z.string(),
+  software_version: z.string(),
+  serial_number: z.string(),
+  location_name: z.string(),
+  latitude: z.string(),
+  longitude: z.string(),
+  area: z.string(),
+  branch: z.string(),
+  sto: z.string(),
   total_ports: z.number().int().positive('Must be positive').min(1, 'At least 1 port required'),
-  status: z.enum(['active', 'inactive', 'maintenance']).default('active'),
-  installation_date: z.string().optional(),
-  notes: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'maintenance']),
+  installation_date: z.string(),
+  notes: z.string(),
 });
 
 export type OltFormData = z.infer<typeof oltFormSchema>;
@@ -414,19 +414,19 @@ export type OltFormData = z.infer<typeof oltFormSchema>;
  */
 export const odcFormSchema = z.object({
   odc_name: z.string().min(1, 'ODC name is required').max(100, 'ODC name too long'),
-  regional: z.string().optional(),
-  witel: z.string().optional(),
-  datel: z.string().optional(),
+  regional: z.string(),
+  witel: z.string(),
+  datel: z.string(),
   sto: z.string().min(1, 'STO is required'),
-  olt_id: z.string().optional(),
-  splitter_type: z.string().optional(),
+  olt_id: z.string(),
+  splitter_type: z.string(),
   max_capacity: z.number().int().min(0, 'Capacity must be positive'),
-  latitude: z.string().optional(),
-  longitude: z.string().optional(),
-  polygon_status: z.enum(['planned', 'surveyed', 'approved', 'deployed']).default('planned'),
-  installation_date: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'maintenance']).default('active'),
-  notes: z.string().optional(),
+  latitude: z.string(),
+  longitude: z.string(),
+  polygon_status: z.enum(['planned', 'surveyed', 'approved', 'deployed']),
+  installation_date: z.string(),
+  status: z.enum(['active', 'inactive', 'maintenance']),
+  notes: z.string(),
 });
 
 export type OdcFormData = z.infer<typeof odcFormSchema>;
@@ -436,17 +436,17 @@ export type OdcFormData = z.infer<typeof odcFormSchema>;
  */
 export const vendorFormSchema = z.object({
   vendor_name: z.string().min(1, 'Vendor name is required').max(255, 'Vendor name too long'),
-  vendor_code: z.string().optional(),
-  contact_person: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email('Invalid email format').optional().or(z.literal('')),
-  address: z.string().optional(),
-  contract_start_date: z.string().optional(),
-  contract_end_date: z.string().optional(),
-  contract_value: z.number().min(0, 'Contract value cannot be negative').optional(),
-  rating: z.number().min(0).max(5, 'Rating must be between 0-5').optional(),
-  status: z.enum(['active', 'inactive']).default('active'),
-  notes: z.string().optional(),
+  vendor_code: z.string(),
+  contact_person: z.string(),
+  phone: z.string(),
+  email: z.string().email('Invalid email format').or(z.literal('')),
+  address: z.string(),
+  contract_start_date: z.string(),
+  contract_end_date: z.string(),
+  contract_value: z.number().min(0, 'Contract value cannot be negative'),
+  rating: z.number().min(0).max(5, 'Rating must be between 0-5'),
+  status: z.enum(['active', 'inactive']),
+  notes: z.string(),
 });
 
 export type VendorFormData = z.infer<typeof vendorFormSchema>;

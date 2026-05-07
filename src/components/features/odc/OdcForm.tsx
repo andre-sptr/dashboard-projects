@@ -28,15 +28,15 @@ export function OdcForm({ initialData, onSubmit, onCancel }: OdcFormProps) {
       max_capacity: initialData?.max_capacity || 48,
       latitude: initialData?.latitude || '',
       longitude: initialData?.longitude || '',
-      polygon_status: initialData?.polygon_status || 'planned',
-      status: initialData?.status || 'active',
+      polygon_status: initialData?.polygon_status ?? 'planned',
+      status: initialData?.status ?? 'active',
       installation_date: initialData?.installation_date || '',
       notes: initialData?.notes || '',
     }
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* ODC Name */}
         <div>
