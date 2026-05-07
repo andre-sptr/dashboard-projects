@@ -4,9 +4,11 @@ import { successResponse, errorResponse } from '@/lib/response';
 export async function POST() {
   try {
     const result = await SyncService.syncProjects();
-    
+
     if (!result.success) {
-      return errorResponse(result.message || 'Gagal sinkronisasi data', 400);
+      const errorMessage = 'message' in result ? result.message : 'Gagal sinkronisasi data';
+
+      return errorResponse(errorMessage, 400);
     }
 
     return successResponse(result, 'Sync project berhasil');
