@@ -13,6 +13,7 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/analytics', label: 'Advanced Analytics', icon: BarChart3 },
+  { href: '/report', label: 'Report', icon: BarChart3 },
   { href: '/audit-logs', label: 'Audit Timeline', icon: Activity },
   { href: '/projects', label: 'Projects Data', icon: Database },
   { href: '/boq', label: 'BoQ Plan', icon: Receipt },
@@ -82,8 +83,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   href={item.href}
                   onClick={onClose}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
-                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                     }`}
                 >
                   <Icon size={18} />
