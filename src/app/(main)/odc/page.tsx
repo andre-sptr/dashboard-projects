@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Plus, Search, Filter } from 'lucide-react';
+import { Box, Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
+import { FormModal } from '@/components/ui/FormModal';
+import { OdcForm } from '@/components/features/odc/OdcForm';
+import { useToast } from '@/hooks/useToast';
+import { useConfirm } from '@/hooks/useConfirm';
+import type { OdcFormData } from '@/lib/validation';
 
 interface OdcDevice {
   id: string;
@@ -33,6 +38,11 @@ export default function OdcInventoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingOdc, setEditingOdc] = useState<OdcDevice | null>(null);
+  
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     fetchOdcs();
@@ -59,6 +69,81 @@ export default function OdcInventoryPage() {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddOdc = () => {
+    setEditingOdc(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditOdc = (odc: OdcDevice) => {
+    setEditingOdc(odc);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteOdc = async (odc: OdcDevice) => {
+    const confirmed = await confirm({
+      title: 'Delete ODC',
+      message: `Are you sure you want to delete ${odc.odc_name}? This action cannot be undone.`,
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/odc?id=${odc.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete ODC');
+      }
+
+      showToast({
+        type: 'success',
+        message: `ODC ${odc.odc_name} deleted successfully`,
+      });
+
+      fetchOdcs();
+    } catch (err) {
+      showToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to delete ODC',
+      });
+    }
+  };
+
+  const handleSubmitOdc = async (data: OdcFormData) => {
+    try {
+      const url = editingOdc ? `/api/odc?id=${editingOdc.id}` : '/api/odc';
+      const method = editingOdc ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save ODC');
+      }
+
+      showToast({
+        type: 'success',
+        message: `ODC ${editingOdc ? 'updated' : 'created'} successfully`,
+      });
+
+      setIsModalOpen(false);
+      setEditingOdc(null);
+      fetchOdcs();
+    } catch (err) {
+      showToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to save ODC',
+      });
+      throw err;
     }
   };
 
@@ -113,7 +198,7 @@ export default function OdcInventoryPage() {
         </div>
         <button
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          onClick={() => alert('Add ODC feature coming soon!')}
+          onClick={handleAddOdc}
         >
           <Plus size={18} />
           Add ODC
@@ -223,6 +308,9 @@ export default function OdcInventoryPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -278,6 +366,24 @@ export default function OdcInventoryPage() {
                           </div>
                         </div>
                       </td>
+                      <td className="px-4 py-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditOdc(odc)}
+                            className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOdc(odc)}
+                            className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -293,6 +399,25 @@ export default function OdcInventoryPage() {
           Showing {filteredOdcs.length} of {odcs.length} ODC devices
         </div>
       )}
+
+      {/* Add/Edit Modal */}
+      <FormModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingOdc(null);
+        }}
+        title={editingOdc ? 'Edit ODC' : 'Add New ODC'}
+      >
+        <OdcForm
+          initialData={editingOdc as any}
+          onSubmit={handleSubmitOdc}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setEditingOdc(null);
+          }}
+        />
+      </FormModal>
     </div>
   );
 }
