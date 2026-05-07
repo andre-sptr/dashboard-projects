@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Server, Plus, Search, Filter } from 'lucide-react';
+import { Server, Plus, Search, Filter, Edit, Trash2 } from 'lucide-react';
+import { FormModal } from '@/components/ui/FormModal';
+import { OltForm } from '@/components/features/olt/OltForm';
+import { useToast } from '@/hooks/useToast';
+import { useConfirm } from '@/hooks/useConfirm';
+import type { OltFormData } from '@/lib/validation';
 
 interface OltDevice {
   id: string;
@@ -31,6 +36,11 @@ export default function OltInventoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingOlt, setEditingOlt] = useState<OltDevice | null>(null);
+  
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     fetchOlts();
@@ -57,6 +67,81 @@ export default function OltInventoryPage() {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddOlt = () => {
+    setEditingOlt(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditOlt = (olt: OltDevice) => {
+    setEditingOlt(olt);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteOlt = async (olt: OltDevice) => {
+    const confirmed = await confirm({
+      title: 'Delete OLT Device',
+      message: `Are you sure you want to delete ${olt.hostname}? This action cannot be undone.`,
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/olt?id=${olt.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete OLT device');
+      }
+
+      showToast({
+        type: 'success',
+        message: `OLT device ${olt.hostname} deleted successfully`,
+      });
+
+      fetchOlts();
+    } catch (err) {
+      showToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to delete OLT device',
+      });
+    }
+  };
+
+  const handleSubmitOlt = async (data: OltFormData) => {
+    try {
+      const url = editingOlt ? `/api/olt?id=${editingOlt.id}` : '/api/olt';
+      const method = editingOlt ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save OLT device');
+      }
+
+      showToast({
+        type: 'success',
+        message: `OLT device ${editingOlt ? 'updated' : 'created'} successfully`,
+      });
+
+      setIsModalOpen(false);
+      setEditingOlt(null);
+      fetchOlts();
+    } catch (err) {
+      showToast({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to save OLT device',
+      });
+      throw err;
     }
   };
 
@@ -100,7 +185,7 @@ export default function OltInventoryPage() {
         </div>
         <button
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          onClick={() => alert('Add OLT feature coming soon!')}
+          onClick={handleAddOlt}
         >
           <Plus size={18} />
           Add OLT
@@ -210,6 +295,9 @@ export default function OltInventoryPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -256,6 +344,24 @@ export default function OltInventoryPage() {
                           {olt.status}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditOlt(olt)}
+                            className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOlt(olt)}
+                            className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -271,6 +377,25 @@ export default function OltInventoryPage() {
           Showing {filteredOlts.length} of {olts.length} OLT devices
         </div>
       )}
+
+      {/* Add/Edit Modal */}
+      <FormModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingOlt(null);
+        }}
+        title={editingOlt ? 'Edit OLT Device' : 'Add New OLT Device'}
+      >
+        <OltForm
+          initialData={editingOlt as any}
+          onSubmit={handleSubmitOlt}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setEditingOlt(null);
+          }}
+        />
+      </FormModal>
     </div>
   );
 }
