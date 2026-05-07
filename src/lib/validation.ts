@@ -372,3 +372,82 @@ export function validateCapacity(used: number, max: number): boolean {
   return used >= 0 && used <= max;
 }
 
+// ============================================================================
+// Form Schemas for React Hook Form
+// ============================================================================
+
+/**
+ * OLT Form Schema - Simplified for form input
+ */
+export const oltFormSchema = z.object({
+  hostname: z.string().min(1, 'Hostname is required').max(100, 'Hostname too long'),
+  ip_address: z.string()
+    .min(1, 'IP address is required')
+    .regex(/^(\d{1,3}\.){3}\d{1,3}$/, 'Invalid IP address format')
+    .refine((ip) => {
+      const parts = ip.split('.');
+      return parts.every(part => {
+        const num = parseInt(part, 10);
+        return num >= 0 && num <= 255;
+      });
+    }, 'Invalid IP address (each octet must be 0-255)'),
+  brand: z.string().optional(),
+  model: z.string().optional(),
+  software_version: z.string().optional(),
+  serial_number: z.string().optional(),
+  location_name: z.string().optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional().or(z.literal('')),
+  longitude: z.coerce.number().min(-180).max(180).optional().or(z.literal('')),
+  area: z.string().optional(),
+  branch: z.string().optional(),
+  sto: z.string().optional(),
+  total_ports: z.coerce.number().int().positive('Must be positive').min(1, 'At least 1 port required'),
+  status: z.enum(['active', 'inactive', 'maintenance']).default('active'),
+  installation_date: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export type OltFormData = z.infer<typeof oltFormSchema>;
+
+/**
+ * ODC Form Schema - Simplified for form input
+ */
+export const odcFormSchema = z.object({
+  odc_name: z.string().min(1, 'ODC name is required').max(100, 'ODC name too long'),
+  regional: z.string().optional(),
+  witel: z.string().optional(),
+  datel: z.string().optional(),
+  sto: z.string().min(1, 'STO is required'),
+  olt_id: z.string().optional(),
+  splitter_type: z.enum(['48', '144', '288', '']).optional(),
+  max_capacity: z.coerce.number().int().min(0).optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional().or(z.literal('')),
+  longitude: z.coerce.number().min(-180).max(180).optional().or(z.literal('')),
+  polygon_status: z.enum(['planned', 'active', 'inactive']).default('planned'),
+  installation_date: z.string().optional(),
+  status: z.enum(['active', 'inactive']).default('active'),
+  notes: z.string().optional(),
+});
+
+export type OdcFormData = z.infer<typeof odcFormSchema>;
+
+/**
+ * Vendor Form Schema - Simplified for form input
+ */
+export const vendorFormSchema = z.object({
+  vendor_name: z.string().min(1, 'Vendor name is required').max(255, 'Vendor name too long'),
+  vendor_code: z.string().optional(),
+  contact_person: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email('Invalid email format').optional().or(z.literal('')),
+  address: z.string().optional(),
+  contract_start_date: z.string().optional(),
+  contract_end_date: z.string().optional(),
+  contract_value: z.coerce.number().min(0, 'Contract value cannot be negative').optional(),
+  rating: z.coerce.number().min(0).max(5, 'Rating must be between 0-5').optional(),
+  status: z.enum(['active', 'inactive']).default('active'),
+  notes: z.string().optional(),
+});
+
+export type VendorFormData = z.infer<typeof vendorFormSchema>;
+
