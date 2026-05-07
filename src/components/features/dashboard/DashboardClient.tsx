@@ -1,12 +1,14 @@
 // Dashboard table with filtering, pagination, and project rows
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Project } from '@/lib/db';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { FilterSection } from './FilterSection';
 import { ProjectRow } from './ProjectRow';
 import { getFullDataArray } from '@/utils/project';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { useRouter } from 'next/navigation';
 
 interface Props {
   initialProjects: Project[];
@@ -21,6 +23,8 @@ const areaBranchMap: Record<string, string[]> = {
 };
 
 export default function DashboardClient({ initialProjects }: Props) {
+  const router = useRouter();
+  const { subscribe, unsubscribe } = useWebSocket();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -28,6 +32,22 @@ export default function DashboardClient({ initialProjects }: Props) {
   const [subStatusFilter, setSubStatusFilter] = useState<string>('');
   const [areaFilter, setAreaFilter] = useState<string>('');
   const [branchFilter, setBranchFilter] = useState<string>('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const handleSyncCompleted = (data: any) => {
+      console.log('[Dashboard] Sync completed, refreshing data...', data);
+      setIsRefreshing(true);
+      router.refresh();
+      // Reset refreshing state after a short delay
+      setTimeout(() => setIsRefreshing(false), 2000);
+    };
+
+    subscribe('sync.completed', handleSyncCompleted);
+    return () => {
+      unsubscribe('sync.completed', handleSyncCompleted);
+    };
+  }, [subscribe, unsubscribe, router]);
 
   const filterOptions = useMemo(() => {
     const statuses = new Set<string>();
@@ -159,6 +179,13 @@ export default function DashboardClient({ initialProjects }: Props) {
         resetFilters={handleResetFilters}
         filterOptions={filterOptions}
       />
+
+      {isRefreshing && (
+        <div className="flex items-center justify-center gap-2 py-2 px-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium animate-pulse">
+          <RefreshCw className="w-4 h-4 animate-spin" />
+          Updating dashboard data in real-time...
+        </div>
+      )}
 
       <div className="glass-panel rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="overflow-x-auto">

@@ -29,4 +29,60 @@ export interface Project {
   history: string;
 }
 
+export interface SyncLog {
+  id: string;
+  sync_type: string;
+  status: string;
+  started_at: string;
+  completed_at?: string;
+  records_processed: number;
+  records_created: number;
+  records_updated: number;
+  records_failed: number;
+  error_message?: string;
+  details: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  related_entity_type?: string;
+  related_entity_id?: string;
+  is_read: number;
+  created_at: string;
+  read_at?: string;
+}
+
+export interface Document {
+  id: string;
+  project_uid: string;
+  category: string;
+  name: string;
+  file_path: string;
+  file_size: number;
+  mime_type: string;
+  version: number;
+  parent_document_id?: string;
+  uploaded_by: string;
+  upload_date: string;
+  tags: string;
+  notes: string;
+}
+
+export interface AuditLog {
+  id: string;
+  user_id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  old_value: string;
+  new_value: string;
+  ip_address: string;
+  user_agent: string;
+  created_at: string;
+}
+
 export default db;

@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Database, X, Activity, FileText, ClipboardList, Receipt, BarChart3, Network, Server, Box, Users } from 'lucide-react';
+import { LayoutDashboard, Database, X, Activity, FileText, ClipboardList, Receipt, BarChart3, Network, Server, Box, Users, Settings } from 'lucide-react';
 
 interface SidebarProps {
   open: boolean;
@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { href: '/olt', label: 'OLT Inventory', icon: Server },
   { href: '/odc', label: 'ODC Inventory', icon: Box },
   { href: '/vendors', label: 'Vendor Management', icon: Users },
+  { href: '/settings/sync', label: 'Settings', icon: Settings },
 ];
 
 export default function Sidebar({ open, onClose }: SidebarProps) {

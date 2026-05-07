@@ -288,6 +288,89 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_projects_priority ON projects(priority);
       `);
     }
+  },
+  {
+    id: 8,
+    name: 'phase3_initial_tables',
+    run: (db) => {
+      db.exec(`
+        -- Sync Logs
+        CREATE TABLE IF NOT EXISTS sync_logs (
+          id TEXT PRIMARY KEY,
+          sync_type TEXT NOT NULL,
+          status TEXT NOT NULL,
+          started_at DATETIME NOT NULL,
+          completed_at DATETIME,
+          records_processed INTEGER DEFAULT 0,
+          records_created INTEGER DEFAULT 0,
+          records_updated INTEGER DEFAULT 0,
+          records_failed INTEGER DEFAULT 0,
+          error_message TEXT,
+          details TEXT DEFAULT '{}'
+        );
+
+        -- Notifications
+        CREATE TABLE IF NOT EXISTS notifications (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          message TEXT NOT NULL,
+          related_entity_type TEXT,
+          related_entity_id TEXT,
+          is_read INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          read_at DATETIME
+        );
+
+        CREATE TABLE IF NOT EXISTS notification_preferences (
+          user_id TEXT PRIMARY KEY,
+          email_enabled INTEGER DEFAULT 1,
+          in_app_enabled INTEGER DEFAULT 1,
+          notification_types TEXT DEFAULT '[]',
+          digest_frequency TEXT DEFAULT 'daily'
+        );
+
+        -- Documents
+        CREATE TABLE IF NOT EXISTS documents (
+          id TEXT PRIMARY KEY,
+          project_uid TEXT NOT NULL,
+          category TEXT NOT NULL,
+          name TEXT NOT NULL,
+          file_path TEXT NOT NULL,
+          file_size INTEGER NOT NULL,
+          mime_type TEXT NOT NULL,
+          version INTEGER DEFAULT 1,
+          parent_document_id TEXT,
+          uploaded_by TEXT NOT NULL,
+          upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+          tags TEXT DEFAULT '[]',
+          notes TEXT DEFAULT '',
+          FOREIGN KEY (project_uid) REFERENCES projects(uid),
+          FOREIGN KEY (parent_document_id) REFERENCES documents(id)
+        );
+
+        -- Audit Logs
+        CREATE TABLE IF NOT EXISTS audit_logs (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          action TEXT NOT NULL,
+          entity_type TEXT NOT NULL,
+          entity_id TEXT NOT NULL,
+          old_value TEXT DEFAULT '{}',
+          new_value TEXT DEFAULT '{}',
+          ip_address TEXT DEFAULT '',
+          user_agent TEXT DEFAULT '',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_date ON audit_logs(created_at);
+        CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+        CREATE INDEX IF NOT EXISTS idx_documents_project ON documents(project_uid);
+      `);
+    }
   }
 ];
 

@@ -4,14 +4,9 @@ import { successResponse, errorResponse } from '@/lib/response';
 export async function POST() {
   try {
     const result = await SyncService.syncProjects();
-    
-    if (!result.success) {
-      return errorResponse(result.message || 'Gagal sinkronisasi data', 400);
-    }
-
-    return successResponse(result, 'Sync project berhasil');
+    return successResponse(result, 'Sync project berhasil dimulai secara manual');
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('Manual sync error:', error);
     return errorResponse((error as Error).message);
   }
 }
