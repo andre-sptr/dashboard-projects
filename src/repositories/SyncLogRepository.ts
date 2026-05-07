@@ -1,4 +1,4 @@
-import db, { SyncLog } from '../lib/db';
+import { db, SyncLog } from '../lib/db';
 import { randomUUID } from 'crypto';
 
 export class SyncLogRepository {

@@ -371,6 +371,26 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_documents_project ON documents(project_uid);
       `);
     }
+  },
+  {
+    id: 9,
+    name: 'performance_indexing_v2',
+    run: (db) => {
+      db.exec(`
+        -- Projects indexing
+        CREATE INDEX IF NOT EXISTS idx_projects_id_ihld ON projects(id_ihld);
+        CREATE INDEX IF NOT EXISTS idx_projects_batch ON projects(batch_program);
+        CREATE INDEX IF NOT EXISTS idx_projects_sub_status ON projects(sub_status);
+        
+        -- Documents indexing
+        CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(category);
+        
+        -- Sync Logs indexing
+        CREATE INDEX IF NOT EXISTS idx_sync_logs_type ON sync_logs(sync_type);
+        CREATE INDEX IF NOT EXISTS idx_sync_logs_status ON sync_logs(status);
+        CREATE INDEX IF NOT EXISTS idx_sync_logs_date ON sync_logs(started_at);
+      `);
+    }
   }
 ];
 

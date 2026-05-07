@@ -13,6 +13,7 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/analytics', label: 'Advanced Analytics', icon: BarChart3 },
+  { href: '/audit-logs', label: 'Audit Timeline', icon: Activity },
   { href: '/projects', label: 'Projects Data', icon: Database },
   { href: '/boq', label: 'BoQ Plan', icon: Receipt },
   { href: '/aanwijzing', label: 'Catatan AANWIJZING', icon: FileText },
