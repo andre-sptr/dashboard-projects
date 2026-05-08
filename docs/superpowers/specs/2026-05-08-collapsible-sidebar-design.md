@@ -7,7 +7,7 @@ Reduce sidebar visual density by grouping secondary navigation into collapsible 
 ## Navigation Structure
 
 - Top-level item: Dashboard.
-- Monitoring: Advanced Analytics, Report, Audit Timeline.
+- Monitoring: Analytics, Report, Audit Timeline.
 - Project Tracking: Projects Data, BoQ Plan, Catatan AANWIJZING, Rekap UT.
 - Network Inventory: Topology, OLT Inventory, ODC Inventory.
 - Administration: Vendor Management, Settings.

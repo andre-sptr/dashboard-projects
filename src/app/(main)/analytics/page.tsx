@@ -98,8 +98,8 @@ export default function AnalyticsPage() {
           {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Skeleton className="h-[450px] w-full rounded-2xl" />
-          <Skeleton className="h-[450px] w-full rounded-2xl" />
+          <Skeleton className="h-112.5 w-full rounded-2xl" />
+          <Skeleton className="h-112.5 w-full rounded-2xl" />
         </div>
       </div>
     );
@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Advanced Analytics
+            Analytics
           </h1>
           <p className="mt-2 text-slate-500 dark:text-slate-400">
             Visualisasi data mendalam, analisis durasi, dan prediksi penyelesaian proyek.

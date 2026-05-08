@@ -51,7 +51,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Monitoring',
     icon: Activity,
     items: [
-      { href: '/analytics', label: 'Advanced Analytics', icon: BarChart3 },
+      { href: '/analytics', label: 'Analytics', icon: BarChart3 },
       { href: '/report', label: 'Report', icon: BarChart3 },
       { href: '/audit-logs', label: 'Audit Timeline', icon: Activity },
     ],
