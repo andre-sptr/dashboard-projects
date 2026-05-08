@@ -1,33 +1,145 @@
 // Main navigation sidebar
 'use client';
 
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Database, X, Activity, FileText, ClipboardList, Receipt, BarChart3, Network, Server, Box, Users, Settings } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Database,
+  X,
+  Activity,
+  FileText,
+  ClipboardList,
+  Receipt,
+  BarChart3,
+  Network,
+  Server,
+  Box,
+  Users,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/analytics', label: 'Advanced Analytics', icon: BarChart3 },
-  { href: '/report', label: 'Report', icon: BarChart3 },
-  { href: '/audit-logs', label: 'Audit Timeline', icon: Activity },
-  { href: '/projects', label: 'Projects Data', icon: Database },
-  { href: '/boq', label: 'BoQ Plan', icon: Receipt },
-  { href: '/aanwijzing', label: 'Catatan AANWIJZING', icon: FileText },
-  { href: '/ut', label: 'Rekap UT', icon: ClipboardList },
-  { href: '/topology', label: 'Topology', icon: Network },
-  { href: '/olt', label: 'OLT Inventory', icon: Server },
-  { href: '/odc', label: 'ODC Inventory', icon: Box },
-  { href: '/vendors', label: 'Vendor Management', icon: Users },
-  { href: '/settings/sync', label: 'Settings', icon: Settings },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+interface NavGroup {
+  label: string;
+  icon: LucideIcon;
+  items: NavItem[];
+}
+
+const PRIMARY_NAV_ITEM: NavItem = {
+  href: '/dashboard',
+  label: 'Dashboard',
+  icon: LayoutDashboard,
+};
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Monitoring',
+    icon: Activity,
+    items: [
+      { href: '/analytics', label: 'Advanced Analytics', icon: BarChart3 },
+      { href: '/report', label: 'Report', icon: BarChart3 },
+      { href: '/audit-logs', label: 'Audit Timeline', icon: Activity },
+    ],
+  },
+  {
+    label: 'Project Tracking',
+    icon: ClipboardList,
+    items: [
+      { href: '/projects', label: 'Projects Data', icon: Database },
+      { href: '/boq', label: 'BoQ Plan', icon: Receipt },
+      { href: '/aanwijzing', label: 'Catatan AANWIJZING', icon: FileText },
+      { href: '/ut', label: 'Rekap UT', icon: ClipboardList },
+    ],
+  },
+  {
+    label: 'Network Inventory',
+    icon: Network,
+    items: [
+      { href: '/topology', label: 'Topology', icon: Network },
+      { href: '/olt', label: 'OLT Inventory', icon: Server },
+      { href: '/odc', label: 'ODC Inventory', icon: Box },
+    ],
+  },
+  {
+    label: 'Administration',
+    icon: Settings,
+    items: [
+      { href: '/vendors', label: 'Vendor Management', icon: Users },
+      { href: '/settings/sync', label: 'Settings', icon: Settings },
+    ],
+  },
 ];
+
+function isActiveRoute(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(href + '/');
+}
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const activeGroup = useMemo(
+    () =>
+      NAV_GROUPS.find((group) =>
+        group.items.some((item) => isActiveRoute(pathname, item.href))
+      )?.label,
+    [pathname]
+  );
+  const [groupState, setGroupState] = useState<{
+    pathname: string;
+    overrides: Record<string, boolean>;
+  }>({ pathname, overrides: {} });
+  const groupOverrides = groupState.pathname === pathname ? groupState.overrides : {};
+
+  const toggleGroup = (label: string) => {
+    setGroupState((current) => {
+      const currentOverrides =
+        current.pathname === pathname ? current.overrides : {};
+      const isOpen = currentOverrides[label] ?? label === activeGroup;
+
+      return {
+        pathname,
+        overrides: {
+          ...currentOverrides,
+          [label]: !isOpen,
+        },
+      };
+    });
+  };
+
+  const renderNavLink = (item: NavItem, nested = false) => {
+    const Icon = item.icon;
+    const isActive = isActiveRoute(pathname, item.href);
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onClose}
+        className={`flex items-center gap-3 rounded-lg text-sm font-medium transition-colors ${nested ? 'px-3 py-2 ml-5' : 'px-3 py-2.5'
+          } ${isActive
+            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+          }`}
+      >
+        <Icon size={18} />
+        {item.label}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -72,26 +184,43 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           </div>
 
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive =
-                pathname === item.href || pathname.startsWith(item.href + '/');
+            {renderNavLink(PRIMARY_NAV_ITEM)}
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-                    }`}
-                >
-                  <Icon size={18} />
-                  {item.label}
-                </Link>
-              );
-            })}
+            <div className="pt-2 space-y-1">
+              {NAV_GROUPS.map((group) => {
+                const Icon = group.icon;
+                const isExpanded =
+                  groupOverrides[group.label] ?? group.label === activeGroup;
+                const isGroupActive = group.label === activeGroup;
+                const contentId = `sidebar-group-${group.label.toLowerCase().replace(/\s+/g, '-')}`;
+                const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+
+                return (
+                  <div key={group.label} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.label)}
+                      aria-expanded={isExpanded}
+                      aria-controls={contentId}
+                      className={`flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${isGroupActive
+                        ? 'text-blue-700 dark:text-blue-400'
+                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                        }`}
+                    >
+                      <Icon size={18} />
+                      <span className="flex-1 text-left">{group.label}</span>
+                      <ChevronIcon size={16} />
+                    </button>
+
+                    {isExpanded && (
+                      <div id={contentId} className="space-y-1">
+                        {group.items.map((item) => renderNavLink(item, true))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </nav>
 
           <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
