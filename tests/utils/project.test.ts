@@ -1,6 +1,11 @@
 // Unit tests for project-specific calculations and status classification
 import { describe, it, expect } from 'vitest';
-import { classifyStatus, parseNumber, getPortCount } from '@/utils/project';
+import {
+  classifyStatus,
+  parseNumber,
+  getPortCount,
+  isGoliveTimelineStatus,
+} from '@/utils/project';
 
 describe('Project Utilities', () => {
   describe('classifyStatus', () => {
@@ -47,6 +52,16 @@ describe('Project Utilities', () => {
       fd[10] = 100; // Plan
       fd[29] = 0;   // Real
       expect(getPortCount(fd)).toBe(100);
+    });
+  });
+
+  describe('isGoliveTimelineStatus', () => {
+    it('should include only numbered GOLIVE and UJI TERIMA statuses', () => {
+      expect(isGoliveTimelineStatus('7. GOLIVE')).toBe(true);
+      expect(isGoliveTimelineStatus('8. UJI TERIMA')).toBe(true);
+      expect(isGoliveTimelineStatus('7. Done')).toBe(false);
+      expect(isGoliveTimelineStatus('GOLIVE')).toBe(false);
+      expect(isGoliveTimelineStatus('complete')).toBe(false);
     });
   });
 });

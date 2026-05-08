@@ -13,7 +13,8 @@ import {
   classifyStatus,
   getPortCount,
   getFullDataArray,
-  formatExcelDateShort
+  formatExcelDateShort,
+  isGoliveTimelineStatus
 } from '@/utils/project';
 import dynamic from 'next/dynamic';
 import { KpiCard } from '@/components/features/recap/KpiCard';
@@ -59,7 +60,7 @@ export default function DashboardRecap({ projects }: Props) {
       statusMap.set(st, (statusMap.get(st) || 0) + ports);
 
       const goliveStr = formatExcelDateShort(fd[30]);
-      if (goliveStr && bucket === 'done') {
+      if (goliveStr && isGoliveTimelineStatus(p.status)) {
         totalGolivePorts += ports;
         goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);
       }

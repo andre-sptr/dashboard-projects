@@ -23,6 +23,11 @@ export function classifyStatus(status: string): StatusBucket {
   return 'other';
 }
 
+export function isGoliveTimelineStatus(status: string): boolean {
+  const s = (status || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  return s === '7. golive' || s === '8. uji terima';
+}
+
 // Parse value to number with fallback to 0
 export function parseNumber(value: unknown): number {
   if (value === null || value === undefined || value === '') return 0;
