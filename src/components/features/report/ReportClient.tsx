@@ -67,11 +67,11 @@ export default function ReportClient({ initialProjects }: Props) {
       const fd = getFullDataArray(p);
 
       const planPort = Number(fd[10]) || 0;
-      const realPort = Number(fd[29]) || 0;
-      const goliveDate = parseExcelDate(fd[30]);
+      const realPort = Number(fd[30]) || 0;
+      const goliveDate = parseExcelDate(fd[31]);
 
-      let targetDate = parseExcelDate(fd[18]);
-      if (!targetDate) targetDate = parseExcelDate(fd[17]);
+      let targetDate = parseExcelDate(fd[19]);
+      if (!targetDate) targetDate = parseExcelDate(fd[18]);
 
       const branch = String(fd[7] || 'UNKNOWN').toUpperCase();
 

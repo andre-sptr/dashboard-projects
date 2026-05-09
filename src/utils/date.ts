@@ -185,7 +185,7 @@ export function parseExcelDate(value: unknown): Date | null {
 
   // Handle Excel Serial Number
   const serial = Number(strVal);
-  if (!isNaN(serial) && serial > 1000) {
+  if (!isNaN(serial) && serial > 25569) {
     return new Date((serial - 25569) * 86400 * 1000);
   }
 
