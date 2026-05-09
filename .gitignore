@@ -40,3 +40,4 @@ kunci_rahasia_google.json
 next-env.d.ts
 
 data/*
+.gstack/
