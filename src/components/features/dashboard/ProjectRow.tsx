@@ -127,14 +127,14 @@ const ProjectDetailTabs = ({ project, fullData, parsedHistory }: { project: Proj
         ))}
       </div>
 
-      <div className="min-h-[30rem]">
+      <div className="min-h-120">
         {activeTab === 'info' && (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 animate-in fade-in duration-300">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Database size={16} className="text-purple-500" />
               Data Kolom Mentah (Raw)
             </h4>
-            <div className="max-h-[26rem] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="max-h-104 overflow-y-auto pr-2 custom-scrollbar">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 text-xs">
                 {RAW_DATA_HEADERS.map((headerName, idx) => {
                   const val = fullData[idx];
