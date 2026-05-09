@@ -71,7 +71,7 @@ export const BranchRanking = ({ branchData }: BranchRankingProps) => {
                 </td>
                 {STATUS_COLS.map(s => (
                   <td key={s} className="px-3 py-3 text-center text-sm font-medium text-gray-600 dark:text-gray-400 tabular-nums" suppressHydrationWarning>
-                    {(branch.statusCounts?.[s] ?? 0).toLocaleString()}
+                    {(branch.statusCounts?.[s] ?? 0).toLocaleString('id-ID')}
                   </td>
                 ))}
                 <td className="px-4 py-3">
