@@ -189,28 +189,29 @@ export function parseExcelDate(value: unknown): Date | null {
     return new Date((serial - 25569) * 86400 * 1000);
   }
 
-  // Handle Month Name (e.g. "JAN")
+  // Handle Month Name (e.g. "JAN" or "MEI")
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  const monthIdx = months.indexOf(strVal);
-  if (monthIdx !== -1) {
+  const monthsID = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+  const resolveMonth = (s: string): number => {
+    const upper = s.toUpperCase().slice(0, 3);
+    const idx = months.indexOf(upper);
+    if (idx !== -1) return idx;
+    return monthsID.indexOf(upper);
+  };
+  const monthIdx = resolveMonth(strVal);
+  if (monthIdx !== -1 && strVal.length <= 3) {
     const now = new Date();
     return new Date(now.getFullYear(), monthIdx, 1);
   }
 
-  // Handle DD/Mon/YYYY (e.g. "21/Feb/2026") and DD/MM/YYYY
+  // Handle DD/Mon/YYYY (e.g. "21/Feb/2026", "07/Mei/2026") and DD/MM/YYYY
   if (strVal.includes('/')) {
     const parts = strVal.split('/');
     if (parts.length === 3) {
       const d = parseInt(parts[0], 10);
       const y = parseInt(parts[2], 10);
-      let m: number;
-      const monthIdx = months.indexOf(parts[1].toUpperCase().slice(0, 3));
-      if (monthIdx !== -1) {
-        m = monthIdx;
-      } else {
-        m = parseInt(parts[1], 10) - 1;
-      }
-      if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+      const m = resolveMonth(parts[1]) !== -1 ? resolveMonth(parts[1]) : parseInt(parts[1], 10) - 1;
+      if (!isNaN(d) && !isNaN(m) && m >= 0 && !isNaN(y)) {
         const date = new Date(y, m, d);
         if (!isNaN(date.getTime())) return date;
       }

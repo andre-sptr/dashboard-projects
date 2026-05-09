@@ -59,25 +59,41 @@ export default function DashboardRecap({ projects }: Props) {
       const st = p.status || '-';
       statusMap.set(st, (statusMap.get(st) || 0) + ports);
 
-      const goliveStr = formatExcelDateShort(fd[30]);
+      const goliveStr = formatExcelDateShort(fd[31]);
       if (goliveStr && isGoliveTimelineStatus(p.status)) {
         totalGolivePorts += ports;
         goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);
       }
     }
 
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
     const chronologicalGolive: { name: string; count: number }[] = [];
 
-    for (let m = 0; m <= currentMonth; m++) {
-      const d = new Date(currentYear, m, 1);
-      const label = d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
-      chronologicalGolive.push({
-        name: label,
-        count: goliveMonthMap.get(label) || 0
-      });
+    if (goliveMonthMap.size > 0) {
+      // Build date range from earliest to latest golive month in the data
+      const parsedMonths = Array.from(goliveMonthMap.keys()).map(label => {
+        const parts = label.split(' ');
+        const monthNames = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des',
+                            'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const mIdx = monthNames.findIndex(m => m.toLowerCase() === parts[0].toLowerCase());
+        return { label, year: parseInt(parts[1]), month: mIdx % 12 };
+      }).filter(m => !isNaN(m.year) && m.month >= 0);
+
+      if (parsedMonths.length > 0) {
+        const minYear = Math.min(...parsedMonths.map(m => m.year));
+        const maxYear = Math.max(...parsedMonths.map(m => m.year));
+        const minMonth = Math.min(...parsedMonths.filter(m => m.year === minYear).map(m => m.month));
+        const maxMonth = Math.max(...parsedMonths.filter(m => m.year === maxYear).map(m => m.month));
+
+        for (let y = minYear; y <= maxYear; y++) {
+          const startM = y === minYear ? minMonth : 0;
+          const endM = y === maxYear ? maxMonth : 11;
+          for (let m = startM; m <= endM; m++) {
+            const d = new Date(y, m, 1);
+            const label = d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+            chronologicalGolive.push({ name: label, count: goliveMonthMap.get(label) || 0 });
+          }
+        }
+      }
     }
 
     const recent = [...projects]
