@@ -197,15 +197,23 @@ export function parseExcelDate(value: unknown): Date | null {
     return new Date(now.getFullYear(), monthIdx, 1);
   }
 
-  // Handle DD/MM/YYYY
+  // Handle DD/Mon/YYYY (e.g. "21/Feb/2026") and DD/MM/YYYY
   if (strVal.includes('/')) {
     const parts = strVal.split('/');
     if (parts.length === 3) {
       const d = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10) - 1;
       const y = parseInt(parts[2], 10);
-      const date = new Date(y, m, d);
-      if (!isNaN(date.getTime())) return date;
+      let m: number;
+      const monthIdx = months.indexOf(parts[1].toUpperCase().slice(0, 3));
+      if (monthIdx !== -1) {
+        m = monthIdx;
+      } else {
+        m = parseInt(parts[1], 10) - 1;
+      }
+      if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+        const date = new Date(y, m, d);
+        if (!isNaN(date.getTime())) return date;
+      }
     }
   }
 
