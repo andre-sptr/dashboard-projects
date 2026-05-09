@@ -96,6 +96,24 @@ export default function DashboardRecap({ projects }: Props) {
       }
     }
 
+    const branchGoliveMap = new Map<string, { done: number; total: number }>();
+    for (const p of projects) {
+      const fd = getFullDataArray(p);
+      const ports = getPortCount(fd);
+      const br = (p.branch || 'UNKNOWN').toUpperCase();
+      const entry = branchGoliveMap.get(br) || { done: 0, total: 0 };
+      entry.total += ports;
+      if (classifyStatus(p.status) === 'done') entry.done += ports;
+      branchGoliveMap.set(br, entry);
+    }
+    const branchGoliveData = Array.from(branchGoliveMap.entries())
+      .map(([name, v]) => ({
+        name,
+        done: v.done,
+        achiev: v.total > 0 ? Math.round((v.done / v.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.achiev - a.achiev);
+
     const recent = [...projects]
       .sort(
         (a, b) =>
@@ -126,6 +144,7 @@ export default function DashboardRecap({ projects }: Props) {
         }),
       totalGolivePorts,
       goliveMonthList: chronologicalGolive,
+      branchGoliveData,
       recent,
       pieData,
     };
@@ -167,10 +186,11 @@ export default function DashboardRecap({ projects }: Props) {
       </section>
 
       <div className="animate-in stagger-2">
-        <DistributionCharts 
-          pieData={stats.pieData} 
-          statusList={stats.statusList} 
-          totalPorts={totalPorts} 
+        <DistributionCharts
+          pieData={stats.pieData}
+          statusList={stats.statusList}
+          totalPorts={totalPorts}
+          branchGoliveData={stats.branchGoliveData}
         />
       </div>
 

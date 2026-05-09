@@ -55,60 +55,95 @@ interface SubStatusEntry {
   count: number;
 }
 
+interface BranchGoliveEntry {
+  name: string;
+  done: number;
+  achiev: number;
+}
+
 interface DistributionChartsProps {
   pieData: PieEntry[];
   statusList: SubStatusEntry[];
   totalPorts: number;
+  branchGoliveData: BranchGoliveEntry[];
 }
 
-export const DistributionCharts = ({ pieData, statusList, totalPorts }: DistributionChartsProps) => {
+export const DistributionCharts = ({ pieData, statusList, totalPorts, branchGoliveData }: DistributionChartsProps) => {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
       <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm flex flex-col min-h-87.5">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-3">
           <TrendingUp size={18} className="text-blue-600" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
             Distribusi Status (by Port)
           </h3>
         </div>
         {pieData.length ? (
-          <div className="flex-1 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ cx, x, y, percent }) => (
-                    <text
-                      x={x}
-                      y={y}
-                      fill="currentColor"
-                      className="text-[11px] font-bold text-gray-600 dark:text-gray-400"
-                      textAnchor={x > cx ? 'start' : 'end'}
-                      dominantBaseline="central"
-                    >
-                      {`${((percent || 0) * 100).toFixed(0)}%`}
-                    </text>
-                  )}
-                  labelLine={{ stroke: '#9ca3af', strokeWidth: 1 }}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => typeof value === 'number' ? value.toLocaleString('id-ID') : value}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <>
+            <div className="w-full" style={{ height: 220 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ cx, x, y, percent }) => (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="currentColor"
+                        className="text-[11px] font-bold text-gray-600 dark:text-gray-400"
+                        textAnchor={x > cx ? 'start' : 'end'}
+                        dominantBaseline="central"
+                      >
+                        {`${((percent || 0) * 100).toFixed(0)}%`}
+                      </text>
+                    )}
+                    labelLine={{ stroke: '#9ca3af', strokeWidth: 1 }}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => typeof value === 'number' ? value.toLocaleString('id-ID') : value}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            {branchGoliveData.length > 0 && (
+              <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+                      <th className="pb-1.5 text-left">Branch</th>
+                      <th className="pb-1.5 text-right">GL</th>
+                      <th className="pb-1.5 text-right">Achiev</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {branchGoliveData.map((b) => (
+                      <tr key={b.name}>
+                        <td className="py-1 font-medium text-gray-700 dark:text-gray-300">{b.name}</td>
+                        <td className="py-1 text-right tabular-nums text-gray-600 dark:text-gray-400">{b.done.toLocaleString('id-ID')}</td>
+                        <td className="py-1 text-right tabular-nums font-semibold">
+                          <span className={b.achiev >= 90 ? 'text-emerald-600' : b.achiev >= 70 ? 'text-blue-600' : 'text-amber-600'}>
+                            {b.achiev}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         ) : (
           <p className="text-sm text-gray-500 italic">Belum ada data.</p>
         )}

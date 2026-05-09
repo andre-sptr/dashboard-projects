@@ -55,8 +55,11 @@ export default function ReportClient({ initialProjects }: Props) {
     let lateProjects = 0;
     let onTimeProjects = 0;
 
+    const STATUS_COLS = ['0. DROP','1. AANWIJZING','2. DONE AANWIJZING','3. PERIZINAN','4. MATDEL','5. INSTALASI','6. FINISH INSTALASI','7. GOLIVE','8. UJI TERIMA'] as const;
+    type StatusCol = typeof STATUS_COLS[number];
+
     const timeSeriesMap = new Map<string, { name: string; actual: number; planned: number; timestamp: number }>();
-    const branchMap = new Map<string, { name: string; planned: number; actual: number }>();
+    const branchMap = new Map<string, { name: string; planned: number; actual: number; statusCounts: Record<StatusCol, number> }>();
 
     projects.forEach(p => {
       const planPort = p.port_planned || 0;
@@ -70,9 +73,14 @@ export default function ReportClient({ initialProjects }: Props) {
       totalPlannedPorts += planPort;
       totalRealizedPorts += realPort;
 
-      const bData = branchMap.get(branch) || { name: branch, planned: 0, actual: 0 };
+      const emptyStatusCounts = Object.fromEntries(STATUS_COLS.map(s => [s, 0])) as Record<StatusCol, number>;
+      const bData = branchMap.get(branch) || { name: branch, planned: 0, actual: 0, statusCounts: emptyStatusCounts };
       bData.planned += planPort;
       bData.actual += realPort;
+      const normalizedStatus = (p.status || '').trim() as StatusCol;
+      if (STATUS_COLS.includes(normalizedStatus)) {
+        bData.statusCounts[normalizedStatus] = (bData.statusCounts[normalizedStatus] || 0) + 1;
+      }
       branchMap.set(branch, bData);
 
       if (goliveDate) {
@@ -126,8 +134,11 @@ export default function ReportClient({ initialProjects }: Props) {
 
     const branchData = Array.from(branchMap.values())
       .map(b => ({
-        ...b,
-        achievement: b.planned > 0 ? Math.round((b.actual / b.planned) * 100) : 0
+        name: b.name,
+        planned: b.planned,
+        actual: b.actual,
+        statusCounts: b.statusCounts,
+        achievement: b.planned > 0 ? Math.round((b.actual / b.planned) * 100) : 0,
       }))
       .sort((a, b) => b.achievement - a.achievement);
 

@@ -2,11 +2,38 @@
 import React from 'react';
 import { MapPin } from 'lucide-react';
 
+const STATUS_COLS = [
+  '0. DROP',
+  '1. AANWIJZING',
+  '2. DONE AANWIJZING',
+  '3. PERIZINAN',
+  '4. MATDEL',
+  '5. INSTALASI',
+  '6. FINISH INSTALASI',
+  '7. GOLIVE',
+  '8. UJI TERIMA',
+] as const;
+
+type StatusCol = typeof STATUS_COLS[number];
+
+const SHORT_LABELS: Record<StatusCol, string> = {
+  '0. DROP': 'DROP',
+  '1. AANWIJZING': 'AANWIJZING',
+  '2. DONE AANWIJZING': 'DONE AANWJ',
+  '3. PERIZINAN': 'PERIZINAN',
+  '4. MATDEL': 'MATDEL',
+  '5. INSTALASI': 'INSTALASI',
+  '6. FINISH INSTALASI': 'FINISH INST',
+  '7. GOLIVE': 'GOLIVE',
+  '8. UJI TERIMA': 'UJI TERIMA',
+};
+
 interface BranchData {
   name: string;
   planned: number;
   actual: number;
   achievement: number;
+  statusCounts: Record<StatusCol, number>;
 }
 
 interface BranchRankingProps {
@@ -26,29 +53,29 @@ export const BranchRanking = ({ branchData }: BranchRankingProps) => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-white dark:bg-gray-900">
-              <th className="px-6 py-4">Branch</th>
-              <th className="px-6 py-4 text-center">Port Plan</th>
-              <th className="px-6 py-4 text-center">Realized</th>
-              <th className="px-6 py-4">Achievement %</th>
+              <th className="px-4 py-4 sticky left-0 bg-white dark:bg-gray-900">Branch</th>
+              {STATUS_COLS.map(s => (
+                <th key={s} className="px-3 py-4 text-center whitespace-nowrap">{SHORT_LABELS[s]}</th>
+              ))}
+              <th className="px-4 py-4">Achievement %</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {branchData.map((branch, i) => (
               <tr key={branch.name} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
+                <td className="px-4 py-3 sticky left-0 bg-white dark:bg-gray-900">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-gray-400 w-4">{i + 1}</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{branch.name}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">{branch.name}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-center text-sm font-medium text-gray-500" suppressHydrationWarning>
-                  {branch.planned.toLocaleString()}
-                </td>
-                <td className="px-6 py-4 text-center text-sm font-bold text-gray-900 dark:text-white" suppressHydrationWarning>
-                  {branch.actual.toLocaleString()}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
+                {STATUS_COLS.map(s => (
+                  <td key={s} className="px-3 py-3 text-center text-sm font-medium text-gray-600 dark:text-gray-400 tabular-nums" suppressHydrationWarning>
+                    {(branch.statusCounts?.[s] ?? 0).toLocaleString()}
+                  </td>
+                ))}
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3 min-w-[110px]">
                     <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${branch.achievement >= 90 ? 'bg-emerald-500' :
