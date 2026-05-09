@@ -132,7 +132,7 @@ export class SyncService {
             odp_planned: num(COL.ODP_PLAN),
             port_planned: num(COL.PORT_PLAN),
             port_realized: num(COL.REAL_JML_PORT_GOLIVE),
-            golive_target: str(COL.TARGET_GOLIVE_APRIL),
+            golive_target: str(COL.KOMITMEN_GOLIVE),
             golive_actual: str(COL.TANGGAL_GOLIVE),
           });
           processed++;
