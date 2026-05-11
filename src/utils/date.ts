@@ -177,6 +177,11 @@ export function getCurrentTimestamp(): string {
   return new Date().toISOString();
 }
 
+function isReasonableDateYear(date: Date): boolean {
+  const year = date.getFullYear();
+  return year >= 1900 && year <= 2100;
+}
+
 // Parse Excel serial number or date string to Date
 export function parseExcelDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === '' || String(value).trim() === '#N/A') return null;
@@ -186,7 +191,8 @@ export function parseExcelDate(value: unknown): Date | null {
   // Handle Excel Serial Number
   const serial = Number(strVal);
   if (!isNaN(serial) && serial > 25569) {
-    return new Date((serial - 25569) * 86400 * 1000);
+    const date = new Date((serial - 25569) * 86400 * 1000);
+    return isReasonableDateYear(date) ? date : null;
   }
 
   // Handle Month Name (e.g. "JAN" or "MEI")
@@ -213,13 +219,13 @@ export function parseExcelDate(value: unknown): Date | null {
       const m = resolveMonth(parts[1]) !== -1 ? resolveMonth(parts[1]) : parseInt(parts[1], 10) - 1;
       if (!isNaN(d) && !isNaN(m) && m >= 0 && !isNaN(y)) {
         const date = new Date(y, m, d);
-        if (!isNaN(date.getTime())) return date;
+        if (!isNaN(date.getTime()) && isReasonableDateYear(date)) return date;
       }
     }
   }
 
   const date = new Date(strVal);
-  if (!isNaN(date.getTime())) return date;
+  if (!isNaN(date.getTime()) && isReasonableDateYear(date)) return date;
 
   return null;
 }

@@ -76,7 +76,7 @@ export default function DashboardRecap({ projects }: Props) {
                             'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const mIdx = monthNames.findIndex(m => m.toLowerCase() === parts[0].toLowerCase());
         return { label, year: parseInt(parts[1]), month: mIdx % 12 };
-      }).filter(m => !isNaN(m.year) && m.month >= 0);
+      }).filter(m => !isNaN(m.year) && m.year >= 1900 && m.year <= 2100 && m.month >= 0);
 
       if (parsedMonths.length > 0) {
         const minYear = Math.min(...parsedMonths.map(m => m.year));

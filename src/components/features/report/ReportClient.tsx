@@ -66,7 +66,7 @@ export default function ReportClient({ initialProjects }: Props) {
       const realPort = p.port_realized || 0;
       const goliveDate = parseExcelDate(p.golive_actual);
 
-      let targetDate = parseExcelDate(p.golive_target);
+      const targetDate = parseExcelDate(p.golive_target);
 
       const branch = (p.branch || 'UNKNOWN').toUpperCase();
 
