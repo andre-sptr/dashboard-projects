@@ -16,8 +16,8 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'Sistem pelacakan durasi perubahan status SLA project.',
   },
   '/boq': {
-    title: 'Bill of Quantity',
-    subtitle: 'Import dan kelola data BoQ dari file Excel.',
+    title: 'BoQ Plan',
+    subtitle: 'Form pencatatan bill of quantity plan.',
   },
   '/aanwijzing': {
     title: 'Catatan AANWIJZING',
@@ -28,8 +28,24 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'Form pencatatan hasil UT (Uji Terima).',
   },
   '/report': {
-    title: 'KPI Analytics & Report',
+    title: 'Report & Analytics',
     subtitle: 'Laporan mendalam performa proyek dan realisasi port.',
+  },
+  '/kpi-report/jpp': {
+    title: 'KPI Report JPP',
+    subtitle: '',
+  },
+  '/kpi-report/nodeb': {
+    title: 'KPI Report NodeB',
+    subtitle: '',
+  },
+  '/kpi-report/hem': {
+    title: 'KPI Report HEM',
+    subtitle: '',
+  },
+  '/kpi-report/engineering': {
+    title: 'KPI Report Engineering',
+    subtitle: '',
   },
   '/topology': {
     title: 'Network Topology',

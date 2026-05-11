@@ -51,6 +51,16 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'KPI Report',
+    icon: BarChart3,
+    items: [
+      { href: '/kpi-report/jpp', label: 'JPP', icon: FileText },
+      { href: '/kpi-report/nodeb', label: 'NodeB', icon: FileText },
+      { href: '/kpi-report/hem', label: 'HEM', icon: FileText },
+      { href: '/kpi-report/engineering', label: 'Engineering', icon: FileText },
+    ],
+  },
+  {
     label: 'Project Tracking',
     icon: ClipboardList,
     items: [
