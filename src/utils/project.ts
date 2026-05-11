@@ -38,7 +38,7 @@ export function parseNumber(value: unknown): number {
 // Get port count from full_data (real or plan)
 export function getPortCount(fd: unknown[]): number {
   const plan = parseNumber(fd[10]);
-  const real = parseNumber(fd[30]);
+  const real = parseNumber(fd[29]);
   return real > 0 ? real : plan;
 }
 

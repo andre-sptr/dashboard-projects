@@ -32,8 +32,8 @@ export const COL = {
   REAL_JML_ODP_8: 27,
   REAL_JML_ODP_16: 28,
   ID_SW_ABD: 29,
-  REAL_JML_PORT_GOLIVE: 30,
-  TANGGAL_GOLIVE: 31,
+  REAL_JML_PORT_GOLIVE: 29,
+  TANGGAL_GOLIVE: 30,
 } as const;
 
 export type ColKey = keyof typeof COL;
