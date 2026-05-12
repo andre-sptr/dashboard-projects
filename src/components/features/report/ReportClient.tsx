@@ -16,6 +16,11 @@ const PerformanceCharts = dynamic(() => import('./PerformanceCharts').then(mod =
   ssr: false
 });
 
+const GoliveDistributionChart = dynamic(() => import('./PerformanceCharts').then(mod => mod.GoliveDistributionChart), {
+  loading: () => <div className="h-[400px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />,
+  ssr: false
+});
+
 const BranchRanking = dynamic(() => import('./BranchRanking').then(mod => mod.BranchRanking), {
   loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />,
   ssr: false
@@ -55,6 +60,7 @@ export default function ReportClient({ initialProjects }: Props) {
     let totalLeadTimeDays = 0;
     let lateProjects = 0;
     let onTimeProjects = 0;
+    let totalGolivePorts = 0;
 
     const STATUS_COLS = ['0. DROP','1. AANWIJZING','2. DONE AANWIJZING','3. PERIZINAN','4. MATDEL','5. INSTALASI','6. FINISH INSTALASI','7. GOLIVE','8. UJI TERIMA'] as const;
     type StatusCol = typeof STATUS_COLS[number];
@@ -85,6 +91,7 @@ export default function ReportClient({ initialProjects }: Props) {
       branchMap.set(branch, bData);
 
       if (goliveDate) {
+        totalGolivePorts += realPort;
         if (targetDate) {
           if (goliveDate <= targetDate) {
             onTimeProjects++;
@@ -159,7 +166,8 @@ export default function ReportClient({ initialProjects }: Props) {
       branchData,
       slaData,
       onTimeProjects,
-      lateProjects
+      lateProjects,
+      totalGolivePorts,
     };
   }, [initialProjects, granularity, areaFilter, branchFilter]);
 
@@ -185,11 +193,15 @@ export default function ReportClient({ initialProjects }: Props) {
         lateProjects={stats.lateProjects}
         avgDelayDays={stats.avgDelayDays}
         slaRate={stats.slaRate}
-        trendData={stats.trendData}
-        granularity={granularity}
       />
 
       <BranchRanking branchData={stats.branchData} />
+
+      <GoliveDistributionChart
+        trendData={stats.trendData}
+        granularity={granularity}
+        totalGolivePorts={stats.totalGolivePorts}
+      />
     </div>
   );
 }

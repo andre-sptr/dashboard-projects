@@ -13,6 +13,11 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+const STATUS_COLS = [
+  '0. DROP', '1. AANWIJZING', '2. DONE AANWIJZING', '3. PERIZINAN',
+  '4. MATDEL', '5. INSTALASI', '6. FINISH INSTALASI', '7. GOLIVE', '8. UJI TERIMA',
+] as const;
+
 function buildDashboardStats(projects: Project[]): DashboardStats {
   let totalPorts = 0;
   let donePorts = 0;
@@ -23,6 +28,7 @@ function buildDashboardStats(projects: Project[]): DashboardStats {
   const statusMap = new Map<string, number>();
   const goliveMonthMap = new Map<string, number>();
   const branchGoliveMap = new Map<string, { done: number; total: number }>();
+  const branchRankingMap = new Map<string, { planned: number; actual: number; statusCounts: Record<string, number> }>();
   let totalGolivePorts = 0;
 
   for (const project of projects) {
@@ -50,6 +56,20 @@ function buildDashboardStats(projects: Project[]): DashboardStats {
     branchEntry.total += ports;
     if (bucket === 'done') branchEntry.done += ports;
     branchGoliveMap.set(branch, branchEntry);
+
+    const planPort = project.port_planned || 0;
+    const realPort = project.port_realized || 0;
+    const rankEntry = branchRankingMap.get(branch) || {
+      planned: 0, actual: 0,
+      statusCounts: Object.fromEntries(STATUS_COLS.map(s => [s, 0])),
+    };
+    rankEntry.planned += planPort;
+    rankEntry.actual += realPort;
+    const normalizedStatus = (project.status || '').trim();
+    if ((STATUS_COLS as readonly string[]).includes(normalizedStatus)) {
+      rankEntry.statusCounts[normalizedStatus] = (rankEntry.statusCounts[normalizedStatus] || 0) + planPort;
+    }
+    branchRankingMap.set(branch, rankEntry);
   }
 
   const goliveMonthList: { name: string; count: number }[] = [];
@@ -125,6 +145,15 @@ function buildDashboardStats(projects: Project[]): DashboardStats {
         achiev: value.total > 0 ? Math.round((value.done / value.total) * 100) : 0,
       }))
       .sort((a, b) => b.achiev - a.achiev),
+    branchRankingData: Array.from(branchRankingMap.entries())
+      .map(([name, value]) => ({
+        name,
+        planned: value.planned,
+        actual: value.actual,
+        achievement: value.planned > 0 ? Math.round((value.actual / value.planned) * 100) : 0,
+        statusCounts: value.statusCounts,
+      }))
+      .sort((a, b) => b.achievement - a.achievement),
     recent,
   };
 }

@@ -1,5 +1,13 @@
 import type { Project } from '@/types/database';
 
+export interface BranchRankingEntry {
+  name: string;
+  planned: number;
+  actual: number;
+  achievement: number;
+  statusCounts: Record<string, number>;
+}
+
 export interface DashboardStats {
   total: number;
   totalPorts: number;
@@ -11,5 +19,6 @@ export interface DashboardStats {
   totalGolivePorts: number;
   goliveMonthList: { name: string; count: number }[];
   branchGoliveData: { name: string; done: number; achiev: number }[];
+  branchRankingData: BranchRankingEntry[];
   recent: Project[];
 }

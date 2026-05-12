@@ -23,6 +23,11 @@ const TimelineChart = dynamic(() => import('@/components/features/recap/Timeline
   ssr: false,
 });
 
+const BranchRanking = dynamic(() => import('@/components/features/report/BranchRanking').then(mod => mod.BranchRanking), {
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />,
+  ssr: false,
+});
+
 interface Props {
   stats: DashboardStats;
 }
@@ -79,13 +84,17 @@ export default function DashboardRecap({ stats }: Props) {
       </div>
 
       <div className="animate-in stagger-3">
-        <TimelineChart 
-          goliveMonthList={stats.goliveMonthList} 
-          totalGolivePorts={stats.totalGolivePorts} 
-        />
+        <BranchRanking branchData={stats.branchRankingData} />
       </div>
 
       <div className="animate-in stagger-4">
+        <TimelineChart
+          goliveMonthList={stats.goliveMonthList}
+          totalGolivePorts={stats.totalGolivePorts}
+        />
+      </div>
+
+      <div className="animate-in stagger-5">
         <RecentChanges recent={stats.recent} />
       </div>
     </div>

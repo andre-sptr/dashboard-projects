@@ -123,16 +123,16 @@ export const DistributionCharts = ({ pieData, statusList, totalPorts, branchGoli
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
                       <th className="pb-1.5 text-left">Branch</th>
-                      <th className="pb-1.5 text-right">GL</th>
-                      <th className="pb-1.5 text-right">Achiev</th>
+                      <th className="pb-1.5 text-center">GL</th>
+                      <th className="pb-1.5 text-center">Achiev</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {branchGoliveData.map((b) => (
                       <tr key={b.name}>
                         <td className="py-1 font-medium text-gray-700 dark:text-gray-300">{b.name}</td>
-                        <td className="py-1 text-right tabular-nums text-gray-600 dark:text-gray-400">{b.done.toLocaleString('id-ID')}</td>
-                        <td className="py-1 text-right tabular-nums font-semibold">
+                        <td className="py-1 text-center tabular-nums text-gray-600 dark:text-gray-400">{b.done.toLocaleString('id-ID')}</td>
+                        <td className="py-1 text-center tabular-nums font-semibold">
                           <span className={b.achiev >= 90 ? 'text-emerald-600' : b.achiev >= 70 ? 'text-blue-600' : 'text-amber-600'}>
                             {b.achiev}%
                           </span>
