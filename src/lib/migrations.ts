@@ -526,7 +526,7 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_boq_ut_items_parent ON boq_ut_items(boq_ut_id);
       `);
     }
-  }
+  },
   {
     id: 13,
     name: 'drop_unused_projects_columns',
@@ -535,10 +535,10 @@ const migrations: Migration[] = [
 
       // Drop indexes before columns that have them
       const indexedCols: Record<string, string> = {
-        vendor_id:  'idx_projects_vendor',
-        olt_id:     'idx_projects_olt',
-        odc_id:     'idx_projects_odc',
-        priority:   'idx_projects_priority',
+        vendor_id: 'idx_projects_vendor',
+        olt_id: 'idx_projects_olt',
+        odc_id: 'idx_projects_odc',
+        priority: 'idx_projects_priority',
       };
       for (const [col, idx] of Object.entries(indexedCols)) {
         if (projectCols.includes(col)) {
