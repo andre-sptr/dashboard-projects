@@ -1,7 +1,7 @@
 // Visual representation of network node hierarchy
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Network,
   ChevronRight,
@@ -13,6 +13,8 @@ import {
   Maximize2,
   Minimize2,
   Filter,
+  Search,
+  X,
 } from 'lucide-react';
 import { TopologyHierarchy, OltData, SlotData } from '@/lib/topology';
 
@@ -37,72 +39,85 @@ function SlotPanel({
   toggleNode: (id: string) => void;
 }) {
   const slotByIndex = new Map<number, SlotData>(olt.slots.map(s => [s.slot, s]));
+  const maxPortGlobal = olt.slots.reduce((max, s) => Math.max(max, s.maxPort), 15);
+  const numSlots = olt.maxSlot + 1;
 
   return (
-    <div className="mt-3 ml-4 font-mono text-[9px]">
-      <div className="bg-gray-950/5 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 text-gray-400 uppercase tracking-widest">
-          <span className="w-8 text-right shrink-0">Slot</span>
-          <span className="text-gray-300 dark:text-gray-600 shrink-0">│</span>
-          <span>Port map — click occupied port to view ODC</span>
+    <div className="mt-3 ml-4">
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
+        <div className="overflow-x-auto">
+          <table className="font-mono text-[9px] border-collapse">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800/60">
+                <th className="sticky left-0 z-10 px-3 py-2 text-right text-[8px] text-gray-400 font-bold uppercase tracking-widest border-r border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 min-w-[2.5rem]">
+                  P\S
+                </th>
+                {Array.from({ length: numSlots }, (_, s) => (
+                  <th
+                    key={s}
+                    className="py-2 text-center text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-gray-700 min-w-[1.5rem] w-6"
+                  >
+                    {s}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: maxPortGlobal + 1 }, (_, portIdx) => {
+                const expandedInRow = Array.from({ length: numSlots }, (_, slotIdx) => {
+                  const p = slotByIndex.get(slotIdx)?.ports[portIdx] ?? null;
+                  return p && expandedNodes[`PORT-${p.port_str}`] ? p : null;
+                }).filter((p): p is NonNullable<typeof p> => p !== null);
+
+                return (
+                  <React.Fragment key={portIdx}>
+                    <tr className={`border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors ${portIdx % 2 === 1 ? 'bg-gray-50/60 dark:bg-gray-800/20' : ''}`}>
+                      <td className="sticky left-0 z-10 px-3 py-1 text-right text-gray-500 dark:text-gray-400 font-bold border-r border-gray-200 dark:border-gray-700 bg-inherit">
+                        {String(portIdx).padStart(2, '0')}
+                      </td>
+                      {Array.from({ length: numSlots }, (_, slotIdx) => {
+                        const portEntry = slotByIndex.get(slotIdx)?.ports[portIdx] ?? null;
+                        const isExpanded = portEntry ? expandedNodes[`PORT-${portEntry.port_str}`] : false;
+                        return (
+                          <td key={slotIdx} className="p-0.5 text-center">
+                            <button
+                              className={`w-5 h-5 rounded-sm block mx-auto transition-all
+                                ${portEntry
+                                  ? isExpanded
+                                    ? 'bg-blue-500 ring-2 ring-blue-400 ring-offset-1 dark:ring-offset-gray-900 shadow-md'
+                                    : 'bg-emerald-500 hover:bg-emerald-400 hover:scale-110'
+                                  : 'bg-gray-100 dark:bg-gray-700/50 cursor-default'
+                                }`}
+                              title={portEntry ? `${portEntry.port_str} → ${portEntry.odc_name}` : `S${slotIdx} P${portIdx}: empty`}
+                              onClick={() => portEntry && toggleNode(`PORT-${portEntry.port_str}`)}
+                              disabled={!portEntry}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    {expandedInRow.length > 0 && (
+                      <tr className="bg-blue-50 dark:bg-blue-900/20">
+                        <td colSpan={numSlots + 1} className="px-3 py-1.5">
+                          <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                            {expandedInRow.map(p => (
+                              <div key={p.port_str} className="flex items-center gap-1.5 text-[9px]">
+                                <span className="font-bold text-blue-600 dark:text-blue-400">{p.port_str}</span>
+                                <span className="text-blue-300 dark:text-blue-700">→</span>
+                                <Box size={9} className="text-blue-400 shrink-0" />
+                                <span className="font-medium text-gray-700 dark:text-gray-200">{p.odc_name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-
-        {Array.from({ length: olt.maxSlot + 1 }, (_, slotIdx) => {
-          const slotData = slotByIndex.get(slotIdx);
-          const numPorts = slotData ? Math.max(slotData.maxPort + 1, 16) : 16;
-          const expandedPorts = slotData?.ports.filter(p => p && expandedNodes[`PORT-${p.port_str}`]) ?? [];
-
-          return (
-            <div key={slotIdx} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
-              <div className="flex items-center gap-2 px-3 py-1 hover:bg-gray-50 dark:hover:bg-gray-800/40">
-                <span className="text-gray-400 w-8 text-right shrink-0">
-                  {String(slotIdx).padStart(2, '0')}
-                </span>
-                <span className="text-gray-300 dark:text-gray-600 shrink-0">│</span>
-                <div className="flex flex-wrap gap-0.5">
-                  {Array.from({ length: numPorts }, (_, portIdx) => {
-                    const portEntry = slotData?.ports[portIdx] ?? null;
-                    const isExpanded = portEntry ? expandedNodes[`PORT-${portEntry.port_str}`] : false;
-                    return (
-                      <button
-                        key={portIdx}
-                        className={`w-5 h-5 flex items-center justify-center text-[7px] font-bold rounded transition-all
-                          ${portEntry
-                            ? isExpanded
-                              ? 'bg-blue-500 text-white ring-1 ring-blue-400 ring-offset-1 dark:ring-offset-gray-900'
-                              : 'bg-emerald-500 text-white hover:bg-emerald-600'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 cursor-default'
-                          }`}
-                        title={portEntry ? `${portEntry.port_str} → ${portEntry.odc_name}` : `Port ${portIdx}: empty`}
-                        onClick={() => portEntry && toggleNode(`PORT-${portEntry.port_str}`)}
-                        disabled={!portEntry}
-                      >
-                        {portIdx}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {expandedPorts.length > 0 && (
-                <div className="mx-3 mb-1.5 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-0.5">
-                  {slotData!.ports.map((p, portIdx) => {
-                    if (!p || !expandedNodes[`PORT-${p.port_str}`]) return null;
-                    return (
-                      <div key={portIdx} className="flex items-center gap-2 text-[9px] text-blue-700 dark:text-blue-300">
-                        <span className="font-bold w-6 text-right">{String(portIdx).padStart(2, '0')}</span>
-                        <span className="text-blue-300 dark:text-blue-700">│</span>
-                        <Box size={9} className="text-blue-400 shrink-0" />
-                        <span className="font-medium text-gray-700 dark:text-gray-200 truncate">{p.odc_name}</span>
-                        <span className="text-gray-400 ml-auto shrink-0">{p.port_str}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );
@@ -114,6 +129,42 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ ROOT: true });
   const [selectedArea, setSelectedArea] = useState<string>('');
   const [selectedSto, setSelectedSto] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const filteredData = useMemo<TopologyHierarchy | null>(() => {
+    if (!data) return null;
+    if (!searchQuery.trim()) return data;
+    const q = searchQuery.toLowerCase();
+    const result: TopologyHierarchy = {};
+    for (const [area, stoMap] of Object.entries(data)) {
+      if (area.toLowerCase().includes(q)) { result[area] = stoMap; continue; }
+      const matchedStos: TopologyHierarchy[string] = {};
+      for (const [sto, oltMap] of Object.entries(stoMap)) {
+        if (sto.toLowerCase().includes(q)) { matchedStos[sto] = oltMap; continue; }
+        const matchedOlts: typeof oltMap = {};
+        for (const [oltName, olt] of Object.entries(oltMap)) {
+          const hits = oltName.toLowerCase().includes(q) ||
+            olt.slots.some(s => s.ports.some(p => p && (
+              p.odc_name.toLowerCase().includes(q) || p.port_str.toLowerCase().includes(q)
+            )));
+          if (hits) matchedOlts[oltName] = olt;
+        }
+        if (Object.keys(matchedOlts).length > 0) matchedStos[sto] = matchedOlts;
+      }
+      if (Object.keys(matchedStos).length > 0) result[area] = matchedStos;
+    }
+    return result;
+  }, [data, searchQuery]);
+
+  useEffect(() => {
+    if (!searchQuery.trim() || !filteredData) return;
+    const toExpand: Record<string, boolean> = { ROOT: true };
+    for (const [area, stoMap] of Object.entries(filteredData)) {
+      toExpand[`AREA-${area}`] = true;
+      for (const sto of Object.keys(stoMap)) toExpand[`STO-${sto}`] = true;
+    }
+    setExpandedNodes(prev => ({ ...prev, ...toExpand }));
+  }, [searchQuery, filteredData]);
 
   useEffect(() => {
     if (!initialData) {
@@ -158,6 +209,24 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
           </div>
 
           <div className="h-8 w-px bg-gray-200 dark:bg-gray-800 hidden md:block" />
+
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <Search size={13} className="text-gray-400 shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari OLT, ODC, STO, Port..."
+              className="bg-transparent border-none text-xs focus:ring-0 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 w-44"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden md:block" />
 
           <div className="flex items-center gap-2">
             <Filter size={16} className="text-gray-400" />
@@ -219,7 +288,14 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
             </div>
 
             <div className="mt-12 w-full space-y-12">
-              {areas
+              {searchQuery && Object.keys(filteredData || {}).length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
+                  <Search size={32} className="opacity-30" />
+                  <p className="text-sm font-medium">Tidak ada hasil untuk <span className="font-bold text-gray-600 dark:text-gray-300">"{searchQuery}"</span></p>
+                  <button onClick={() => setSearchQuery('')} className="text-xs text-blue-500 hover:underline">Hapus pencarian</button>
+                </div>
+              )}
+              {Object.keys(filteredData || {})
                 .filter(a => !selectedArea || a === selectedArea)
                 .map((area) => (
                   <div key={area} className="relative pl-8">
@@ -238,7 +314,7 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
                       </div>
                     </div>
 
-                    {expandedNodes[`AREA-${area}`] && Object.keys(data?.[area] || {})
+                    {expandedNodes[`AREA-${area}`] && Object.keys(filteredData?.[area] || {})
                       .filter(b => !selectedSto || b === selectedSto)
                       .map((sto) => (
                         <div key={sto} className="ml-8 mb-8 relative">
@@ -257,7 +333,7 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
                             </div>
                           </div>
 
-                          {expandedNodes[`STO-${sto}`] && (Object.values(data?.[area]?.[sto] || {}) as OltData[]).map((olt) => (
+                          {expandedNodes[`STO-${sto}`] && (Object.values(filteredData?.[area]?.[sto] || {}) as OltData[]).map((olt) => (
                             <div key={olt.name} className="ml-8 mt-6">
                               <div className="flex items-center gap-4">
                                 <div
