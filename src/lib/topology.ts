@@ -1,146 +1,95 @@
-import { ProjectRepository } from '@/repositories/ProjectRepository';
-import { AanwijzingRepository } from '@/repositories/AanwijzingRepository';
+import { OltOdcRepository } from '@/repositories/OltOdcRepository';
 
-import { parseJsonArray } from '@/utils/json';
-
-export interface OdpData {
-    id: string;
-    name: string;
-    type: 'ODP';
-    status: string;
-    plannedPorts: number;
-    realizedPorts: number;
+export interface PortEntry {
+  port: number;
+  odc_name: string;
+  port_str: string;
 }
 
-export interface OdcData {
-    name: string;
-    type: 'ODC';
-    status: string;
-    plannedPorts: number;
-    realizedPorts: number;
-    odps: OdpData[];
+export interface SlotData {
+  slot: number;
+  frame: string;
+  maxPort: number;
+  ports: (PortEntry | null)[];
 }
 
 export interface OltData {
-    name: string;
-    type: 'OLT';
-    status: string;
-    plannedPorts: number;
-    realizedPorts: number;
-    odcs: Record<string, OdcData>;
+  name: string;
+  type: 'OLT';
+  status: string;
+  plannedPorts: number;
+  realizedPorts: number;
+  slots: SlotData[];
+  maxSlot: number;
 }
 
-export type BranchData = Record<string, OltData>;
-export type AreaData = Record<string, BranchData>;
+export type StoData = Record<string, OltData>;
+export type AreaData = Record<string, StoData>;
 export type TopologyHierarchy = Record<string, AreaData>;
 
-export interface TopologyNode {
-    id: string;
-    name: string;
-    type: 'OLT' | 'ODC' | 'ODP';
-    status: string;
-    plannedPorts: number;
-    realizedPorts: number;
-    children: TopologyNode[];
-}
-
-type FullDataCell = string | number | boolean | null;
-
-const COLUMNS = {
-    AREA: 4,
-    STO: 5,
-    BRANCH: 7,
-    ODP_COUNT: 9,
-    PLANNED_PORTS: 10,
-    ODP_DATA: 28,
-    REALIZED_PORTS: 29
-};
-
-// Build network hierarchy from projects and aanwijzing data
 export function getNetworkHierarchy(): TopologyHierarchy {
-    const projects = ProjectRepository.findAllByRegion('SUMBAGTENG');
-    const aanwijzing = AanwijzingRepository.findAll();
+  const rows = OltOdcRepository.findAll();
+  const hierarchy: TopologyHierarchy = {};
 
-    const hierarchy: TopologyHierarchy = {};
+  type SlotInfo = { frame: string; maxPort: number; portEntries: Map<number, PortEntry> };
+  const slotMaps: Record<string, Record<string, Record<string, Map<number, SlotInfo>>>> = {};
 
-    projects.forEach(p => {
-        const fd = parseJsonArray<FullDataCell>(p.full_data || '[]');
+  for (const row of rows) {
+    if (!row.area || !row.sto) continue;
 
-        const sto = String(fd[COLUMNS.STO] || 'UNKNOWN STO');
-        const area = String(fd[COLUMNS.AREA] || 'UNKNOWN AREA');
-        const branch = String(fd[COLUMNS.BRANCH] || 'UNKNOWN BRANCH');
+    if (!hierarchy[row.area]) hierarchy[row.area] = {};
+    if (!hierarchy[row.area][row.sto]) hierarchy[row.area][row.sto] = {};
+    if (!hierarchy[row.area][row.sto][row.olt_name]) {
+      hierarchy[row.area][row.sto][row.olt_name] = {
+        name: row.olt_name,
+        type: 'OLT',
+        status: 'LIVE',
+        plannedPorts: 0,
+        realizedPorts: 0,
+        slots: [],
+        maxSlot: 0,
+      };
+    }
 
-        const matchAan = aanwijzing.find(a => a.id_ihld === p.id_ihld);
-        const oltName = matchAan?.gpon || `OLT-${sto}`;
+    if (!slotMaps[row.area]) slotMaps[row.area] = {};
+    if (!slotMaps[row.area][row.sto]) slotMaps[row.area][row.sto] = {};
+    if (!slotMaps[row.area][row.sto][row.olt_name]) slotMaps[row.area][row.sto][row.olt_name] = new Map();
 
-        const odcName = p.nama_lop || `ODC-${p.id_ihld}`;
-        const plannedPorts = Number(fd[COLUMNS.PLANNED_PORTS]) || 0;
-        const realizedPorts = Number(fd[COLUMNS.REALIZED_PORTS]) || 0;
-        const status = p.status || 'PLANNED';
+    const slotMap = slotMaps[row.area][row.sto][row.olt_name];
+    if (!slotMap.has(row.slot)) {
+      slotMap.set(row.slot, { frame: row.frame, maxPort: 0, portEntries: new Map() });
+    }
+    const slotInfo = slotMap.get(row.slot)!;
+    if (row.port > slotInfo.maxPort) slotInfo.maxPort = row.port;
+    slotInfo.portEntries.set(row.port, { port: row.port, odc_name: row.odc_name, port_str: row.port_str });
+  }
 
-        if (!hierarchy[area]) hierarchy[area] = {};
-        if (!hierarchy[area][branch]) hierarchy[area][branch] = {};
-        if (!hierarchy[area][branch][oltName]) hierarchy[area][branch][oltName] = {
-            name: oltName,
-            type: 'OLT',
-            status: 'LIVE',
-            plannedPorts: 0,
-            realizedPorts: 0,
-            odcs: {}
-        };
+  for (const area of Object.keys(hierarchy)) {
+    for (const sto of Object.keys(hierarchy[area])) {
+      for (const oltName of Object.keys(hierarchy[area][sto])) {
+        const slotMap = slotMaps[area]?.[sto]?.[oltName];
+        if (!slotMap) continue;
 
-        const olt = hierarchy[area][branch][oltName];
-        olt.plannedPorts += plannedPorts;
-        olt.realizedPorts += realizedPorts;
+        const olt = hierarchy[area][sto][oltName];
+        const slotIndices = Array.from(slotMap.keys()).sort((a, b) => a - b);
+        const maxSlotFromData = slotIndices.length > 0 ? slotIndices[slotIndices.length - 1] : 0;
+        olt.maxSlot = Math.max(maxSlotFromData, 17);
 
-        if (!olt.odcs[odcName]) {
-            olt.odcs[odcName] = {
-                name: odcName,
-                type: 'ODC',
-                status: status,
-                plannedPorts: plannedPorts,
-                realizedPorts: realizedPorts,
-                odps: []
-            };
-        } else {
-            olt.odcs[odcName].plannedPorts += plannedPorts;
-            olt.odcs[odcName].realizedPorts += realizedPorts;
-        }
+        olt.slots = slotIndices.map(slotNum => {
+          const info = slotMap.get(slotNum)!;
+          const maxPort = Math.max(info.maxPort, 15);
+          const ports: (PortEntry | null)[] = new Array(maxPort + 1).fill(null);
+          for (const [portNum, entry] of info.portEntries) {
+            ports[portNum] = entry;
+          }
+          return { slot: slotNum, frame: info.frame, maxPort, ports };
+        });
 
-        const odc = olt.odcs[odcName];
-        const odpData = fd[COLUMNS.ODP_DATA] || '';
-        
-        if (odpData && typeof odpData === 'string' && odpData.includes('#')) {
-            const odpIds = odpData.split('#');
-            odpIds.forEach(id => {
-                if (!odc.odps.some(o => o.id === id)) {
-                    odc.odps.push({
-                        id: id,
-                        name: `ODP-${id}`,
-                        type: 'ODP',
-                        status: status,
-                        plannedPorts: 8,
-                        realizedPorts: status.toLowerCase().includes('done') ? 8 : 0
-                    });
-                }
-            });
-        } else {
-            const odpCount = Number(fd[COLUMNS.ODP_COUNT]) || 1;
-            for (let i = 1; i <= odpCount; i++) {
-                const odpId = `${p.id_ihld}-${i}`;
-                if (!odc.odps.some(o => o.id === odpId)) {
-                    odc.odps.push({
-                        id: odpId,
-                        name: `ODP-${sto}-${i}`,
-                        type: 'ODP',
-                        status: status,
-                        plannedPorts: 8,
-                        realizedPorts: status.toLowerCase().includes('done') ? 8 : 0
-                    });
-                }
-            }
-        }
-    });
+        olt.realizedPorts = olt.slots.reduce((sum, s) => sum + s.ports.filter(Boolean).length, 0);
+        olt.plannedPorts = olt.slots.reduce((sum, s) => sum + s.ports.length, 0);
+      }
+    }
+  }
 
-    return hierarchy;
+  return hierarchy;
 }

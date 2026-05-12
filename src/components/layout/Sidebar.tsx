@@ -14,6 +14,7 @@ import {
   Receipt,
   BarChart3,
   Settings,
+  Network,
   ChevronDown,
   ChevronRight,
   type LucideIcon,
@@ -68,6 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/boq', label: 'BoQ Plan', icon: Receipt },
       { href: '/aanwijzing', label: 'Catatan AANWIJZING', icon: FileText },
       { href: '/ut', label: 'Rekap UT', icon: ClipboardList },
+      { href: '/topology', label: 'Network Topology', icon: Network },
     ],
   },
   {

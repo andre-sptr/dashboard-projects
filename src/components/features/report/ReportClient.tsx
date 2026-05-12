@@ -3,8 +3,9 @@
 
 import React, { useMemo, useState } from 'react';
 import type { Project } from '@/types/database';
-import { parseExcelDate } from '@/utils/project';
+import { parseExcelDate, getFullDataArray } from '@/utils/project';
 import { AREA_BRANCH_MAP } from '@/lib/constants';
+import { COL } from '@/lib/sheet-columns';
 import dynamic from 'next/dynamic';
 import { ReportFilters, Granularity } from './ReportFilters';
 import { ReportKpiGrid } from './ReportKpiGrid';
@@ -62,11 +63,11 @@ export default function ReportClient({ initialProjects }: Props) {
     const branchMap = new Map<string, { name: string; planned: number; actual: number; statusCounts: Record<StatusCol, number> }>();
 
     projects.forEach(p => {
+      const fullData = getFullDataArray(p);
       const planPort = p.port_planned || 0;
       const realPort = p.port_realized || 0;
-      const goliveDate = parseExcelDate(p.golive_actual);
-
-      const targetDate = parseExcelDate(p.golive_target);
+      const goliveDate = parseExcelDate(fullData[COL.TANGGAL_GOLIVE]);
+      const targetDate = parseExcelDate(fullData[COL.KOMITMEN_GOLIVE]);
 
       const branch = (p.branch || 'UNKNOWN').toUpperCase();
 

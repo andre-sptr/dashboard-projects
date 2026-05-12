@@ -391,6 +391,50 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_sync_logs_date ON sync_logs(started_at);
       `);
     }
+  },
+  {
+    id: 10,
+    name: 'create_olt_odc_map_table',
+    run: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS olt_odc_map (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          area TEXT NOT NULL,
+          sto TEXT NOT NULL,
+          olt_name TEXT NOT NULL,
+          odc_name TEXT NOT NULL,
+          UNIQUE(olt_name, odc_name)
+        );
+        CREATE INDEX IF NOT EXISTS idx_olt_odc_area ON olt_odc_map(area);
+        CREATE INDEX IF NOT EXISTS idx_olt_odc_sto  ON olt_odc_map(sto);
+        CREATE INDEX IF NOT EXISTS idx_olt_odc_olt  ON olt_odc_map(olt_name);
+      `);
+    }
+  },
+  {
+    id: 11,
+    name: 'recreate_olt_odc_map_with_ports',
+    run: (db) => {
+      db.exec(`
+        DROP TABLE IF EXISTS olt_odc_map;
+        CREATE TABLE IF NOT EXISTS olt_odc_map (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          area TEXT NOT NULL,
+          sto TEXT NOT NULL,
+          olt_name TEXT NOT NULL,
+          odc_name TEXT NOT NULL,
+          port_str TEXT NOT NULL,
+          frame TEXT NOT NULL DEFAULT '',
+          slot INTEGER NOT NULL,
+          port INTEGER NOT NULL,
+          UNIQUE(olt_name, port_str)
+        );
+        CREATE INDEX IF NOT EXISTS idx_olt_odc_area ON olt_odc_map(area);
+        CREATE INDEX IF NOT EXISTS idx_olt_odc_sto  ON olt_odc_map(sto);
+        CREATE INDEX IF NOT EXISTS idx_olt_odc_olt  ON olt_odc_map(olt_name);
+        CREATE INDEX IF NOT EXISTS idx_olt_odc_slot ON olt_odc_map(olt_name, slot);
+      `);
+    }
   }
 ];
 

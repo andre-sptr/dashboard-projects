@@ -19,18 +19,18 @@ interface Props {
 export const RAW_DATA_HEADERS = [
   'TAHUN', 'ID-IHLD', 'NAMA LOP', 'REGIONAL', 'AREA', 'STO', 'REGION FMC', 'BRANCH FMC',
   'BATCH PROGRAM', 'ODP PLAN', 'PORT PLAN', 'CPP', 'BOQ', 'Mitra', 'Status', 'SUB STATUS KONS',
-  'DETAIL STATUS', 'KET Ba Drop', 'KOMITMEN GOLIVE', 'TARGET GOLIVE APRIL', 'Prioritas 1 by Tsel', 'PID (PROACTIVE)', 'WASPANG', 'PROJECT ADMIN',
-  'STATUS GOLIVE', 'KENDALA GOLIVE', 'Progres MINOL', 'REAL JML ODP 8', 'REAL JML ODP 16', 'ID SW ABD', 'REAL JML PORT GOLIVE', 'TANGGAL GOLIVE'
+  'DETAIL STATUS', 'KOMITMEN GOLIVE', 'TARGET GOLIVE APRIL', 'Prioritas 1 by Tsel', 'PID (PROACTIVE)', 'WASPANG', 'PROJECT ADMIN',
+  'STATUS GOLIVE', 'KENDALA GOLIVE', 'Progres MINOL', 'REAL JML ODP 8', 'REAL JML ODP 16', 'ID SW ABD', 'REAL JML PORT GOLIVE', 'TANGGAL GOLIVE', 'KET'
 ];
 
-const DATE_COLUMN_INDICES = new Set([18, 19, 31]);
+const DATE_COLUMN_INDICES = new Set([17, 18, 30]);
 const NUMBER_COLUMN_INDICES = new Set([12]);
 
 export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColor }: Props) => {
   const parsedHistory = parseJsonArray<HistoryEntry>(project.history || '[]');
   const fullData = getFullDataArray(project);
 
-  const displayTanggalGolive = formatExcelDate(fullData[31]);
+  const displayTanggalGolive = formatExcelDate(fullData[30]);
   const staggerClass = index < 10 ? `stagger-${(index % 4) + 1}` : '';
 
   return (
@@ -144,7 +144,7 @@ const ProjectDetailTabs = ({ project, fullData, parsedHistory }: { project: Proj
                     : NUMBER_COLUMN_INDICES.has(idx)
                       ? isEmpty ? '-' : (isNaN(Number(val)) ? String(val) : Number(val).toLocaleString('en-US'))
                       : isEmpty ? '-' : String(val);
-                  const isGolive = idx === 31;
+                  const isGolive = idx === 30;
                   return (
                     <div
                       key={idx}

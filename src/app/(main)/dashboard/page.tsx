@@ -39,7 +39,7 @@ function buildDashboardStats(projects: Project[]): DashboardStats {
     const status = project.status || '-';
     statusMap.set(status, (statusMap.get(status) || 0) + ports);
 
-    const goliveStr = formatExcelDateShort(fullData[31]);
+    const goliveStr = formatExcelDateShort(fullData[30]);
     if (goliveStr && isGoliveTimelineStatus(project.status)) {
       totalGolivePorts += ports;
       goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);

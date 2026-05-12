@@ -83,8 +83,7 @@ export default function SyncSettingsPage() {
       void fetchData();
     }, 0);
 
-    const handleSyncCompleted = (data: Record<string, unknown>) => {
-      console.log('[SyncSettings] Sync completed event:', data);
+    const handleSyncCompleted = (_data: Record<string, unknown>) => {
       void fetchData();
       setSyncing(false);
     };

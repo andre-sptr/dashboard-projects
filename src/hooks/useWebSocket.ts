@@ -22,12 +22,10 @@ export function useWebSocket() {
     });
 
     socketInstance.on('connect', () => {
-      console.log('[WebSocket] Connected to server');
       setIsConnected(true);
     });
 
     socketInstance.on('disconnect', () => {
-      console.log('[WebSocket] Disconnected from server');
       setIsConnected(false);
     });
 

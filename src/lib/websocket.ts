@@ -33,15 +33,8 @@ export class WebSocketServer {
     });
 
     io.on('connection', (socket) => {
-      console.log('[WebSocket] Client connected:', socket.id);
-
       socket.on('join', (room: string) => {
         socket.join(room);
-        console.log(`[WebSocket] Client ${socket.id} joined room: ${room}`);
-      });
-
-      socket.on('disconnect', () => {
-        console.log('[WebSocket] Client disconnected:', socket.id);
       });
     });
 

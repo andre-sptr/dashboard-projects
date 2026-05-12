@@ -1,9 +1,14 @@
 // Network topology visualization page
-'use client';
-
 import NetworkTopology from '@/components/features/topology/NetworkTopology';
+import { getNetworkHierarchy } from '@/lib/topology';
+import { seedOltOdcIfEmpty } from '@/lib/seed-olt-odc';
+
+export const dynamic = 'force-dynamic';
 
 export default function TopologyPage() {
+  seedOltOdcIfEmpty();
+  const data = getNetworkHierarchy();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -17,7 +22,7 @@ export default function TopologyPage() {
         </div>
       </div>
 
-      <NetworkTopology initialData={null} />
+      <NetworkTopology initialData={data} />
     </div>
   );
 }
