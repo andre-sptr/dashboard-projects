@@ -51,10 +51,6 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     title: 'Network Topology',
     subtitle: 'Visualisasi hirarki perangkat OLT, ODC, dan ODP.',
   },
-  '/audit-logs': {
-    title: 'Audit Timeline',
-    subtitle: 'Pelacakan aktivitas dan perubahan sistem secara real-time.',
-  },
 };
 
 export default function MainLayout({

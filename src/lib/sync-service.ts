@@ -1,6 +1,5 @@
 import { ProjectRepository } from '@/repositories/ProjectRepository';
 import { SyncLogRepository } from '@/repositories/SyncLogRepository';
-import { NotificationRepository } from '@/repositories/NotificationRepository';
 import { AuditLogger } from './audit-logger';
 import { GoogleSheetsClient } from './google-sheets';
 import { getSheetId } from './env';
@@ -37,13 +36,6 @@ export class SyncService {
           error_message: errorMsg,
         });
         
-        const notification = NotificationRepository.create({
-          user_id: 'system',
-          type: 'SYNC_FAILED',
-          title: 'Sinkronisasi Gagal',
-          message: errorMsg
-        });
-        WebSocketServer.emit('notification.new', notification);
         WebSocketServer.emit('sync.completed', { success: false, message: errorMsg });
         
         return { success: false, message: errorMsg };
@@ -164,13 +156,6 @@ export class SyncService {
 
       await AuditLogger.log('system', 'SYNC', 'PROJECTS', syncLogId, {}, result);
 
-      const notification = NotificationRepository.create({
-        user_id: 'system',
-        type: 'SYNC_SUCCESS',
-        title: 'Sinkronisasi Selesai',
-        message: `Berhasil memproses ${processed} data. Baru: ${created}, Update: ${updated}, Gagal: ${failed}.`
-      });
-      WebSocketServer.emit('notification.new', notification);
       WebSocketServer.emit('sync.completed', result);
 
       return result;
@@ -183,13 +168,6 @@ export class SyncService {
         error_message: errorMsg,
       });
       
-      const notification = NotificationRepository.create({
-        user_id: 'system',
-        type: 'SYNC_FAILED',
-        title: 'Sinkronisasi Gagal',
-        message: errorMsg
-      });
-      WebSocketServer.emit('notification.new', notification);
       WebSocketServer.emit('sync.completed', { success: false, message: errorMsg });
       
       throw error;
