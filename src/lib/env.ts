@@ -138,6 +138,6 @@ export function getSheetId(): string {
 if (isDevelopment()) {
   console.log('✅ Environment variables validated successfully');
   console.log(`📊 Database path: ${env.DATABASE_PATH}`);
-  console.log(`🔗 Google Sheets configured: ${hasGoogleSheetsConfig() ? 'Yes' : 'No'}`);
+  console.log(`📊 Google Sheets configured: ${hasGoogleSheetsConfig() ? 'Yes' : 'No'}`);
 }
 

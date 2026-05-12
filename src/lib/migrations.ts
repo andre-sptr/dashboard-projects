@@ -592,7 +592,6 @@ export function runMigrations(db: Database) {
 
   for (const migration of migrations) {
     if (!appliedIds.has(migration.id)) {
-      console.log(`[db] Applying migration ${migration.id}: ${migration.name}`);
       try {
         db.transaction(() => {
           migration.run(db);

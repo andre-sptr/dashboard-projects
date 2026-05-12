@@ -74,5 +74,4 @@ export function seedOltOdcIfEmpty(): void {
   }
 
   OltOdcRepository.bulkInsert(unique);
-  console.log(`[seed-olt-odc] seeded ${unique.length} unique OLT port entries`);
 }
