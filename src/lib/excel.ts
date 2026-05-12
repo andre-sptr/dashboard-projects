@@ -1,5 +1,82 @@
 import * as XLSX from 'xlsx';
 
+export interface BoqItem {
+  no: number;
+  is_section: boolean;
+  designator: string;
+  uraian_pekerjaan: string;
+  satuan: string;
+  harga_satuan_material: number;
+  harga_satuan_jasa: number;
+  volume: number;
+  total_material: number;
+  total_jasa: number;
+  total: number;
+  keterangan: string;
+}
+
+// Excel column layout (0-indexed):
+// 0=NO, 1=DESIGNATOR, 2=URAIAN PEKERJAAN, 3=SATUAN,
+// 4=HARGA SATUAN MATERIAL, 5=HARGA SATUAN JASA, 6=VOL,
+// 7=TOTAL MATERIAL, 8=TOTAL JASA, 9=TOTAL, 10=KETERANGAN
+//
+// Rows 0-1: headers — skip
+// Row 2+:   data (includes section headers e.g. "A | PT2S")
+// Skip rows where NO = "MATERIAL", "JASA", or "TOTAL" (summary rows at bottom)
+
+function toNum(val: unknown): number {
+  if (val === null || val === undefined || val === '') return 0;
+  const n = typeof val === 'number' ? val : parseFloat(String(val).replace(/,/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+function toStr(val: unknown): string {
+  return val === null || val === undefined ? '' : String(val).trim();
+}
+
+export function parseBoQExcelItems(buffer: ArrayBuffer): BoqItem[] {
+  const workbook = XLSX.read(buffer, { type: 'array' });
+
+  if (!workbook.SheetNames.length) {
+    throw new Error('File Excel tidak memiliki sheet yang valid.');
+  }
+
+  const sheet = workbook.Sheets[workbook.SheetNames[0]!]!;
+  const json = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' }) as unknown[][];
+
+  const items: BoqItem[] = [];
+  const SUMMARY = new Set(['MATERIAL', 'JASA', 'TOTAL']);
+
+  for (let i = 2; i < json.length; i++) {
+    const row = (Array.isArray(json[i]) ? json[i] : []) as unknown[];
+    const noRaw = toStr(row[0]);
+    const designator = toStr(row[1]);
+
+    if (!noRaw || !designator) continue;
+    if (SUMMARY.has(noRaw.toUpperCase())) continue;
+
+    const isSection = /^[A-Za-z]$/.test(noRaw);
+
+    items.push({
+      no: isSection ? 0 : (parseInt(noRaw, 10) || 0),
+      is_section: isSection,
+      designator,
+      uraian_pekerjaan: toStr(row[2]),
+      satuan: toStr(row[3]),
+      harga_satuan_material: toNum(row[4]),
+      harga_satuan_jasa: toNum(row[5]),
+      volume: toNum(row[6]),
+      total_material: toNum(row[7]),
+      total_jasa: toNum(row[8]),
+      total: toNum(row[9]),
+      keterangan: toStr(row[10]),
+    });
+  }
+
+  return items;
+}
+
+// Legacy interface kept for /api/boq/parse backward compatibility
 export interface BoqRow {
   id: string;
   nama_lop: string;
@@ -12,51 +89,17 @@ export interface BoqRow {
   rowIndex: number;
 }
 
-// Parse BoQ Excel file to structured rows
 export function parseBoQExcel(buffer: ArrayBuffer): BoqRow[] {
-  const workbook = XLSX.read(buffer, { type: 'array' });
-
-  if (!workbook.SheetNames.length) {
-    throw new Error('File Excel tidak memiliki sheet yang valid.');
-  }
-
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName]!;
-
-  const json = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' }) as unknown[][];
-
-  const rows: BoqRow[] = [];
-
-  for (let i = 4; i < json.length; i++) {
-    const row = Array.isArray(json[i]) ? json[i] : [];
-
-    if (row.length === 0 || !row[0]?.toString().trim()) {
-      continue;
-    }
-
-    const idIhld = (row[0] || '').toString().trim();
-
-    if (!idIhld) continue;
-
-    const batchProgram = (row[1] || '').toString().trim();
-
-    const uid = `boq_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-    const fullDataArray = Array.from(row, (v) => (v === undefined || v === null ? '' : v));
-    const fullData = JSON.stringify(fullDataArray);
-
-    rows.push({
-      id: uid,
-      nama_lop: '',
-      id_ihld: idIhld,
-      sto: '',
-      batch_program: batchProgram,
-      project_name: '',
-      region: 'SUMBAGTENG',
-      full_data: fullData,
-      rowIndex: i + 1,
-    });
-  }
-
-  return rows;
+  const items = parseBoQExcelItems(buffer);
+  return items.map((item, i) => ({
+    id: `boq_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+    nama_lop: '',
+    id_ihld: item.designator,
+    sto: '',
+    batch_program: '',
+    project_name: '',
+    region: 'SUMBAGTENG',
+    full_data: JSON.stringify(item),
+    rowIndex: i + 3,
+  }));
 }

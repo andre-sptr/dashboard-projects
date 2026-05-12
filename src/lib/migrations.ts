@@ -435,6 +435,97 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_olt_odc_slot ON olt_odc_map(olt_name, slot);
       `);
     }
+  },
+  {
+    id: 12,
+    name: 'boq_normalized_items',
+    run: (db) => {
+      // Add project_uid FK to boq table
+      const boqCols = (db.pragma('table_info(boq)') as { name: string }[]).map(c => c.name);
+      if (!boqCols.includes('project_uid')) {
+        db.exec(`ALTER TABLE boq ADD COLUMN project_uid TEXT`);
+      }
+
+      db.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_boq_project_uid
+          ON boq(project_uid) WHERE project_uid IS NOT NULL;
+
+        CREATE TABLE IF NOT EXISTS boq_plan_items (
+          id TEXT PRIMARY KEY,
+          boq_plan_id TEXT NOT NULL REFERENCES boq(id) ON DELETE CASCADE,
+          project_uid TEXT NOT NULL DEFAULT '',
+          nama_lop TEXT NOT NULL DEFAULT '',
+          id_ihld TEXT NOT NULL DEFAULT '',
+          no INTEGER DEFAULT 0,
+          is_section INTEGER DEFAULT 0,
+          designator TEXT NOT NULL DEFAULT '',
+          uraian_pekerjaan TEXT DEFAULT '',
+          satuan TEXT DEFAULT '',
+          harga_satuan_material REAL DEFAULT 0,
+          harga_satuan_jasa REAL DEFAULT 0,
+          volume REAL DEFAULT 0,
+          total_material REAL DEFAULT 0,
+          total_jasa REAL DEFAULT 0,
+          total REAL DEFAULT 0,
+          keterangan TEXT DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS idx_boq_plan_items_designator ON boq_plan_items(designator);
+        CREATE INDEX IF NOT EXISTS idx_boq_plan_items_id_ihld ON boq_plan_items(id_ihld);
+        CREATE INDEX IF NOT EXISTS idx_boq_plan_items_parent ON boq_plan_items(boq_plan_id);
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_boq_aanwijzing_one
+          ON boq_aanwijzing(aanwijzing_id) WHERE aanwijzing_id IS NOT NULL;
+
+        CREATE TABLE IF NOT EXISTS boq_aanwijzing_items (
+          id TEXT PRIMARY KEY,
+          boq_aanwijzing_id TEXT NOT NULL REFERENCES boq_aanwijzing(id) ON DELETE CASCADE,
+          project_uid TEXT DEFAULT '',
+          nama_lop TEXT NOT NULL DEFAULT '',
+          id_ihld TEXT NOT NULL DEFAULT '',
+          no INTEGER DEFAULT 0,
+          is_section INTEGER DEFAULT 0,
+          designator TEXT NOT NULL DEFAULT '',
+          uraian_pekerjaan TEXT DEFAULT '',
+          satuan TEXT DEFAULT '',
+          harga_satuan_material REAL DEFAULT 0,
+          harga_satuan_jasa REAL DEFAULT 0,
+          volume REAL DEFAULT 0,
+          total_material REAL DEFAULT 0,
+          total_jasa REAL DEFAULT 0,
+          total REAL DEFAULT 0,
+          keterangan TEXT DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS idx_boq_aanwijzing_items_designator ON boq_aanwijzing_items(designator);
+        CREATE INDEX IF NOT EXISTS idx_boq_aanwijzing_items_id_ihld ON boq_aanwijzing_items(id_ihld);
+        CREATE INDEX IF NOT EXISTS idx_boq_aanwijzing_items_parent ON boq_aanwijzing_items(boq_aanwijzing_id);
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_boq_ut_one
+          ON boq_ut(ut_id) WHERE ut_id IS NOT NULL;
+
+        CREATE TABLE IF NOT EXISTS boq_ut_items (
+          id TEXT PRIMARY KEY,
+          boq_ut_id TEXT NOT NULL REFERENCES boq_ut(id) ON DELETE CASCADE,
+          project_uid TEXT DEFAULT '',
+          nama_lop TEXT NOT NULL DEFAULT '',
+          id_ihld TEXT NOT NULL DEFAULT '',
+          no INTEGER DEFAULT 0,
+          is_section INTEGER DEFAULT 0,
+          designator TEXT NOT NULL DEFAULT '',
+          uraian_pekerjaan TEXT DEFAULT '',
+          satuan TEXT DEFAULT '',
+          harga_satuan_material REAL DEFAULT 0,
+          harga_satuan_jasa REAL DEFAULT 0,
+          volume REAL DEFAULT 0,
+          total_material REAL DEFAULT 0,
+          total_jasa REAL DEFAULT 0,
+          total REAL DEFAULT 0,
+          keterangan TEXT DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS idx_boq_ut_items_designator ON boq_ut_items(designator);
+        CREATE INDEX IF NOT EXISTS idx_boq_ut_items_id_ihld ON boq_ut_items(id_ihld);
+        CREATE INDEX IF NOT EXISTS idx_boq_ut_items_parent ON boq_ut_items(boq_ut_id);
+      `);
+    }
   }
 ];
 

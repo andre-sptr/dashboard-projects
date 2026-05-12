@@ -17,18 +17,9 @@ function generateId(): string {
 }
 
 export const GET = withErrorHandling(async () => {
-  const aanwijzingList = AanwijzingRepository.findAll();
+  const aanwijzingWithBoq = AanwijzingRepository.findAllWithBoq();
   const projects = ProjectRepository.getForSelect();
-
-  const aanwijzingWithBoq = aanwijzingList.map(a => {
-    const boq = AanwijzingRepository.getBoq(a.id);
-    return { ...a, boq_data: boq || null };
-  });
-
-  return successResponse({
-    aanwijzing: aanwijzingWithBoq,
-    projects: projects
-  });
+  return successResponse({ aanwijzing: aanwijzingWithBoq, projects });
 });
 
 export const POST = withErrorHandling(async (request: NextRequest) => {

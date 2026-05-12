@@ -13,6 +13,12 @@ export class ProjectRepository {
     return db.prepare('SELECT * FROM projects WHERE region = ? ORDER BY last_changed_at DESC').all(region) as Project[];
   }
 
+  // Find project by id_ihld (returns first match)
+  static findByIdIhld(idIhld: string): Project | undefined {
+    return db.prepare('SELECT * FROM projects WHERE id_ihld = ? LIMIT 1')
+      .get(idIhld) as Project | undefined;
+  }
+
   // Get project names and IDs for select inputs
   static getForSelect(): { nama_lop: string; id_ihld: string }[] {
     return db.prepare(`

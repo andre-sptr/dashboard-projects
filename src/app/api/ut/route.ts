@@ -17,18 +17,9 @@ function generateId(): string {
 }
 
 export const GET = withErrorHandling(async () => {
-  const utList = UtRepository.findAll();
+  const utWithBoq = UtRepository.findAllWithBoq();
   const projects = ProjectRepository.getForSelect();
-
-  const utWithBoq = utList.map(item => {
-    const boq = UtRepository.getBoq(item.id);
-    return { ...item, boq_data: boq || null };
-  });
-
-  return successResponse({
-    ut: utWithBoq,
-    projects: projects
-  });
+  return successResponse({ ut: utWithBoq, projects });
 });
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
