@@ -2,7 +2,7 @@
 import { ProjectRepository } from '@/repositories/ProjectRepository';
 import type { Project } from '@/types/database';
 import DashboardRecap from '@/components/features/dashboard/DashboardRecap';
-import type { DashboardStats } from '@/types/dashboard';
+import type { DashboardStats, RiskyProjectDTO } from '@/types/dashboard';
 import {
   classifyStatus,
   formatExcelDateShort,
@@ -10,6 +10,7 @@ import {
   getPortCount,
   isGoliveTimelineStatus,
 } from '@/utils/project';
+import { computeProjectRisk, getDaysSinceChanged } from '@/lib/risk-criteria';
 
 export const dynamic = 'force-dynamic';
 
@@ -158,6 +159,24 @@ function buildDashboardStats(projects: Project[]): DashboardStats {
   };
 }
 
+function buildRiskyProjects(projects: Project[]): RiskyProjectDTO[] {
+  const result: RiskyProjectDTO[] = [];
+  for (const project of projects) {
+    const risk = computeProjectRisk(project);
+    if (risk === 'AMAN') continue;
+    result.push({
+      uid: project.uid,
+      nama_lop: project.nama_lop,
+      branch: project.branch,
+      status: project.status,
+      risk_level: risk,
+      days_since_changed: getDaysSinceChanged(project),
+      golive_target: project.golive_target,
+    });
+  }
+  return result;
+}
+
 export default async function DashboardPage() {
   let projects: Project[] = [];
 
@@ -168,5 +187,8 @@ export default async function DashboardPage() {
     throw new Error('Gagal mengambil data dari database.');
   }
 
-  return <DashboardRecap stats={buildDashboardStats(projects)} />;
+  const stats = buildDashboardStats(projects);
+  const riskyProjects = buildRiskyProjects(projects);
+
+  return <DashboardRecap stats={stats} riskyProjects={riskyProjects} />;
 }

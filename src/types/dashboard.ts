@@ -1,5 +1,15 @@
 import type { Project } from '@/types/database';
 
+export interface RiskyProjectDTO {
+  uid: string;
+  nama_lop: string;
+  branch: string;
+  status: string;
+  risk_level: 'KRITIS' | 'PERHATIAN';
+  days_since_changed: number;
+  golive_target: string | null;
+}
+
 export interface BranchRankingEntry {
   name: string;
   planned: number;
