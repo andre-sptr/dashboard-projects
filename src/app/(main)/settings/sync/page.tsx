@@ -354,7 +354,7 @@ export default function SyncSettingsPage() {
                         </span>
                       </td>
                       <td className="text-center px-6 py-4">
-                        <div className="text-center flex items-center gap-2">
+                        <div className="flex items-center justify-center gap-2 text-center">
                           {log.status === 'SUCCESS' ? (
                             <span className="flex items-center gap-1 text-emerald-600 text-sm font-medium">
                               <CheckCircle2 className="w-4 h-4" /> Success
@@ -370,8 +370,8 @@ export default function SyncSettingsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3 text-sm">
+                      <td className="text-center px-6 py-4">
+                        <div className="flex items-center justify-center gap-3 text-sm">
                           <span className="text-slate-600 font-medium">{log.records_processed} total</span>
                           <div className="flex gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-emerald-400" title="Created"></span>
@@ -379,7 +379,7 @@ export default function SyncSettingsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">
+                      <td className="text-center px-6 py-4 text-sm text-slate-500">
                         {duration !== null ? `${duration}s` : '-'}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -441,10 +441,10 @@ export default function SyncSettingsPage() {
                         <div className="h-4 w-16 bg-slate-100 rounded mb-1" />
                         <div className="h-3 w-24 bg-slate-100 rounded" />
                       </td>
-                      <td className="px-6 py-4"><div className="h-5 w-16 bg-slate-100 rounded" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-20 bg-slate-100 rounded" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-16 bg-slate-100 rounded" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-8 bg-slate-100 rounded" /></td>
+                      <td className="px-6 py-4"><div className="mx-auto h-5 w-16 bg-slate-100 rounded" /></td>
+                      <td className="px-6 py-4"><div className="mx-auto h-4 w-20 bg-slate-100 rounded" /></td>
+                      <td className="px-6 py-4"><div className="mx-auto h-4 w-16 bg-slate-100 rounded" /></td>
+                      <td className="px-6 py-4"><div className="mx-auto h-4 w-8 bg-slate-100 rounded" /></td>
                       <td className="px-6 py-4"></td>
                     </tr>
                   ))}
