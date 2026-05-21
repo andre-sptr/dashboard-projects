@@ -18,14 +18,24 @@ function objectValue(row: Record<string, unknown>, key: keyof BoqItem) {
   return row[key];
 }
 
+function hasTotalValue(row: unknown[]): boolean {
+  for (let c = 7; c <= 9; c++) {
+    const s = toString(row[c]);
+    if (s !== '' && s !== '-') return true;
+  }
+  return false;
+}
+
 function fromArray(row: unknown[]): BoqItem | null {
   const noRaw = toString(row[0]);
   const designator = toString(row[1]);
 
   if (!noRaw || !designator) return null;
   if (SUMMARY_ROWS.has(noRaw.toUpperCase())) return null;
+  if (noRaw.toUpperCase() === 'NO' || designator.toUpperCase() === 'DESIGNATOR') return null;
 
   const isSection = /^[A-Za-z]$/.test(noRaw);
+  if (!isSection && !hasTotalValue(row)) return null;
 
   return {
     no: isSection ? 0 : Number.parseInt(noRaw, 10) || 0,

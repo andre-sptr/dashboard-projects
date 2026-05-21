@@ -25,6 +25,17 @@ function toStr(val: unknown): string {
   return val === null || val === undefined ? '' : String(val).trim();
 }
 
+// A designator row is "used" only if at least one of columns H-J
+// (total material/jasa, total) holds a real value. Unused designators carry
+// "-" (or blanks) across all of H-J.
+function hasTotalValue(row: unknown[]): boolean {
+  for (let c = 7; c <= 9; c++) {
+    const s = toStr(row[c]);
+    if (s !== '' && s !== '-') return true;
+  }
+  return false;
+}
+
 export function parseBoQExcelItems(buffer: ArrayBuffer): BoqItem[] {
   const workbook = XLSX.read(buffer, { type: 'array' });
 
@@ -38,15 +49,18 @@ export function parseBoQExcelItems(buffer: ArrayBuffer): BoqItem[] {
   const items: BoqItem[] = [];
   const SUMMARY = new Set(['MATERIAL', 'JASA', 'TOTAL']);
 
-  for (let i = 2; i < json.length; i++) {
+  for (let i = 0; i < json.length; i++) {
     const row = (Array.isArray(json[i]) ? json[i] : []) as unknown[];
     const noRaw = toStr(row[0]);
     const designator = toStr(row[1]);
 
     if (!noRaw || !designator) continue;
     if (SUMMARY.has(noRaw.toUpperCase())) continue;
+    // Skip the column-header row (placement varies between BoQ formats).
+    if (noRaw.toUpperCase() === 'NO' || designator.toUpperCase() === 'DESIGNATOR') continue;
 
     const isSection = /^[A-Za-z]$/.test(noRaw);
+    if (!isSection && !hasTotalValue(row)) continue;
 
     items.push({
       no: isSection ? 0 : (parseInt(noRaw, 10) || 0),
