@@ -83,7 +83,7 @@ export default function SyncSettingsPage() {
       void fetchData();
     }, 0);
 
-    const handleSyncCompleted = (_data: Record<string, unknown>) => {
+    const handleSyncCompleted = () => {
       void fetchData();
       setSyncing(false);
     };
@@ -201,22 +201,7 @@ export default function SyncSettingsPage() {
                   {status?.isRunning ? 'Running' : 'Stopped'}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mb-3">Interval: Hourly (Setiap jam)</p>
-              <button
-                onClick={handleToggleScheduler}
-                disabled={schedulerLoading}
-                className={`
-                  flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all
-                  ${schedulerLoading ? 'opacity-50 cursor-not-allowed' : ''}
-                  ${status?.isRunning
-                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                    : 'bg-green-50 text-green-700 hover:bg-green-100'}
-                `}
-              >
-                {status?.isRunning
-                  ? <><Square className="w-3 h-3" /> Stop Scheduler</>
-                  : <><Play className="w-3 h-3" /> Start Scheduler</>}
-              </button>
+              <p className="text-xs text-slate-400 mt-2">Interval: Hourly (Setiap jam)</p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -263,45 +248,73 @@ export default function SyncSettingsPage() {
       </div>
 
       {/* Sync Statistics */}
-      {latestSync && (
-        <div className="bg-slate-900 text-white rounded-2xl p-8 shadow-xl overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <FileSpreadsheet className="w-32 h-32" />
-          </div>
+      <div className="bg-slate-900 text-white rounded-2xl p-8 shadow-xl overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <FileSpreadsheet className="w-32 h-32" />
+        </div>
 
-          <div className="relative z-10">
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Info className="w-5 h-5 text-blue-400" />
-              Latest Sync Detail
-            </h3>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div>
-                <p className="text-left text-slate-400 text-sm mb-1">Processed</p>
-                <p className="text-left text-3xl font-bold">{latestSync.records_processed}</p>
-              </div>
-              <div>
-                <p className="text-left text-emerald-400 text-sm mb-1">Created</p>
-                <p className="text-left text-3xl font-bold">{latestSync.records_created}</p>
-              </div>
-              <div>
-                <p className="text-left text-blue-400 text-sm mb-1">Updated</p>
-                <p className="text-left text-3xl font-bold">{latestSync.records_updated}</p>
-              </div>
-              <div>
-                <p className="text-left text-red-400 text-sm mb-1">Failed</p>
-                <p className="text-left text-3xl font-bold">{latestSync.records_failed}</p>
-              </div>
+        <div className="relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-8">
+            <div>
+              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                <Info className="w-5 h-5 text-blue-400" />
+                Latest Sync Detail
+              </h3>
+              <p className="text-sm text-slate-400 max-w-2xl">
+                Scheduler berjalan otomatis setiap jam. Gunakan kontrol ini untuk mengaktifkan atau menghentikannya.
+              </p>
             </div>
 
-            {latestSync.error_message && (
-              <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
-                <strong>Error:</strong> {latestSync.error_message}
-              </div>
-            )}
+            <button
+              onClick={handleToggleScheduler}
+              disabled={schedulerLoading}
+              className={`
+                flex items-center gap-3 bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-left transition-all
+                ${schedulerLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/15 active:scale-95'}
+              `}
+            >
+              {status?.isRunning ? (
+                <Square className="w-4 h-4 text-red-300" />
+              ) : (
+                <Play className="w-4 h-4 text-emerald-300" />
+              )}
+              <span>
+                <span className="block text-sm font-semibold">
+                  {status?.isRunning ? 'Stop Scheduler' : 'Start Scheduler'}
+                </span>
+                <span className="block text-xs text-slate-400">
+                  {status?.isRunning ? 'Hentikan auto-sync hourly' : 'Jalankan auto-sync hourly'}
+                </span>
+              </span>
+            </button>
           </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <p className="text-left text-slate-400 text-sm mb-1">Processed</p>
+              <p className="text-left text-3xl font-bold">{latestSync?.records_processed ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-left text-emerald-400 text-sm mb-1">Created</p>
+              <p className="text-left text-3xl font-bold">{latestSync?.records_created ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-left text-blue-400 text-sm mb-1">Updated</p>
+              <p className="text-left text-3xl font-bold">{latestSync?.records_updated ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-left text-red-400 text-sm mb-1">Failed</p>
+              <p className="text-left text-3xl font-bold">{latestSync?.records_failed ?? 0}</p>
+            </div>
+          </div>
+
+          {latestSync?.error_message && (
+            <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+              <strong>Error:</strong> {latestSync.error_message}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Sync History Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
