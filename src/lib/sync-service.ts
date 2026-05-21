@@ -7,7 +7,8 @@ import { HistoryEntry } from '@/utils/duration';
 import { parseJsonArray } from '@/utils/json';
 import { normalizeWhitespace } from '@/utils/validation';
 import { WebSocketServer } from './websocket';
-import { COL } from './sheet-columns';
+import { indexToLetter } from './sheet-columns';
+import { ColumnConfigRepository } from '@/repositories/ColumnConfigRepository';
 
 function normalizeStatus(value: string): string {
   return normalizeWhitespace(
@@ -26,7 +27,13 @@ export class SyncService {
 
     try {
       const gid = getSheetId();
-      const rows = await GoogleSheetsClient.getRowsFromGid(gid, 'A4:AF');
+      const COL = ColumnConfigRepository.getMap();
+      // The widest configured column drives both the fetch range and the slice
+      // length, so inserting columns in the sheet never truncates mapped fields.
+      const maxIndex = Math.max(...Object.values(COL));
+      const endLetter = indexToLetter(maxIndex);
+      const sliceLen = maxIndex + 1;
+      const rows = await GoogleSheetsClient.getRowsFromGid(gid, `A4:${endLetter}`);
 
       if (!rows || rows.length === 0) {
         const errorMsg = 'Tidak ada data valid yang ditemukan.';
@@ -102,7 +109,7 @@ export class SyncService {
             created++;
           }
 
-          const fullDataAtoAF = row.slice(0, 32).map(v => v === undefined || v === null ? '' : v);
+          const fullDataAtoAF = row.slice(0, sliceLen).map(v => v === undefined || v === null ? '' : v);
 
           const str = (idx: number) => (row[idx] ?? '').toString().trim();
           const num = (idx: number) => { const n = Number(row[idx]); return isNaN(n) ? 0 : n; };

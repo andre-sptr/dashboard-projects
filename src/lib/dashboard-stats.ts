@@ -5,12 +5,11 @@ import {
   classifyStatus,
   formatExcelDateShort,
   getFullDataArray,
-  isGoliveTimelineStatus,
   parseExcelDate,
   parseNumber,
 } from '@/utils/project';
 import { computeProjectRisk, getDaysSinceChanged } from '@/lib/risk-criteria';
-import { COL } from '@/lib/sheet-columns';
+import { DEFAULT_COLUMN_MAP, type ColumnMap } from '@/lib/sheet-columns';
 
 export const STATUS_COLS = [
   '0. DROP', '1. AANWIJZING', '2. DONE AANWIJZING', '3. PERIZINAN',
@@ -18,9 +17,9 @@ export const STATUS_COLS = [
 ] as const;
 
 // Komitmen golive date (target) used for the month/year filter.
-export function getKomitmenGoliveDate(project: Project): Date | null {
+export function getKomitmenGoliveDate(project: Project, colMap: ColumnMap = DEFAULT_COLUMN_MAP): Date | null {
   const fullData = getFullDataArray(project);
-  return parseExcelDate(fullData[COL.KOMITMEN_GOLIVE]);
+  return parseExcelDate(fullData[colMap.KOMITMEN_GOLIVE]);
 }
 
 // Achiev per distrik = (port 7.GOLIVE + 8.UJI TERIMA) / total port status 1..8 * 100 (0.DROP tidak dihitung)
@@ -32,7 +31,7 @@ function computeStatusAchiev(sc: Record<string, number>): number {
   return total > 0 ? Math.round((golive / total) * 10000) / 100 : 0;
 }
 
-export function buildDashboardStats(projects: Project[]): DashboardStats {
+export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEFAULT_COLUMN_MAP): DashboardStats {
   let totalPorts = 0;
   let donePorts = 0;
   let progressPorts = 0;
@@ -47,7 +46,7 @@ export function buildDashboardStats(projects: Project[]): DashboardStats {
 
   for (const project of projects) {
     const fullData = getFullDataArray(project);
-    const ports = parseNumber(fullData[COL.PORT_PLAN]);
+    const ports = parseNumber(fullData[colMap.PORT_PLAN]);
     const bucket = classifyStatus(project.status);
 
     totalPorts += ports;
@@ -59,9 +58,10 @@ export function buildDashboardStats(projects: Project[]): DashboardStats {
     const status = project.status || '-';
     statusMap.set(status, (statusMap.get(status) || 0) + ports);
 
-    // Timeline grouped by Komitmen Golive (target) month, consistent with the dashboard filter.
-    const goliveStr = formatExcelDateShort(fullData[COL.KOMITMEN_GOLIVE]);
-    if (goliveStr && isGoliveTimelineStatus(project.status)) {
+    // Timeline grouped by actual Tanggal Golive (kolom AF) month — based purely on
+    // whether a golive date exists, regardless of status.
+    const goliveStr = formatExcelDateShort(fullData[colMap.TANGGAL_GOLIVE]);
+    if (goliveStr) {
       totalGolivePorts += ports;
       goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);
     }

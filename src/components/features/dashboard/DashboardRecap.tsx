@@ -18,6 +18,7 @@ import {
   buildRiskyProjects,
   getKomitmenGoliveDate,
 } from '@/lib/dashboard-stats';
+import { DEFAULT_COLUMN_MAP, type ColumnMap } from '@/lib/sheet-columns';
 
 const MONTH_NAMES = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -42,6 +43,7 @@ const BranchRanking = dynamic(() => import('@/components/features/report/BranchR
 
 interface Props {
   projects: Project[];
+  colMap?: ColumnMap;
 }
 
 const now = new Date();
@@ -56,7 +58,7 @@ function isFutureMonth(monthIndex: number, year: number | 'all'): boolean {
   return monthIndex > now.getMonth();
 }
 
-export default function DashboardRecap({ projects }: Props) {
+export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }: Props) {
   const [exporting, setExporting] = useState(false);
   const [year, setYear] = useState<number | 'all'>(now.getFullYear());
   const [month, setMonth] = useState<number | 'all'>(now.getMonth());
@@ -65,27 +67,30 @@ export default function DashboardRecap({ projects }: Props) {
   const years = useMemo(() => {
     const set = new Set<number>();
     for (const p of projects) {
-      const d = getKomitmenGoliveDate(p);
+      const d = getKomitmenGoliveDate(p, colMap);
       if (d) set.add(d.getFullYear());
     }
     set.add(now.getFullYear());
     return Array.from(set).sort((a, b) => b - a);
-  }, [projects]);
+  }, [projects, colMap]);
 
   // Filter by komitmen golive (target) date.
   const filtered = useMemo(() => {
     if (year === 'all' && month === 'all') return projects;
     return projects.filter((p) => {
-      const d = getKomitmenGoliveDate(p);
+      const d = getKomitmenGoliveDate(p, colMap);
       if (!d) return false;
       if (year !== 'all' && d.getFullYear() !== year) return false;
       if (month !== 'all' && d.getMonth() !== month) return false;
       return true;
     });
-  }, [projects, year, month]);
+  }, [projects, year, month, colMap]);
 
-  const stats = useMemo(() => buildDashboardStats(filtered), [filtered]);
+  const stats = useMemo(() => buildDashboardStats(filtered, colMap), [filtered, colMap]);
   const riskyProjects = useMemo(() => buildRiskyProjects(filtered), [filtered]);
+
+  // Timeline golive per bulan selalu menampilkan seluruh data, tidak terpengaruh filter.
+  const allStats = useMemo(() => buildDashboardStats(projects, colMap), [projects, colMap]);
 
   const pieData = [
     { name: 'Done', value: stats.donePorts, color: '#10b981' },
@@ -196,15 +201,15 @@ export default function DashboardRecap({ projects }: Props) {
         />
       </div>
 
-      <div className="animate-in stagger-6">
-        <TimelineChart
-          goliveMonthList={stats.goliveMonthList}
-          totalGolivePorts={stats.totalGolivePorts}
-        />
-      </div>
-
       <div className="animate-in stagger-5">
         <BranchRanking branchData={stats.branchRankingData} />
+      </div>
+
+      <div className="animate-in stagger-6">
+        <TimelineChart
+          goliveMonthList={allStats.goliveMonthList}
+          totalGolivePorts={allStats.totalGolivePorts}
+        />
       </div>
 
       <div className="animate-in stagger-7">

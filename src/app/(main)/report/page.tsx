@@ -1,5 +1,6 @@
 // Detailed KPI analytics and reporting interface
 import { ProjectRepository } from '@/repositories/ProjectRepository';
+import { ColumnConfigRepository } from '@/repositories/ColumnConfigRepository';
 import type { Project } from '@/types/database';
 import ReportClient from '@/components/features/report/ReportClient';
 
@@ -15,5 +16,7 @@ export default async function ReportPage() {
     throw new Error('Gagal mengambil data dari database.');
   }
 
-  return <ReportClient initialProjects={projects} />;
+  const colMap = ColumnConfigRepository.getMap();
+
+  return <ReportClient initialProjects={projects} colMap={colMap} />;
 }

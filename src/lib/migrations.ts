@@ -1,4 +1,5 @@
 import { Database } from 'better-sqlite3';
+import { COLUMN_FIELDS } from './sheet-columns';
 
 interface Migration {
   id: number;
@@ -622,6 +623,50 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_topology_allocations_aanwijzing ON topology_allocations(aanwijzing_id);
         CREATE INDEX IF NOT EXISTS idx_topology_allocations_location ON topology_allocations(area, sto, olt_name);
       `);
+    }
+  },
+  {
+    id: 17,
+    name: 'create_column_config_table',
+    run: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS column_config (
+          field_key TEXT PRIMARY KEY,
+          label TEXT NOT NULL,
+          header_text TEXT NOT NULL DEFAULT '',
+          col_index INTEGER NOT NULL,
+          sort_order INTEGER NOT NULL
+        );
+      `);
+
+      const insert = db.prepare(`
+        INSERT OR IGNORE INTO column_config (field_key, label, header_text, col_index, sort_order)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      COLUMN_FIELDS.forEach((field, order) => {
+        insert.run(field.key, field.label, field.headerText, field.defaultIndex, order);
+      });
+    }
+  },
+  {
+    id: 18,
+    name: 'reseed_column_config_latest_layout',
+    run: (db) => {
+      // Re-apply the canonical column layout (KET moved to index 21, downstream
+      // fields shifted +1, and four new AG–AJ fields added). Upsert so existing
+      // installs adopt the new defaults and gain the new field rows.
+      const upsert = db.prepare(`
+        INSERT INTO column_config (field_key, label, header_text, col_index, sort_order)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(field_key) DO UPDATE SET
+          label = excluded.label,
+          header_text = excluded.header_text,
+          col_index = excluded.col_index,
+          sort_order = excluded.sort_order
+      `);
+      COLUMN_FIELDS.forEach((field, order) => {
+        upsert.run(field.key, field.label, field.headerText, field.defaultIndex, order);
+      });
     }
   },
 ];

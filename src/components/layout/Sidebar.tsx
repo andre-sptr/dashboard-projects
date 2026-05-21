@@ -14,6 +14,7 @@ import {
   Receipt,
   BarChart3,
   Settings,
+  Columns3,
   Network,
   ChevronDown,
   ChevronRight,
@@ -78,6 +79,7 @@ const NAV_GROUPS: NavGroup[] = [
     icon: Settings,
     items: [
       { href: '/settings/sync', label: 'Settings', icon: Settings },
+      { href: '/settings/columns', label: 'Konfigurasi', icon: Columns3 },
     ],
   },
 ];

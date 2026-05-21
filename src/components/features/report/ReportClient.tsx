@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import type { Project } from '@/types/database';
 import { parseExcelDate, getFullDataArray } from '@/utils/project';
 import { AREA_BRANCH_MAP } from '@/lib/constants';
-import { COL } from '@/lib/sheet-columns';
+import { DEFAULT_COLUMN_MAP, type ColumnMap } from '@/lib/sheet-columns';
 import dynamic from 'next/dynamic';
 import { ReportFilters, Granularity } from './ReportFilters';
 import { ReportKpiGrid } from './ReportKpiGrid';
@@ -28,6 +28,7 @@ const BranchRanking = dynamic(() => import('./BranchRanking').then(mod => mod.Br
 
 interface Props {
   initialProjects: Project[];
+  colMap?: ColumnMap;
 }
 
 interface TrendEntry {
@@ -38,7 +39,7 @@ interface TrendEntry {
 }
 
 
-export default function ReportClient({ initialProjects }: Props) {
+export default function ReportClient({ initialProjects, colMap = DEFAULT_COLUMN_MAP }: Props) {
   const [granularity, setGranularity] = useState<Granularity>('monthly');
   const [areaFilter, setAreaFilter] = useState<string>('');
   const [branchFilter, setBranchFilter] = useState<string>('');
@@ -72,8 +73,8 @@ export default function ReportClient({ initialProjects }: Props) {
       const fullData = getFullDataArray(p);
       const planPort = p.port_planned || 0;
       const realPort = p.port_realized || 0;
-      const goliveDate = parseExcelDate(fullData[COL.TANGGAL_GOLIVE]);
-      const targetDate = parseExcelDate(fullData[COL.KOMITMEN_GOLIVE]);
+      const goliveDate = parseExcelDate(fullData[colMap.TANGGAL_GOLIVE]);
+      const targetDate = parseExcelDate(fullData[colMap.KOMITMEN_GOLIVE]);
 
       const branch = (p.branch || 'UNKNOWN').toUpperCase();
 
@@ -175,7 +176,7 @@ export default function ReportClient({ initialProjects }: Props) {
       lateProjects,
       totalGolivePorts,
     };
-  }, [initialProjects, granularity, areaFilter, branchFilter]);
+  }, [initialProjects, granularity, areaFilter, branchFilter, colMap]);
 
 
   return (
