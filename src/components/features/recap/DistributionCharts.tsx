@@ -23,7 +23,7 @@ export const BarRow = ({
   total,
   colorClass,
 }: BarRowProps) => {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  const pct = total > 0 ? Math.round((count / total) * 10000) / 100 : 0;
   return (
     <div>
       <div className="flex items-center justify-between text-xs mb-1 gap-2">
@@ -31,7 +31,7 @@ export const BarRow = ({
           {label || '-'}
         </span>
         <span className="text-gray-500 dark:text-gray-400 shrink-0 tabular-nums font-medium">
-          {count.toLocaleString('id-ID')} <span className="text-gray-400 font-normal">({pct}%)</span>
+          {count.toLocaleString('id-ID')} <span className="text-gray-400 font-normal">({pct.toFixed(2)}%)</span>
         </span>
       </div>
       <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -134,7 +134,7 @@ export const DistributionCharts = ({ pieData, statusList, totalPorts, branchGoli
                         <td className="py-1 text-center tabular-nums text-gray-600 dark:text-gray-400">{b.done.toLocaleString('id-ID')}</td>
                         <td className="py-1 text-center tabular-nums font-semibold">
                           <span className={b.achiev >= 90 ? 'text-emerald-600' : b.achiev >= 70 ? 'text-blue-600' : 'text-amber-600'}>
-                            {b.achiev}%
+                            {b.achiev.toFixed(2)}%
                           </span>
                         </td>
                       </tr>

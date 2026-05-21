@@ -6,9 +6,9 @@ interface Props {
   branchData: BranchRankingEntry[];
 }
 
-function getTrafficLevel(realization: number): 'AMAN' | 'PERHATIAN' | 'KRITIS' {
-  if (realization >= 70) return 'AMAN';
-  if (realization >= 40) return 'PERHATIAN';
+function getTrafficLevel(achiev: number): 'AMAN' | 'PERHATIAN' | 'KRITIS' {
+  if (achiev >= 70) return 'AMAN';
+  if (achiev >= 40) return 'PERHATIAN';
   return 'KRITIS';
 }
 
@@ -44,9 +44,9 @@ export default function BranchTrafficLight({ branchData }: Props) {
         </h2>
         <span
           className="ml-auto text-xs text-gray-400 dark:text-gray-500 cursor-help"
-          title="Berdasarkan % realisasi port (port_realized / port_planned). Berbeda dengan badge project yang menggunakan 3 kriteria (stuck, overdue, low-realization)."
+          title="Achiev = (port 7.GOLIVE + 8.UJI TERIMA) / total port status 1..8 per branch (0.DROP tidak dihitung)."
         >
-          ⓘ Skala: realisasi port per branch
+          ⓘ Skala: achievement per branch
         </span>
       </div>
 
@@ -69,8 +69,8 @@ export default function BranchTrafficLight({ branchData }: Props) {
               );
             }
 
-            const realization = Math.round((branch.actual / branch.planned) * 100);
-            const level = getTrafficLevel(realization);
+            const achiev = branch.achievement;
+            const level = getTrafficLevel(achiev);
             const styles = LEVEL_STYLES[level];
 
             return (
@@ -81,11 +81,11 @@ export default function BranchTrafficLight({ branchData }: Props) {
                 <div className="flex-1 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                   <div
                     className={`h-full rounded-full ${styles.bar} transition-all`}
-                    style={{ width: `${Math.min(realization, 100)}%` }}
+                    style={{ width: `${Math.min(achiev, 100)}%` }}
                   />
                 </div>
-                <span className="w-10 text-right text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0">
-                  {realization}%
+                <span className="w-14 text-right text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0 tabular-nums">
+                  {achiev.toFixed(2)}%
                 </span>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${styles.badge}`}>
                   {level}

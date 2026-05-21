@@ -146,7 +146,13 @@ export default function ReportClient({ initialProjects }: Props) {
         planned: b.planned,
         actual: b.actual,
         statusCounts: b.statusCounts,
-        achievement: b.planned > 0 ? Math.round((b.actual / b.planned) * 100) : 0,
+        achievement: (() => {
+          const golive = (b.statusCounts['7. GOLIVE'] || 0) + (b.statusCounts['8. UJI TERIMA'] || 0);
+          const total = STATUS_COLS
+            .filter(s => s !== '0. DROP')
+            .reduce((sum, s) => sum + (b.statusCounts[s] || 0), 0);
+          return total > 0 ? Math.round((golive / total) * 10000) / 100 : 0;
+        })(),
       }))
       .sort((a, b) => b.achievement - a.achievement);
 

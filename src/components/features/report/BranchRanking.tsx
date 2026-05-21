@@ -85,8 +85,8 @@ export const BranchRanking = ({ branchData }: BranchRankingProps) => {
                         style={{ width: `${Math.min(100, branch.achievement)}%` }}
                       />
                     </div>
-                    <span className="text-xs font-black text-gray-700 dark:text-gray-300 w-10 text-right">
-                      {branch.achievement}%
+                    <span className="text-xs font-black text-gray-700 dark:text-gray-300 w-14 text-right tabular-nums">
+                      {branch.achievement.toFixed(2)}%
                     </span>
                   </div>
                 </td>

@@ -8,13 +8,23 @@ import {
   Loader2,
   XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { KpiCard } from '@/components/features/recap/KpiCard';
 import { RecentChanges } from '@/components/features/recap/RecentChanges';
-import type { DashboardStats, RiskyProjectDTO } from '@/types/dashboard';
+import type { Project } from '@/types/database';
+import {
+  buildDashboardStats,
+  buildRiskyProjects,
+  getKomitmenGoliveDate,
+} from '@/lib/dashboard-stats';
 import AtRiskPanel from './AtRiskPanel';
 import BranchTrafficLight from './BranchTrafficLight';
+
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
 
 // Dynamically import heavy chart components
 const DistributionCharts = dynamic(() => import('@/components/features/recap/DistributionCharts').then(mod => mod.DistributionCharts), {
