@@ -66,9 +66,22 @@ interface DistributionChartsProps {
   statusList: SubStatusEntry[];
   totalPorts: number;
   branchGoliveData: BranchGoliveEntry[];
+  statusTotalPorts: number;
+  batchOptions: string[];
+  batchFilter: string;
+  onBatchFilterChange: (value: string) => void;
 }
 
-export const DistributionCharts = ({ pieData, statusList, totalPorts, branchGoliveData }: DistributionChartsProps) => {
+export const DistributionCharts = ({
+  pieData,
+  statusList,
+  totalPorts,
+  branchGoliveData,
+  statusTotalPorts,
+  batchOptions,
+  batchFilter,
+  onBatchFilterChange,
+}: DistributionChartsProps) => {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
       <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm flex flex-col">
@@ -150,11 +163,23 @@ export const DistributionCharts = ({ pieData, statusList, totalPorts, branchGoli
       </div>
 
       <div className="glass-panel rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 shadow-sm flex flex-col">
-        <div className="flex items-center gap-2 mb-4 shrink-0">
-          <Layers size={18} className="text-indigo-600" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Status
-          </h3>
+        <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
+          <div className="flex items-center gap-2">
+            <Layers size={18} className="text-indigo-600" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Status
+            </h3>
+          </div>
+          <select
+            value={batchFilter}
+            onChange={(e) => onBatchFilterChange(e.target.value)}
+            className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">Semua Batch</option>
+            {batchOptions.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
         </div>
         {statusList.length ? (
           <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
@@ -163,7 +188,7 @@ export const DistributionCharts = ({ pieData, statusList, totalPorts, branchGoli
                 key={s.name}
                 label={s.name}
                 count={s.count}
-                total={totalPorts}
+                total={statusTotalPorts}
                 colorClass="bg-indigo-500"
               />
             ))}

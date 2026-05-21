@@ -8,7 +8,7 @@ import {
   Loader2,
   XCircle,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { KpiCard } from '@/components/features/recap/KpiCard';
 import { RecentChanges } from '@/components/features/recap/RecentChanges';
@@ -89,6 +89,29 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
   const stats = useMemo(() => buildDashboardStats(filtered, colMap), [filtered, colMap]);
   const riskyProjects = useMemo(() => buildRiskyProjects(filtered, colMap), [filtered, colMap]);
 
+  // Batch Program filter — scoped to the Status card only.
+  const [batchFilter, setBatchFilter] = useState<string>('');
+
+  const batchOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of filtered) {
+      if (p.batch_program) set.add(p.batch_program);
+    }
+    return Array.from(set).sort();
+  }, [filtered]);
+
+  // Drop the selection when it is no longer present in the current period.
+  useEffect(() => {
+    if (batchFilter && !batchOptions.includes(batchFilter)) setBatchFilter('');
+  }, [batchOptions, batchFilter]);
+
+  const statusStats = useMemo(() => {
+    const subset = batchFilter
+      ? filtered.filter((p) => p.batch_program === batchFilter)
+      : filtered;
+    return buildDashboardStats(subset, colMap);
+  }, [filtered, batchFilter, colMap]);
+
   // Timeline golive per bulan selalu menampilkan seluruh data, tidak terpengaruh filter.
   const allStats = useMemo(() => buildDashboardStats(projects, colMap), [projects, colMap]);
 
@@ -104,7 +127,13 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
     setExporting(true);
     try {
       const { exportDashboardPDF } = await import('@/lib/export-pdf');
-      await exportDashboardPDF(stats, riskyProjects);
+      const monthLabel = month === 'all' ? 'Semua Bulan' : MONTH_NAMES[month];
+      const yearLabel = year === 'all' ? 'Semua Tahun' : String(year);
+      await exportDashboardPDF(stats, {
+        periodLabel: `${monthLabel} ${yearLabel}`,
+        batchLabel: batchFilter || 'Semua Batch',
+        statusStats,
+      });
     } finally {
       setExporting(false);
     }
@@ -195,9 +224,13 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
       <div className="animate-in stagger-4">
         <DistributionCharts
           pieData={pieData}
-          statusList={stats.statusList}
+          statusList={statusStats.statusList}
           totalPorts={totalPorts}
           branchGoliveData={stats.branchGoliveData}
+          statusTotalPorts={statusStats.totalPorts}
+          batchOptions={batchOptions}
+          batchFilter={batchFilter}
+          onBatchFilterChange={setBatchFilter}
         />
       </div>
 
