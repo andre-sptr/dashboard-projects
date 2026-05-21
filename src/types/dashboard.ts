@@ -26,6 +26,7 @@ export interface DashboardStats {
   cancelledPorts: number;
   otherPorts: number;
   statusList: { name: string; count: number }[];
+  overallAchiev: number;
   totalGolivePorts: number;
   goliveMonthList: { name: string; count: number }[];
   branchGoliveData: { name: string; done: number; achiev: number }[];

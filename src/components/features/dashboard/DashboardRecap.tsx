@@ -18,8 +18,6 @@ import {
   buildRiskyProjects,
   getKomitmenGoliveDate,
 } from '@/lib/dashboard-stats';
-import AtRiskPanel from './AtRiskPanel';
-import BranchTrafficLight from './BranchTrafficLight';
 
 const MONTH_NAMES = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -47,6 +45,16 @@ interface Props {
 }
 
 const now = new Date();
+
+// A month is "future" (and thus not selectable) when, combined with the chosen
+// year, it refers to a period that hasn't arrived yet. With year = 'all' every
+// month has already occurred in some past year, so nothing is disabled.
+function isFutureMonth(monthIndex: number, year: number | 'all'): boolean {
+  if (year === 'all') return false;
+  if (year > now.getFullYear()) return true;
+  if (year < now.getFullYear()) return false;
+  return monthIndex > now.getMonth();
+}
 
 export default function DashboardRecap({ projects }: Props) {
   const [exporting, setExporting] = useState(false);
@@ -112,17 +120,21 @@ export default function DashboardRecap({ projects }: Props) {
             onChange={(e) => setMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
             className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="all">Semua Bulan</option>
+            <option value="all">Semua</option>
             {MONTH_NAMES.map((name, i) => (
-              <option key={name} value={i}>{name}</option>
+              <option key={name} value={i} disabled={isFutureMonth(i, year)}>{name}</option>
             ))}
           </select>
           <select
             value={String(year)}
-            onChange={(e) => setYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            onChange={(e) => {
+              const nextYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+              setYear(nextYear);
+              if (month !== 'all' && isFutureMonth(month, nextYear)) setMonth('all');
+            }}
             className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="all">Semua Tahun</option>
+            <option value="all">Semua</option>
             {years.map((y) => (
               <option key={y} value={y}>{y}</option>
             ))}
@@ -157,7 +169,7 @@ export default function DashboardRecap({ projects }: Props) {
           label="Done Ports"
           value={stats.donePorts.toLocaleString('id-ID')}
           accent="bg-emerald-600"
-          sub={totalPorts ? `${Math.round((stats.donePorts / totalPorts) * 100)}% dari total` : '0%'}
+          sub={`${stats.overallAchiev.toFixed(2)}% capaian`}
         />
         <KpiCard
           icon={Loader2}
@@ -184,10 +196,6 @@ export default function DashboardRecap({ projects }: Props) {
         />
       </div>
 
-      <div className="animate-in stagger-5">
-        <BranchRanking branchData={stats.branchRankingData} />
-      </div>
-
       <div className="animate-in stagger-6">
         <TimelineChart
           goliveMonthList={stats.goliveMonthList}
@@ -195,16 +203,12 @@ export default function DashboardRecap({ projects }: Props) {
         />
       </div>
 
+      <div className="animate-in stagger-5">
+        <BranchRanking branchData={stats.branchRankingData} />
+      </div>
+
       <div className="animate-in stagger-7">
         <RecentChanges recent={stats.recent} />
-      </div>
-
-      <div className="animate-in stagger-3">
-        <BranchTrafficLight branchData={stats.branchRankingData} />
-      </div>
-
-      <div className="animate-in stagger-2">
-        <AtRiskPanel projects={riskyProjects} />
       </div>
     </div>
   );

@@ -5,9 +5,9 @@ import {
   classifyStatus,
   formatExcelDateShort,
   getFullDataArray,
-  getPortCount,
   isGoliveTimelineStatus,
   parseExcelDate,
+  parseNumber,
 } from '@/utils/project';
 import { computeProjectRisk, getDaysSinceChanged } from '@/lib/risk-criteria';
 import { COL } from '@/lib/sheet-columns';
@@ -42,11 +42,12 @@ export function buildDashboardStats(projects: Project[]): DashboardStats {
   const statusMap = new Map<string, number>();
   const goliveMonthMap = new Map<string, number>();
   const branchRankingMap = new Map<string, { planned: number; actual: number; statusCounts: Record<string, number> }>();
+  const globalStatusCounts: Record<string, number> = Object.fromEntries(STATUS_COLS.map(s => [s, 0]));
   let totalGolivePorts = 0;
 
   for (const project of projects) {
     const fullData = getFullDataArray(project);
-    const ports = getPortCount(fullData);
+    const ports = parseNumber(fullData[COL.PORT_PLAN]);
     const bucket = classifyStatus(project.status);
 
     totalPorts += ports;
@@ -58,7 +59,8 @@ export function buildDashboardStats(projects: Project[]): DashboardStats {
     const status = project.status || '-';
     statusMap.set(status, (statusMap.get(status) || 0) + ports);
 
-    const goliveStr = formatExcelDateShort(fullData[30]);
+    // Timeline grouped by Komitmen Golive (target) month, consistent with the dashboard filter.
+    const goliveStr = formatExcelDateShort(fullData[COL.KOMITMEN_GOLIVE]);
     if (goliveStr && isGoliveTimelineStatus(project.status)) {
       totalGolivePorts += ports;
       goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);
@@ -77,6 +79,7 @@ export function buildDashboardStats(projects: Project[]): DashboardStats {
     const normalizedStatus = (project.status || '').trim();
     if ((STATUS_COLS as readonly string[]).includes(normalizedStatus)) {
       rankEntry.statusCounts[normalizedStatus] = (rankEntry.statusCounts[normalizedStatus] || 0) + planPort;
+      globalStatusCounts[normalizedStatus] = (globalStatusCounts[normalizedStatus] || 0) + planPort;
     }
     branchRankingMap.set(branch, rankEntry);
   }
@@ -109,7 +112,10 @@ export function buildDashboardStats(projects: Project[]): DashboardStats {
     }
   }
 
-  const recent = projects.slice(0, 5).map((project) => ({
+  const recent = [...projects]
+    .sort((a, b) => getDaysSinceChanged(a) - getDaysSinceChanged(b))
+    .slice(0, 5)
+    .map((project) => ({
     uid: project.uid,
     id_ihld: project.id_ihld,
     batch_program: '',
@@ -145,6 +151,7 @@ export function buildDashboardStats(projects: Project[]): DashboardStats {
         const bNum = parseFloat(b.name) || 0;
         return bNum - aNum;
       }),
+    overallAchiev: computeStatusAchiev(globalStatusCounts),
     totalGolivePorts,
     goliveMonthList,
     branchGoliveData: Array.from(branchRankingMap.entries())
