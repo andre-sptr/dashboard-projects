@@ -8,14 +8,13 @@ import {
   Loader2,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { KpiCard } from '@/components/features/recap/KpiCard';
 import { RecentChanges } from '@/components/features/recap/RecentChanges';
 import type { Project } from '@/types/database';
 import {
   buildDashboardStats,
-  buildRiskyProjects,
   getKomitmenGoliveDate,
 } from '@/lib/dashboard-stats';
 import { DEFAULT_COLUMN_MAP, type ColumnMap } from '@/lib/sheet-columns';
@@ -87,7 +86,6 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
   }, [projects, year, month, colMap]);
 
   const stats = useMemo(() => buildDashboardStats(filtered, colMap), [filtered, colMap]);
-  const riskyProjects = useMemo(() => buildRiskyProjects(filtered, colMap), [filtered, colMap]);
 
   // Batch Program filter — scoped to the Status card only.
   const [batchFilter, setBatchFilter] = useState<string>('');
@@ -100,17 +98,14 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
     return Array.from(set).sort();
   }, [filtered]);
 
-  // Drop the selection when it is no longer present in the current period.
-  useEffect(() => {
-    if (batchFilter && !batchOptions.includes(batchFilter)) setBatchFilter('');
-  }, [batchOptions, batchFilter]);
+  const activeBatchFilter = batchFilter && batchOptions.includes(batchFilter) ? batchFilter : '';
 
   const statusStats = useMemo(() => {
-    const subset = batchFilter
-      ? filtered.filter((p) => p.batch_program === batchFilter)
+    const subset = activeBatchFilter
+      ? filtered.filter((p) => p.batch_program === activeBatchFilter)
       : filtered;
     return buildDashboardStats(subset, colMap);
-  }, [filtered, batchFilter, colMap]);
+  }, [filtered, activeBatchFilter, colMap]);
 
   // Timeline golive per bulan selalu menampilkan seluruh data, tidak terpengaruh filter.
   const allStats = useMemo(() => buildDashboardStats(projects, colMap), [projects, colMap]);
@@ -131,8 +126,9 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
       const yearLabel = year === 'all' ? 'Semua Tahun' : String(year);
       await exportDashboardPDF(stats, {
         periodLabel: `${monthLabel} ${yearLabel}`,
-        batchLabel: batchFilter || 'Semua Batch',
+        batchLabel: activeBatchFilter || 'Semua Batch',
         statusStats,
+        timelineStats: allStats,
       });
     } finally {
       setExporting(false);
@@ -229,7 +225,7 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
           branchGoliveData={stats.branchGoliveData}
           statusTotalPorts={statusStats.totalPorts}
           batchOptions={batchOptions}
-          batchFilter={batchFilter}
+          batchFilter={activeBatchFilter}
           onBatchFilterChange={setBatchFilter}
         />
       </div>

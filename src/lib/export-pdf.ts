@@ -26,6 +26,30 @@ const PIE = {
 const BAR_INDIGO = '#6366f1';
 const BAR_EMERALD = '#10b981';
 
+const STATUS_COLS = [
+  '0. DROP',
+  '1. AANWIJZING',
+  '2. DONE AANWIJZING',
+  '3. PERIZINAN',
+  '4. MATDEL',
+  '5. INSTALASI',
+  '6. FINISH INSTALASI',
+  '7. GOLIVE',
+  '8. UJI TERIMA',
+] as const;
+
+const SHORT_STATUS_LABELS: Record<string, string> = {
+  '0. DROP': 'DROP',
+  '1. AANWIJZING': 'AANWJ',
+  '2. DONE AANWIJZING': 'DONE',
+  '3. PERIZINAN': 'IZIN',
+  '4. MATDEL': 'MATDEL',
+  '5. INSTALASI': 'INST',
+  '6. FINISH INSTALASI': 'F.INST',
+  '7. GOLIVE': 'GL',
+  '8. UJI TERIMA': 'UT',
+};
+
 function hexToRgb(hex: string): RGB {
   const h = hex.replace('#', '');
   return [
@@ -66,6 +90,17 @@ export async function exportDashboardPDF(
     doc.setDrawColor(...C.border);
     doc.setLineWidth(0.3);
     doc.roundedRect(x, yy, w, h, 2, 2, 'FD');
+  };
+
+  const panelHeader = (x: number, yy: number, w: number, title: string, accent: RGB) => {
+    doc.setFillColor(...C.rowAlt);
+    doc.roundedRect(x, yy, w, 13, 2, 2, 'F');
+    doc.setFillColor(...accent);
+    doc.roundedRect(x + 5, yy + 4, 3.2, 3.2, 0.8, 0.8, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C.textDark);
+    doc.text(title, x + 11, yy + 7);
   };
 
   const sectionTitle = (text: string, yy: number, accent: RGB) => {
@@ -200,14 +235,11 @@ export async function exportDashboardPDF(
   const leftX = margin;
   const rightX = margin + colW + colGap;
   const panelTop = cardY + cardH + 12;
-  const panelH = 84;
+  const panelH = 96;
 
   // Left: donut
   panel(leftX, panelTop, colW, panelH);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...C.textDark);
-  doc.text('Distribusi Status (by Port)', leftX + 5, panelTop + 8);
+  panelHeader(leftX, panelTop, colW, 'Distribusi Status (by Port)', C.blue);
 
   const pieSegs = [
     { name: 'Done', value: stats.donePorts, color: PIE.done },
@@ -219,8 +251,8 @@ export async function exportDashboardPDF(
 
   if (pieTotal > 0) {
     const cx = leftX + colW / 2;
-    const cy = panelTop + 34;
-    drawDonut(cx, cy, 22, 13, pieSegs);
+    const cy = panelTop + 38;
+    drawDonut(cx, cy, 20, 12, pieSegs);
     // Center total
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -232,7 +264,7 @@ export async function exportDashboardPDF(
     doc.text('PORT', cx, cy + 3.5, { align: 'center' });
 
     // Legend
-    let ly = panelTop + 62;
+    let ly = panelTop + 65;
     const lx = leftX + 10;
     doc.setFontSize(7.5);
     for (const seg of pieSegs) {
@@ -247,6 +279,33 @@ export async function exportDashboardPDF(
       doc.text(`${seg.value.toLocaleString('id-ID')} (${p}%)`, leftX + colW - 6, ly, { align: 'right' });
       ly += 5;
     }
+
+    const branchRows = stats.branchGoliveData.slice(0, 4);
+    if (branchRows.length > 0) {
+      const tableY = panelTop + 78;
+      doc.setDrawColor(...C.border);
+      doc.line(leftX + 5, tableY - 4, leftX + colW - 5, tableY - 4);
+      doc.setFontSize(5.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...C.textMuted);
+      doc.text('BRANCH', leftX + 7, tableY);
+      doc.text('GL', leftX + colW - 24, tableY, { align: 'right' });
+      doc.text('ACHIEV', leftX + colW - 7, tableY, { align: 'right' });
+      let by = tableY + 4;
+      for (const b of branchRows) {
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.textDark);
+        doc.text(b.name, leftX + 7, by, { maxWidth: colW - 42 });
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...C.textMuted);
+        doc.text(b.done.toLocaleString('id-ID'), leftX + colW - 24, by, { align: 'right' });
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...(b.achiev >= 90 ? C.emerald : b.achiev >= 70 ? C.blue : C.amber));
+        doc.text(`${b.achiev.toFixed(2)}%`, leftX + colW - 7, by, { align: 'right' });
+        by += 4;
+      }
+    }
   } else {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
@@ -257,10 +316,7 @@ export async function exportDashboardPDF(
   // Right: Status horizontal bars (batch-filtered)
   const statusSource = options.statusStats ?? stats;
   panel(rightX, panelTop, colW, panelH);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...C.textDark);
-  doc.text('Status', rightX + 5, panelTop + 8);
+  panelHeader(rightX, panelTop, colW, 'Status', C.indigo);
   if (options.batchLabel) {
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'normal');
@@ -273,8 +329,8 @@ export async function exportDashboardPDF(
   if (statusBars.length && stTotal > 0) {
     const sx = rightX + 5;
     const sw = colW - 10;
-    const rowH = Math.min(8, (panelH - 22) / statusBars.length);
-    let sy = panelTop + 16;
+    const rowH = Math.min(8, (panelH - 26) / statusBars.length);
+    let sy = panelTop + 20;
     for (const s of statusBars) {
       const p = (s.count / stTotal) * 100;
       doc.setFontSize(6.5);
@@ -303,32 +359,80 @@ export async function exportDashboardPDF(
     }
   };
 
-  // ── Branch Performance Ranking (achievement bars) ───────────────────────────
+  // ── Branch Performance Ranking (dashboard-style status table) ───────────────
   ensureSpace(20);
   sectionTitle('Branch Performance Ranking', y, C.blue);
   y += 7;
 
   const branches = stats.branchRankingData;
   if (branches.length) {
-    const nameW = 46;
-    const pctW = 18;
-    const barX = margin + nameW + 3;
-    const barW = usableWidth - nameW - pctW - 6;
-    branches.forEach((b, i) => {
-      ensureSpace(7);
-      const ach = b.achievement;
-      const color = ach >= 90 ? BAR_EMERALD : ach >= 70 ? '#3b82f6' : '#f59e0b';
-      doc.setFontSize(7.5);
+    const tableX = margin;
+    const branchW = 38;
+    const achW = 25;
+    const statusW = (usableWidth - branchW - achW) / STATUS_COLS.length;
+    const headerH = 9;
+    const rowH = 8;
+
+    const drawBranchHeader = () => {
+      panel(tableX, y, usableWidth, headerH);
+      doc.setFillColor(...C.rowAlt);
+      doc.roundedRect(tableX, y, usableWidth, headerH, 2, 2, 'F');
+      doc.setFontSize(5.6);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...C.textMuted);
-      doc.text(`${i + 1}.`, margin, y + 1);
+      doc.text('BRANCH', tableX + 4, y + 5.8);
+      STATUS_COLS.forEach((status, index) => {
+        doc.text(
+          SHORT_STATUS_LABELS[status] ?? status,
+          tableX + branchW + statusW * index + statusW / 2,
+          y + 5.8,
+          { align: 'center' }
+        );
+      });
+      doc.text('ACHIEV', tableX + usableWidth - 4, y + 5.8, { align: 'right' });
+      y += headerH;
+    };
+
+    drawBranchHeader();
+    branches.forEach((b, i) => {
+      ensureSpace(rowH + headerH + 2);
+      if (y < 25) drawBranchHeader();
+      if (i % 2 === 1) {
+        doc.setFillColor(...C.rowAlt);
+        doc.rect(tableX, y, usableWidth, rowH, 'F');
+      }
+      doc.setDrawColor(...C.border);
+      doc.setLineWidth(0.15);
+      doc.line(tableX, y + rowH, tableX + usableWidth, y + rowH);
+
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...C.textMuted);
+      doc.text(`${i + 1}`, tableX + 3, y + 5);
       doc.setTextColor(...C.textDark);
-      doc.text(b.name, margin + 5, y + 1);
-      hBar(barX, y - 0.8, barW, Math.min(100, ach), color);
+      doc.text(b.name, tableX + 8, y + 5, { maxWidth: branchW - 10 });
+
+      STATUS_COLS.forEach((status, index) => {
+        const value = b.statusCounts?.[status] ?? 0;
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...C.textMuted);
+        doc.text(
+          value.toLocaleString('id-ID'),
+          tableX + branchW + statusW * index + statusW / 2,
+          y + 5,
+          { align: 'center' }
+        );
+      });
+
+      const ach = b.achievement;
+      const color = ach >= 90 ? BAR_EMERALD : ach >= 70 ? '#3b82f6' : '#f59e0b';
+      hBar(tableX + usableWidth - achW, y + 2, 12, Math.min(100, ach), color);
+      doc.setFontSize(6);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...C.textDark);
-      doc.text(`${ach.toFixed(2)}%`, margin + usableWidth, y + 1, { align: 'right' });
-      y += 7;
+      doc.text(`${ach.toFixed(2)}%`, tableX + usableWidth - 4, y + 5, { align: 'right' });
+      y += rowH;
     });
   } else {
     doc.setFontSize(8);
