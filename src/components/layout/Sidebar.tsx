@@ -79,7 +79,7 @@ const NAV_GROUPS: NavGroup[] = [
     icon: Settings,
     items: [
       { href: '/settings/sync', label: 'Settings', icon: Settings },
-      { href: '/settings/columns', label: 'Konfigurasi', icon: Columns3 },
+      { href: '/settings/columns', label: 'Configuration', icon: Columns3 },
     ],
   },
 ];
