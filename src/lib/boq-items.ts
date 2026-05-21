@@ -20,8 +20,7 @@ function objectValue(row: Record<string, unknown>, key: keyof BoqItem) {
 
 function hasTotalValue(row: unknown[]): boolean {
   for (let c = 7; c <= 9; c++) {
-    const s = toString(row[c]);
-    if (s !== '' && s !== '-') return true;
+    if (toNumber(row[c]) !== 0) return true;
   }
   return false;
 }

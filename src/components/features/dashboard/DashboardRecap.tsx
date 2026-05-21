@@ -43,12 +43,41 @@ const BranchRanking = dynamic(() => import('@/components/features/report/BranchR
 });
 
 interface Props {
-  stats: DashboardStats;
-  riskyProjects: RiskyProjectDTO[];
+  projects: Project[];
 }
 
-export default function DashboardRecap({ stats, riskyProjects }: Props) {
+const now = new Date();
+
+export default function DashboardRecap({ projects }: Props) {
   const [exporting, setExporting] = useState(false);
+  const [year, setYear] = useState<number | 'all'>(now.getFullYear());
+  const [month, setMonth] = useState<number | 'all'>(now.getMonth());
+
+  // Distinct komitmen-golive years available in the data (+ current year).
+  const years = useMemo(() => {
+    const set = new Set<number>();
+    for (const p of projects) {
+      const d = getKomitmenGoliveDate(p);
+      if (d) set.add(d.getFullYear());
+    }
+    set.add(now.getFullYear());
+    return Array.from(set).sort((a, b) => b - a);
+  }, [projects]);
+
+  // Filter by komitmen golive (target) date.
+  const filtered = useMemo(() => {
+    if (year === 'all' && month === 'all') return projects;
+    return projects.filter((p) => {
+      const d = getKomitmenGoliveDate(p);
+      if (!d) return false;
+      if (year !== 'all' && d.getFullYear() !== year) return false;
+      if (month !== 'all' && d.getMonth() !== month) return false;
+      return true;
+    });
+  }, [projects, year, month]);
+
+  const stats = useMemo(() => buildDashboardStats(filtered), [filtered]);
+  const riskyProjects = useMemo(() => buildRiskyProjects(filtered), [filtered]);
 
   const pieData = [
     { name: 'Done', value: stats.donePorts, color: '#10b981' },
@@ -70,19 +99,50 @@ export default function DashboardRecap({ stats, riskyProjects }: Props) {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Monitoring project region Sumbagteng
         </p>
-        <button
-          onClick={handleExportPDF}
-          disabled={exporting}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-3 py-2 transition-colors"
-        >
-          <Download className="h-4 w-4" />
-          {exporting ? 'Mengekspor...' : 'Ekspor PDF'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            Komitmen Golive:
+          </span>
+          <select
+            value={String(month)}
+            onChange={(e) => setMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Semua Bulan</option>
+            {MONTH_NAMES.map((name, i) => (
+              <option key={name} value={i}>{name}</option>
+            ))}
+          </select>
+          <select
+            value={String(year)}
+            onChange={(e) => setYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Semua Tahun</option>
+            {years.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleExportPDF}
+            disabled={exporting}
+            className="flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-3 py-2 transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            {exporting ? 'Mengekspor...' : 'Ekspor PDF'}
+          </button>
+        </div>
       </div>
+
+      {stats.total === 0 && (
+        <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+          Tidak ada project dengan komitmen golive pada periode ini. Coba ubah filter atau pilih &quot;Semua&quot;.
+        </div>
+      )}
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 animate-in stagger-1">
         <KpiCard

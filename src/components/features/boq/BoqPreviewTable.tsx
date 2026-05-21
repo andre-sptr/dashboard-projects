@@ -9,8 +9,19 @@ function formatNumber(value: number) {
   return value.toLocaleString('id-ID', { maximumFractionDigits: 0 });
 }
 
+// The file's per-row TOTAL (column J) is often blank even when the totals
+// material/jasa (H/I) are filled, so derive it: prefer J, then H+I, then
+// fall back to unit price x volume.
+function rowTotal(item: ReturnType<typeof normalizeBoqItems>[number]): number {
+  if (item.total > 0) return item.total;
+  const fromParts = item.total_material + item.total_jasa;
+  if (fromParts > 0) return fromParts;
+  return (item.harga_satuan_material + item.harga_satuan_jasa) * item.volume;
+}
+
 export default function BoqPreviewTable({ rows }: BoqPreviewTableProps) {
   const items = normalizeBoqItems(rows);
+  const grandTotal = items.reduce((sum, item) => (item.is_section ? sum : sum + rowTotal(item)), 0);
 
   if (items.length === 0) {
     return (
@@ -56,11 +67,21 @@ export default function BoqPreviewTable({ rows }: BoqPreviewTableProps) {
               <td className="px-3 py-2 text-xs text-center text-gray-600 dark:text-gray-400 tabular-nums">{formatNumber(row.harga_satuan_material)}</td>
               <td className="px-3 py-2 text-xs text-center text-gray-600 dark:text-gray-400 tabular-nums">{formatNumber(row.harga_satuan_jasa)}</td>
               <td className="px-3 py-2 text-xs text-center font-semibold text-gray-900 dark:text-white tabular-nums">{formatNumber(row.volume)}</td>
-              <td className="px-3 py-2 text-xs text-center font-bold text-gray-900 dark:text-white tabular-nums">{formatNumber(row.total)}</td>
+              <td className="px-3 py-2 text-xs text-center font-bold text-gray-900 dark:text-white tabular-nums">{formatNumber(rowTotal(row))}</td>
             </tr>
           );
         })}
       </tbody>
+      <tfoot>
+        <tr className="bg-gray-100 dark:bg-gray-900/60 border-t-2 border-gray-300 dark:border-gray-600">
+          <td colSpan={7} className="px-3 py-2.5 text-right text-xs font-black text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+            Grand Total
+          </td>
+          <td className="px-3 py-2.5 text-center text-xs font-black text-gray-900 dark:text-white tabular-nums">
+            {grandTotal.toLocaleString('id-ID', { maximumFractionDigits: 0 })}
+          </td>
+        </tr>
+      </tfoot>
     </table>
   );
 }

@@ -26,12 +26,11 @@ function toStr(val: unknown): string {
 }
 
 // A designator row is "used" only if at least one of columns H-J
-// (total material/jasa, total) holds a real value. Unused designators carry
-// "-" (or blanks) across all of H-J.
+// (total material/jasa, total) carries a real non-zero amount. Unused
+// designators show "-" / blank / 0 across all of H-J.
 function hasTotalValue(row: unknown[]): boolean {
   for (let c = 7; c <= 9; c++) {
-    const s = toStr(row[c]);
-    if (s !== '' && s !== '-') return true;
+    if (toNum(row[c]) !== 0) return true;
   }
   return false;
 }
