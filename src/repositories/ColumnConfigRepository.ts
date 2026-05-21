@@ -3,16 +3,11 @@ import {
   COLUMN_FIELDS,
   DEFAULT_COLUMN_MAP,
   type ColKey,
+  type ColumnConfigEntry,
   type ColumnMap,
 } from '@/lib/sheet-columns';
 
-export interface ColumnConfigRow {
-  field_key: ColKey;
-  label: string;
-  header_text: string;
-  col_index: number;
-  sort_order: number;
-}
+export type ColumnConfigRow = ColumnConfigEntry;
 
 const VALID_KEYS = new Set<string>(COLUMN_FIELDS.map((f) => f.key));
 

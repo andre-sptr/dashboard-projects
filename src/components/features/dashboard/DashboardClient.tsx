@@ -9,15 +9,17 @@ import { ProjectRow } from './ProjectRow';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useRouter } from 'next/navigation';
 import { AREA_BRANCH_MAP } from '@/lib/constants';
+import type { ColumnConfigEntry } from '@/lib/sheet-columns';
 
 interface Props {
   initialProjects: Project[];
+  columnConfig?: ColumnConfigEntry[];
 }
 
 const ITEMS_PER_PAGE = 10;
 
 
-export default function DashboardClient({ initialProjects }: Props) {
+export default function DashboardClient({ initialProjects, columnConfig }: Props) {
   const router = useRouter();
   const { subscribe, unsubscribe } = useWebSocket();
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,7 +32,7 @@ export default function DashboardClient({ initialProjects }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    const handleSyncCompleted = (_data: Record<string, unknown>) => {
+    const handleSyncCompleted = () => {
       setIsRefreshing(true);
       router.refresh();
       // Reset refreshing state after a short delay
@@ -200,6 +202,7 @@ export default function DashboardClient({ initialProjects }: Props) {
                     isExpanded={expandedRow === project.uid}
                     onToggle={() => toggleRow(project.uid)}
                     getStatusColor={getStatusColor}
+                    columnConfig={columnConfig}
                   />
                 ))
               ) : (

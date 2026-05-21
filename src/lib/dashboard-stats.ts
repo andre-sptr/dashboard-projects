@@ -22,6 +22,29 @@ export function getKomitmenGoliveDate(project: Project, colMap: ColumnMap = DEFA
   return parseExcelDate(fullData[colMap.KOMITMEN_GOLIVE]);
 }
 
+function getMappedString(fullData: unknown[], index: number, fallback = ''): string {
+  const value = fullData[index];
+  if (value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  return text.length > 0 ? text : fallback;
+}
+
+function getDashboardProject(project: Project, colMap: ColumnMap, fullData: unknown[]): Project {
+  return {
+    ...project,
+    status: getMappedString(fullData, colMap.STATUS, project.status),
+    sub_status: getMappedString(fullData, colMap.SUB_STATUS_KONS, project.sub_status),
+    area: getMappedString(fullData, colMap.AREA, project.area),
+    branch: getMappedString(fullData, colMap.BRANCH_FMC, project.branch),
+    mitra: getMappedString(fullData, colMap.MITRA, project.mitra),
+    sto: getMappedString(fullData, colMap.STO, project.sto),
+    port_planned: parseNumber(fullData[colMap.PORT_PLAN]),
+    port_realized: parseNumber(fullData[colMap.REAL_JML_PORT_GOLIVE]),
+    golive_target: getMappedString(fullData, colMap.KOMITMEN_GOLIVE, project.golive_target ?? '') || null,
+    golive_actual: getMappedString(fullData, colMap.TANGGAL_GOLIVE, project.golive_actual ?? '') || null,
+  };
+}
+
 // Achiev per distrik = (port 7.GOLIVE + 8.UJI TERIMA) / total port status 1..8 * 100 (0.DROP tidak dihitung)
 function computeStatusAchiev(sc: Record<string, number>): number {
   const golive = (sc['7. GOLIVE'] || 0) + (sc['8. UJI TERIMA'] || 0);
@@ -46,8 +69,9 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
 
   for (const project of projects) {
     const fullData = getFullDataArray(project);
+    const mappedProject = getDashboardProject(project, colMap, fullData);
     const ports = parseNumber(fullData[colMap.PORT_PLAN]);
-    const bucket = classifyStatus(project.status);
+    const bucket = classifyStatus(mappedProject.status);
 
     totalPorts += ports;
     if (bucket === 'done') donePorts += ports;
@@ -55,7 +79,7 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
     else if (bucket === 'cancelled') cancelledPorts += ports;
     else otherPorts += ports;
 
-    const status = project.status || '-';
+    const status = mappedProject.status || '-';
     statusMap.set(status, (statusMap.get(status) || 0) + ports);
 
     // Timeline grouped by actual Tanggal Golive (kolom AF) month — based purely on
@@ -66,17 +90,17 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
       goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);
     }
 
-    const branch = (project.branch || 'UNKNOWN').toUpperCase();
+    const branch = (mappedProject.branch || 'UNKNOWN').toUpperCase();
 
-    const planPort = project.port_planned || 0;
-    const realPort = project.port_realized || 0;
+    const planPort = mappedProject.port_planned || 0;
+    const realPort = mappedProject.port_realized || 0;
     const rankEntry = branchRankingMap.get(branch) || {
       planned: 0, actual: 0,
       statusCounts: Object.fromEntries(STATUS_COLS.map(s => [s, 0])),
     };
     rankEntry.planned += planPort;
     rankEntry.actual += realPort;
-    const normalizedStatus = (project.status || '').trim();
+    const normalizedStatus = (mappedProject.status || '').trim();
     if ((STATUS_COLS as readonly string[]).includes(normalizedStatus)) {
       rankEntry.statusCounts[normalizedStatus] = (rankEntry.statusCounts[normalizedStatus] || 0) + planPort;
       globalStatusCounts[normalizedStatus] = (globalStatusCounts[normalizedStatus] || 0) + planPort;
@@ -115,27 +139,31 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
   const recent = [...projects]
     .sort((a, b) => getDaysSinceChanged(a) - getDaysSinceChanged(b))
     .slice(0, 5)
-    .map((project) => ({
-    uid: project.uid,
-    id_ihld: project.id_ihld,
-    batch_program: '',
-    nama_lop: project.nama_lop,
-    region: '',
-    status: project.status,
-    sub_status: project.sub_status,
-    full_data: '[]',
-    last_changed_at: project.last_changed_at,
-    history: '[]',
-    area: '',
-    branch: '',
-    mitra: '',
-    sto: '',
-    odp_planned: 0,
-    port_planned: 0,
-    port_realized: 0,
-    golive_target: null,
-    golive_actual: null,
-  }));
+    .map((project) => {
+      const fullData = getFullDataArray(project);
+      const mappedProject = getDashboardProject(project, colMap, fullData);
+      return {
+        uid: project.uid,
+        id_ihld: project.id_ihld,
+        batch_program: '',
+        nama_lop: project.nama_lop,
+        region: '',
+        status: mappedProject.status,
+        sub_status: mappedProject.sub_status,
+        full_data: '[]',
+        last_changed_at: project.last_changed_at,
+        history: '[]',
+        area: '',
+        branch: mappedProject.branch,
+        mitra: '',
+        sto: '',
+        odp_planned: 0,
+        port_planned: mappedProject.port_planned,
+        port_realized: mappedProject.port_realized,
+        golive_target: mappedProject.golive_target,
+        golive_actual: mappedProject.golive_actual,
+      };
+    });
 
   return {
     total: projects.length,
@@ -174,19 +202,21 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
   };
 }
 
-export function buildRiskyProjects(projects: Project[]): RiskyProjectDTO[] {
+export function buildRiskyProjects(projects: Project[], colMap: ColumnMap = DEFAULT_COLUMN_MAP): RiskyProjectDTO[] {
   const result: RiskyProjectDTO[] = [];
   for (const project of projects) {
-    const risk = computeProjectRisk(project);
+    const fullData = getFullDataArray(project);
+    const mappedProject = getDashboardProject(project, colMap, fullData);
+    const risk = computeProjectRisk(mappedProject);
     if (risk === 'AMAN') continue;
     result.push({
-      uid: project.uid,
-      nama_lop: project.nama_lop,
-      branch: project.branch,
-      status: project.status,
+      uid: mappedProject.uid,
+      nama_lop: mappedProject.nama_lop,
+      branch: mappedProject.branch,
+      status: mappedProject.status,
       risk_level: risk,
-      days_since_changed: getDaysSinceChanged(project),
-      golive_target: project.golive_target,
+      days_since_changed: getDaysSinceChanged(mappedProject),
+      golive_target: mappedProject.golive_target,
     });
   }
   return result;

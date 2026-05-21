@@ -7,6 +7,12 @@ import { formatExcelDate, getFullDataArray } from '@/utils/project';
 import { parseJsonArray } from '@/utils/json';
 import { DurationCounter } from './DurationCounter';
 import DocumentManager from '../documents/DocumentManager';
+import {
+  COLUMN_FIELDS,
+  DEFAULT_COLUMN_MAP,
+  type ColKey,
+  type ColumnConfigEntry,
+} from '@/lib/sheet-columns';
 
 interface Props {
   project: Project;
@@ -14,23 +20,63 @@ interface Props {
   isExpanded: boolean;
   onToggle: () => void;
   getStatusColor: (status: string) => string;
+  columnConfig?: ColumnConfigEntry[];
 }
 
-export const RAW_DATA_HEADERS = [
-  'TAHUN', 'ID-IHLD', 'NAMA LOP', 'REGIONAL', 'AREA', 'STO', 'REGION FMC', 'BRANCH FMC',
-  'BATCH PROGRAM', 'ODP PLAN', 'PORT PLAN', 'CPP', 'BOQ', 'Mitra', 'Status', 'SUB STATUS KONS',
-  'DETAIL STATUS', 'KOMITMEN GOLIVE', 'TARGET GOLIVE APRIL', 'Prioritas 1 by Tsel', 'PID (PROACTIVE)', 'WASPANG', 'PROJECT ADMIN',
-  'STATUS GOLIVE', 'KENDALA GOLIVE', 'Progres MINOL', 'REAL JML ODP 8', 'REAL JML ODP 16', 'ID SW ABD', 'REAL JML PORT GOLIVE', 'TANGGAL GOLIVE', 'KET'
-];
+const DEFAULT_RAW_COLUMN_CONFIG: ColumnConfigEntry[] = COLUMN_FIELDS.map((field, sort_order) => ({
+  field_key: field.key,
+  label: field.label,
+  header_text: field.headerText,
+  col_index: field.defaultIndex,
+  sort_order,
+}));
 
-const DATE_COLUMN_INDICES = new Set([17, 18, 30]);
-const NUMBER_COLUMN_INDICES = new Set([12]);
+export const RAW_DATA_HEADERS = DEFAULT_RAW_COLUMN_CONFIG.map((field) => field.label);
 
-export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColor }: Props) => {
+const DATE_FIELD_KEYS = new Set<ColKey>([
+  'KOMITMEN_GOLIVE',
+  'TARGET_GOLIVE_APRIL',
+  'TANGGAL_GOLIVE',
+]);
+const NUMBER_FIELD_KEYS = new Set<ColKey>([
+  'ODP_PLAN',
+  'PORT_PLAN',
+  'CPP',
+  'BOQ',
+  'REAL_JML_ODP_8',
+  'REAL_JML_ODP_16',
+  'REAL_JML_PORT_GOLIVE',
+  'NILAI_PRELIM',
+  'NILAI_BOQ_QE',
+  'BOQ_AANWIJZING',
+  'ODP_AANWIJZING',
+]);
+
+function getDisplayColumnConfig(columnConfig?: ColumnConfigEntry[]): ColumnConfigEntry[] {
+  const rows = columnConfig && columnConfig.length > 0 ? columnConfig : DEFAULT_RAW_COLUMN_CONFIG;
+  return [...rows].sort((a, b) => a.sort_order - b.sort_order);
+}
+
+function getColumnIndex(columnConfig: ColumnConfigEntry[], key: ColKey): number {
+  return columnConfig.find((field) => field.field_key === key)?.col_index ?? DEFAULT_COLUMN_MAP[key];
+}
+
+function formatRawColumnValue(fieldKey: ColKey, value: unknown): string {
+  const isEmpty = value === null || value === undefined || value === '' || String(value).trim() === '#N/A';
+  if (DATE_FIELD_KEYS.has(fieldKey)) return formatExcelDate(value);
+  if (NUMBER_FIELD_KEYS.has(fieldKey)) {
+    return isEmpty ? '-' : (isNaN(Number(value)) ? String(value) : Number(value).toLocaleString('en-US'));
+  }
+  return isEmpty ? '-' : String(value);
+}
+
+export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColor, columnConfig }: Props) => {
   const parsedHistory = parseJsonArray<HistoryEntry>(project.history || '[]');
   const fullData = getFullDataArray(project);
+  const displayColumnConfig = getDisplayColumnConfig(columnConfig);
 
-  const displayTanggalGolive = formatExcelDate(fullData[30]);
+  const tanggalGoliveIndex = getColumnIndex(displayColumnConfig, 'TANGGAL_GOLIVE');
+  const displayTanggalGolive = formatExcelDate(fullData[tanggalGoliveIndex]);
   const staggerClass = index < 10 ? `stagger-${(index % 4) + 1}` : '';
 
   return (
@@ -88,7 +134,12 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
         <tr>
           <td colSpan={6} className="px-0 py-0 bg-gray-50/50 dark:bg-gray-800/30">
             <div className="px-6 py-6 border-b border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-top-2 duration-200">
-              <ProjectDetailTabs project={project} fullData={fullData} parsedHistory={parsedHistory} />
+              <ProjectDetailTabs
+                project={project}
+                fullData={fullData}
+                parsedHistory={parsedHistory}
+                columnConfig={displayColumnConfig}
+              />
             </div>
           </td>
         </tr>
@@ -99,7 +150,17 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
 
 type ProjectDetailTab = 'info' | 'history' | 'documents';
 
-const ProjectDetailTabs = ({ project, fullData, parsedHistory }: { project: Project, fullData: unknown[], parsedHistory: HistoryEntry[] }) => {
+const ProjectDetailTabs = ({
+  project,
+  fullData,
+  parsedHistory,
+  columnConfig,
+}: {
+  project: Project,
+  fullData: unknown[],
+  parsedHistory: HistoryEntry[],
+  columnConfig: ColumnConfigEntry[],
+}) => {
   const [activeTab, setActiveTab] = React.useState<'info' | 'history' | 'documents'>('info');
 
   const tabs: { id: ProjectDetailTab; label: string; icon: React.ReactNode }[] = [
@@ -136,18 +197,13 @@ const ProjectDetailTabs = ({ project, fullData, parsedHistory }: { project: Proj
             </h4>
             <div className="max-h-104 overflow-y-auto pr-2 custom-scrollbar">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 text-xs">
-                {RAW_DATA_HEADERS.map((headerName, idx) => {
-                  const val = fullData[idx];
-                  const isEmpty = val === null || val === undefined || val === '' || String(val).trim() === '#N/A';
-                  const displayVal = DATE_COLUMN_INDICES.has(idx)
-                    ? formatExcelDate(val)
-                    : NUMBER_COLUMN_INDICES.has(idx)
-                      ? isEmpty ? '-' : (isNaN(Number(val)) ? String(val) : Number(val).toLocaleString('en-US'))
-                      : isEmpty ? '-' : String(val);
-                  const isGolive = idx === 30;
+                {columnConfig.map((field) => {
+                  const val = fullData[field.col_index];
+                  const displayVal = formatRawColumnValue(field.field_key, val);
+                  const isGolive = field.field_key === 'TANGGAL_GOLIVE';
                   return (
                     <div
-                      key={idx}
+                      key={field.field_key}
                       className={`flex flex-col border-b pb-1.5 ${isGolive
                         ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded'
                         : 'border-gray-50 dark:border-gray-700/50'
@@ -155,7 +211,7 @@ const ProjectDetailTabs = ({ project, fullData, parsedHistory }: { project: Proj
                     >
                       <span className={`font-semibold text-[10px] tracking-wider uppercase mb-0.5 ${isGolive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
                         }`}>
-                        {headerName}
+                        {field.label}
                       </span>
                       <span
                         className={`font-medium ${isGolive

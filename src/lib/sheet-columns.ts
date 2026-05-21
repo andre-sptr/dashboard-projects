@@ -62,6 +62,14 @@ export interface ColumnFieldMeta {
   defaultIndex: number;
 }
 
+export interface ColumnConfigEntry {
+  field_key: ColKey;
+  label: string;
+  header_text: string;
+  col_index: number;
+  sort_order: number;
+}
+
 export const COLUMN_FIELDS: ColumnFieldMeta[] = [
   { key: 'TAHUN', label: 'Tahun', headerText: 'TAHUN', defaultIndex: 0 },
   { key: 'ID_IHLD', label: 'ID IHLD', headerText: 'ID-IHLD', defaultIndex: 1 },

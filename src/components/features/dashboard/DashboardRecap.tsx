@@ -87,7 +87,7 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
   }, [projects, year, month, colMap]);
 
   const stats = useMemo(() => buildDashboardStats(filtered, colMap), [filtered, colMap]);
-  const riskyProjects = useMemo(() => buildRiskyProjects(filtered), [filtered]);
+  const riskyProjects = useMemo(() => buildRiskyProjects(filtered, colMap), [filtered, colMap]);
 
   // Timeline golive per bulan selalu menampilkan seluruh data, tidak terpengaruh filter.
   const allStats = useMemo(() => buildDashboardStats(projects, colMap), [projects, colMap]);
