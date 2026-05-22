@@ -368,8 +368,7 @@ export default function AanwijzingPage() {
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <Plus size={18} />
-            <span className="sm:hidden">Tambah</span>
-            <span className="hidden sm:inline">Tambah</span>
+            <span>Tambah</span>
           </button>
         )}
       </div>

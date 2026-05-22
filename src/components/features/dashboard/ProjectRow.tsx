@@ -156,56 +156,60 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
         className={`group transition-colors cursor-pointer animate-in ${staggerClass} ${rowBg} hover:bg-blue-50/50 dark:hover:bg-gray-800/60`}
         onClick={onToggle}
       >
-        <td className={`px-6 py-4 align-top border-l-4 ${STATUS_ACCENT[statusBucket]}`}>
-          <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{idIhld}</div>
-          {batchProgram && (
-            <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30 uppercase tracking-wide">
-              {batchProgram}
-            </span>
-          )}
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xs" title={namaLop}>
-            {namaLop || '-'}
+        <td className={`px-4 py-3.5 align-top border-l-4 ${STATUS_ACCENT[statusBucket]}`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight truncate" title={idIhld}>{idIhld}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate" title={namaLop}>
+                {namaLop || '-'}
+              </div>
+            </div>
+            {batchProgram && (
+              <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30 uppercase tracking-wide">
+                {batchProgram}
+              </span>
+            )}
           </div>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-center align-middle">
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(status)}`}>
+        <td className="px-3 py-3.5 text-center align-middle">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border whitespace-nowrap ${getStatusColor(status)}`}>
             {status || '-'}
           </span>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-center align-middle">
+        <td className="px-3 py-3.5 text-center align-middle">
           {subStatus ? (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300 whitespace-nowrap">
               {subStatus}
             </span>
           ) : (
             <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
           )}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-center align-middle">
+        <td className="px-3 py-3.5 text-center align-middle">
           {displayTanggalGolive !== '-' ? (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
               {displayTanggalGolive}
             </span>
           ) : (
             <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
           )}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-center align-middle">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+        <td className="px-3 py-3.5 text-center align-middle">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 whitespace-nowrap">
             <DurationCounter lastChangedAt={project.last_changed_at} />
           </span>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-center align-middle text-sm font-medium">
+        <td className="px-2 py-3.5 text-center align-middle">
           <button
             aria-label={isExpanded ? 'Tutup detail' : 'Lihat detail'}
             aria-expanded={isExpanded}
-            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
+            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all"
             onClick={(e) => {
               e.stopPropagation();
               onToggle();
             }}
           >
-            <ChevronDown size={20} className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown size={18} className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
           </button>
         </td>
       </tr>
@@ -266,40 +270,43 @@ const ProjectDetailTabs = ({
         ))}
       </div>
 
-      <div className="min-h-120">
+      <div className="min-h-40">
         {activeTab === 'info' && (
-          <div className="space-y-4 max-h-[34rem] overflow-y-auto pr-2 custom-scrollbar animate-in fade-in duration-300">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-[34rem] overflow-y-auto pr-1 custom-scrollbar animate-in fade-in duration-300">
             {buildInfoGroups(columnConfig).map((group) => (
               <section
                 key={group.title}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
               >
-                <div className="flex items-center gap-2.5 px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/60">
-                  <span className={`w-2 h-2 rounded-full ${group.dot}`} />
-                  <h5 className="text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/60">
+                  <span className={`w-1.5 h-1.5 rounded-full ${group.dot}`} />
+                  <h5 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     {group.title}
                   </h5>
                 </div>
-                <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 p-5">
+                <div className="divide-y divide-gray-50 dark:divide-gray-700/50">
                   {group.fields.map((field) => {
                     const displayVal = formatRawColumnValue(field.field_key, fullData[field.col_index]);
                     const isGolive = field.field_key === 'TANGGAL_GOLIVE';
+                    const isEmpty = displayVal === '-';
                     return (
                       <div
                         key={field.field_key}
-                        className={`flex flex-col gap-1 rounded-lg ${isGolive
-                          ? 'bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-200 dark:ring-emerald-800 px-3 py-1.5'
+                        className={`flex items-baseline justify-between gap-3 px-4 py-2 ${isGolive
+                          ? 'bg-emerald-50/60 dark:bg-emerald-900/10'
                           : ''
                           }`}
                       >
-                        <dt className={`text-[10px] font-semibold uppercase tracking-wider ${isGolive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'
+                        <dt className={`text-[11px] font-medium shrink-0 ${isGolive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'
                           }`}>
                           {field.label}
                         </dt>
                         <dd
-                          className={`text-sm font-medium break-words leading-snug ${isGolive
-                            ? 'text-emerald-800 dark:text-emerald-300'
-                            : 'text-gray-800 dark:text-gray-200'
+                          className={`text-[13px] font-semibold text-right truncate ${isEmpty
+                            ? 'text-gray-300 dark:text-gray-600'
+                            : isGolive
+                              ? 'text-emerald-700 dark:text-emerald-300'
+                              : 'text-gray-800 dark:text-gray-200'
                             }`}
                           title={String(displayVal)}
                         >
@@ -308,7 +315,7 @@ const ProjectDetailTabs = ({
                       </div>
                     );
                   })}
-                </dl>
+                </div>
               </section>
             ))}
           </div>

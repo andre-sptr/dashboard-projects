@@ -350,9 +350,11 @@ export default function BoqPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Daftar BoQ Plan</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+            {showForm ? 'Form Import BoQ' : 'Daftar BoQ Plan'}
+          </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Kelola plan bill of quantity project
+            {showForm ? 'Upload file Excel untuk mengimpor data BoQ' : 'Kelola plan bill of quantity project'}
           </p>
         </div>
         {!showForm && (
@@ -500,7 +502,7 @@ export default function BoqPage() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800/50">
                   <tr>
-                    <th scope="col" className="px-3 py-3 text-left text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Project / ID IHLD</th>
+                    <th scope="col" className="px-3 py-3 text-left text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID IHLD / Nama LOP</th>
                     <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Data Rows</th>
                     <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tanggal</th>
                     <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
@@ -511,10 +513,10 @@ export default function BoqPage() {
                     <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                       <td className="px-3 py-3">
                         <div className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[150px] sm:max-w-[200px]">
-                          {item.project_name || item.nama_lop}
+                          {item.id_ihld || '-'}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-[200px] flex items-center gap-1">
-                          <span className="font-medium">{item.id_ihld || '-'}</span>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-[200px]">
+                          {item.project_name || item.nama_lop}
                         </div>
                       </td>
                       <td className="px-3 py-3 text-center text-sm text-gray-600 dark:text-gray-300 hidden sm:table-cell">
@@ -577,7 +579,7 @@ export default function BoqPage() {
           <div className="px-6 py-12 text-center">
             <FileText size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-gray-500 dark:text-gray-400 text-sm">
-              Belum ada data BoQ. Klik &quot;Tambah&quot; untuk memulai.
+              {showForm ? 'Simpan data untuk melihat di daftar' : 'Belum ada data BoQ. Klik "Tambah" untuk memulai.'}
             </p>
           </div>
         )}

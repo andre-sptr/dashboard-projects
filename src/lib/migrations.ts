@@ -7,7 +7,26 @@ interface Migration {
   run: (db: Database) => void;
 }
 
+// ============================================================================
+// Database Migrations
+// ============================================================================
+//
+// Migration phases:
+//   1-3   : Phase 1 — Core tables (projects, aanwijzing, ut, boq) + indexes
+//   4-7   : Phase 2 — Extended tables (olt/odc inventory, vendors, project cols)
+//   8-9   : Phase 3 — Supporting tables (sync_logs, notifications, documents,
+//                      audit_logs) + performance indexes
+//   10-12 : Phase 4 — Topology & BoQ normalization (olt_odc_map, boq items)
+//   13-15 : Phase 5 — Column cleanup (drop unused projects/boq/ut columns)
+//   16-18 : Phase 6 — Topology allocations & column config
+//   20    : Phase 7 — Drop unused tables (olt_inventory, odc_inventory,
+//                      vendors, notifications)
+// ============================================================================
+
 const migrations: Migration[] = [
+  // ---------------------------------------------------------------------------
+  // Phase 1: Core tables
+  // ---------------------------------------------------------------------------
   {
     id: 1,
     name: 'initial_schema',
@@ -126,6 +145,9 @@ const migrations: Migration[] = [
       `);
     }
   },
+  // ---------------------------------------------------------------------------
+  // Phase 2: Extended tables (most later dropped in migration 20)
+  // ---------------------------------------------------------------------------
   {
     id: 4,
     name: 'create_olt_inventory_table',
@@ -289,6 +311,9 @@ const migrations: Migration[] = [
       `);
     }
   },
+  // ---------------------------------------------------------------------------
+  // Phase 3: Supporting tables (sync_logs, documents, audit_logs)
+  // ---------------------------------------------------------------------------
   {
     id: 8,
     name: 'phase3_initial_tables',
@@ -392,6 +417,9 @@ const migrations: Migration[] = [
       `);
     }
   },
+  // ---------------------------------------------------------------------------
+  // Phase 4: Topology & BoQ normalization
+  // ---------------------------------------------------------------------------
   {
     id: 10,
     name: 'create_olt_odc_map_table',
@@ -527,6 +555,9 @@ const migrations: Migration[] = [
       `);
     }
   },
+  // ---------------------------------------------------------------------------
+  // Phase 5: Column cleanup
+  // ---------------------------------------------------------------------------
   {
     id: 13,
     name: 'drop_unused_projects_columns',
@@ -585,6 +616,9 @@ const migrations: Migration[] = [
       }
     }
   },
+  // ---------------------------------------------------------------------------
+  // Phase 6: Topology allocations & column config
+  // ---------------------------------------------------------------------------
   {
     id: 16,
     name: 'aanwijzing_topology_allocations',
@@ -667,6 +701,45 @@ const migrations: Migration[] = [
       COLUMN_FIELDS.forEach((field, order) => {
         upsert.run(field.key, field.label, field.headerText, field.defaultIndex, order);
       });
+    }
+  },
+
+  // ---------------------------------------------------------------------------
+  // Phase 7: Drop unused tables
+  // ---------------------------------------------------------------------------
+  {
+    id: 20,
+    name: 'drop_unused_tables',
+    run: (db) => {
+      // Drop indexes first, then tables.
+      // Tables dropped: olt_inventory, odc_inventory, vendors, notifications
+      // Reason: No repository, no API route, no application code references.
+      db.exec(`
+        -- olt_inventory indexes
+        DROP INDEX IF EXISTS idx_olt_ip;
+        DROP INDEX IF EXISTS idx_olt_hostname;
+        DROP INDEX IF EXISTS idx_olt_area;
+        DROP INDEX IF EXISTS idx_olt_status;
+
+        -- odc_inventory indexes
+        DROP INDEX IF EXISTS idx_odc_name;
+        DROP INDEX IF EXISTS idx_odc_sto;
+        DROP INDEX IF EXISTS idx_odc_olt;
+        DROP INDEX IF EXISTS idx_odc_status;
+
+        -- vendors indexes
+        DROP INDEX IF EXISTS idx_vendor_name;
+        DROP INDEX IF EXISTS idx_vendor_status;
+
+        -- notifications indexes
+        DROP INDEX IF EXISTS idx_notifications_user;
+
+        -- Drop tables
+        DROP TABLE IF EXISTS olt_inventory;
+        DROP TABLE IF EXISTS odc_inventory;
+        DROP TABLE IF EXISTS vendors;
+        DROP TABLE IF EXISTS notifications;
+      `);
     }
   },
 ];

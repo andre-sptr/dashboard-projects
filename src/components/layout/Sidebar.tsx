@@ -69,7 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/projects', label: 'Projects Data', icon: Database },
       { href: '/boq', label: 'BoQ Plan', icon: Receipt },
-      { href: '/aanwijzing', label: 'Catatan AANWIJZING', icon: FileText },
+      { href: '/aanwijzing', label: 'AANWIJZING', icon: FileText },
       { href: '/ut', label: 'Rekap UT', icon: ClipboardList },
       { href: '/topology', label: 'Network Topology', icon: Network },
     ],
