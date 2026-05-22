@@ -36,14 +36,14 @@ export const RecentChanges = ({ recent }: RecentChangesProps) => {
                   {p.nama_lop || '-'}
                 </p>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,0.9fr)] items-center gap-2 sm:gap-3 sm:w-[440px]">
+                <span className="justify-self-center text-center px-2.5 py-1 rounded-md text-[11px] font-medium leading-snug bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                   {p.sub_status || '-'}
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                <span className="justify-self-center text-center px-2.5 py-1 rounded-md text-[11px] font-medium leading-snug bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                   {p.status || '-'}
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                <span className="justify-self-center text-center px-2.5 py-1 rounded-md text-[11px] font-semibold leading-snug bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap">
                   {calculateCurrentDuration(p.last_changed_at)}
                 </span>
               </div>

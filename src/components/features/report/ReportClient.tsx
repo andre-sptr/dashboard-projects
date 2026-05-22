@@ -3,11 +3,12 @@
 
 import React, { useMemo, useState } from 'react';
 import type { Project } from '@/types/database';
-import { parseExcelDate, getFullDataArray } from '@/utils/project';
+import { parseExcelDate, getFullDataArray, parseNumber, classifyStatus } from '@/utils/project';
+import { getKomitmenGoliveDate, buildDashboardStats } from '@/lib/dashboard-stats';
 import { AREA_BRANCH_MAP } from '@/lib/constants';
 import { DEFAULT_COLUMN_MAP, type ColumnMap } from '@/lib/sheet-columns';
 import dynamic from 'next/dynamic';
-import { ReportFilters, Granularity } from './ReportFilters';
+import { ReportFilters } from './ReportFilters';
 import { ReportKpiGrid } from './ReportKpiGrid';
 
 // Dynamically import heavy chart components
@@ -16,7 +17,7 @@ const PerformanceCharts = dynamic(() => import('./PerformanceCharts').then(mod =
   ssr: false
 });
 
-const GoliveDistributionChart = dynamic(() => import('./PerformanceCharts').then(mod => mod.GoliveDistributionChart), {
+const TimelineChart = dynamic(() => import('@/components/features/recap/TimelineChart').then(mod => mod.TimelineChart), {
   loading: () => <div className="h-[400px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />,
   ssr: false
 });
@@ -39,47 +40,75 @@ interface TrendEntry {
 }
 
 
+const now = new Date();
+
 export default function ReportClient({ initialProjects, colMap = DEFAULT_COLUMN_MAP }: Props) {
-  const [granularity, setGranularity] = useState<Granularity>('monthly');
   const [areaFilter, setAreaFilter] = useState<string>('');
   const [branchFilter, setBranchFilter] = useState<string>('');
+  const [year, setYear] = useState<number | 'all'>(now.getFullYear());
+  const [month, setMonth] = useState<number | 'all'>(now.getMonth());
 
   const handleAreaFilterChange = (val: string) => {
     setAreaFilter(val);
     setBranchFilter('');
   };
 
+  // Distinct komitmen-golive years available in the data (+ current year).
+  const years = useMemo(() => {
+    const set = new Set<number>();
+    for (const p of initialProjects) {
+      const d = getKomitmenGoliveDate(p, colMap);
+      if (d) set.add(d.getFullYear());
+    }
+    set.add(now.getFullYear());
+    return Array.from(set).sort((a, b) => b - a);
+  }, [initialProjects, colMap]);
+
   const stats = useMemo(() => {
-    const projects = initialProjects.filter(p => {
+    // Area/branch filter applies to everything; the month/year (komitmen golive)
+    // filter narrows only the KPIs, SLA, and branch ranking. The golive-per-month
+    // trend and velocity always show the full monthly series.
+    const areaBranchFiltered = initialProjects.filter(p => {
       const matchesArea = !areaFilter || p.area === areaFilter;
       const matchesBranch = !branchFilter || p.branch === branchFilter;
       return matchesArea && matchesBranch;
     });
 
-    let totalPlannedPorts = 0;
-    let totalRealizedPorts = 0;
-    let totalLeadTimeDays = 0;
-    let lateProjects = 0;
-    let onTimeProjects = 0;
-    let totalGolivePorts = 0;
+    const dateFiltered = (year === 'all' && month === 'all')
+      ? areaBranchFiltered
+      : areaBranchFiltered.filter(p => {
+          const d = getKomitmenGoliveDate(p, colMap);
+          if (!d) return false;
+          if (year !== 'all' && d.getFullYear() !== year) return false;
+          if (month !== 'all' && d.getMonth() !== month) return false;
+          return true;
+        });
 
     const STATUS_COLS = ['0. DROP','1. AANWIJZING','2. DONE AANWIJZING','3. PERIZINAN','4. MATDEL','5. INSTALASI','6. FINISH INSTALASI','7. GOLIVE','8. UJI TERIMA'] as const;
     type StatusCol = typeof STATUS_COLS[number];
 
-    const timeSeriesMap = new Map<string, { name: string; actual: number; planned: number; timestamp: number }>();
+    // --- KPI + SLA + branch ranking: respect month/year filter ---
+    let totalPlannedPorts = 0;
+    let totalRealizedPorts = 0;
+    let donePorts = 0;
+    let totalLeadTimeDays = 0;
+    let lateProjects = 0;
+    let onTimeProjects = 0;
+
+    const globalStatusCounts = Object.fromEntries(STATUS_COLS.map(s => [s, 0])) as Record<StatusCol, number>;
     const branchMap = new Map<string, { name: string; planned: number; actual: number; statusCounts: Record<StatusCol, number> }>();
 
-    projects.forEach(p => {
+    dateFiltered.forEach(p => {
       const fullData = getFullDataArray(p);
-      const planPort = p.port_planned || 0;
-      const realPort = p.port_realized || 0;
+      const planPort = parseNumber(fullData[colMap.PORT_PLAN]);
+      const realPort = parseNumber(fullData[colMap.REAL_JML_PORT_GOLIVE]);
       const goliveDate = parseExcelDate(fullData[colMap.TANGGAL_GOLIVE]);
       const targetDate = parseExcelDate(fullData[colMap.KOMITMEN_GOLIVE]);
-
       const branch = (p.branch || 'UNKNOWN').toUpperCase();
 
       totalPlannedPorts += planPort;
       totalRealizedPorts += realPort;
+      if (classifyStatus(p.status) === 'done') donePorts += planPort;
 
       const emptyStatusCounts = Object.fromEntries(STATUS_COLS.map(s => [s, 0])) as Record<StatusCol, number>;
       const bData = branchMap.get(branch) || { name: branch, planned: 0, actual: 0, statusCounts: emptyStatusCounts };
@@ -88,47 +117,42 @@ export default function ReportClient({ initialProjects, colMap = DEFAULT_COLUMN_
       const normalizedStatus = (p.status || '').trim() as StatusCol;
       if (STATUS_COLS.includes(normalizedStatus)) {
         bData.statusCounts[normalizedStatus] = (bData.statusCounts[normalizedStatus] || 0) + planPort;
+        globalStatusCounts[normalizedStatus] = (globalStatusCounts[normalizedStatus] || 0) + planPort;
       }
       branchMap.set(branch, bData);
 
-      if (goliveDate) {
-        totalGolivePorts += realPort;
-        if (targetDate) {
-          if (goliveDate <= targetDate) {
-            onTimeProjects++;
-          } else {
-            lateProjects++;
-            const diffDays = Math.ceil((goliveDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24));
-            totalLeadTimeDays += diffDays;
-          }
-        }
-
-        let key = '';
-        let label = '';
-        const d = goliveDate;
-
-        if (granularity === 'daily') {
-          key = d.toISOString().split('T')[0];
-          label = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
-        } else if (granularity === 'weekly') {
-          const firstDayOfYear = new Date(d.getFullYear(), 0, 1);
-          const pastDaysOfYear = (d.getTime() - firstDayOfYear.getTime()) / 86400000;
-          const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-          key = `${d.getFullYear()}-W${weekNum}`;
-          label = `W${weekNum} ${d.getFullYear()}`;
-        } else if (granularity === 'monthly') {
-          key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          label = d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+      if (goliveDate && targetDate) {
+        if (goliveDate <= targetDate) {
+          onTimeProjects++;
         } else {
-          key = `${d.getFullYear()}`;
-          label = `${d.getFullYear()}`;
+          lateProjects++;
+          totalLeadTimeDays += Math.ceil((goliveDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24));
         }
-
-        const existing = timeSeriesMap.get(key) || { name: label, actual: 0, planned: 0, timestamp: d.getTime() };
-        existing.actual += realPort;
-        existing.planned += planPort;
-        timeSeriesMap.set(key, existing);
       }
+    });
+
+    // --- Golive timeline + total golive ports: always all months ---
+    // Reuse the dashboard builder so the "Tanggal Golive per Bulan" card is
+    // identical to the dashboard (continuous month range, PORT_PLAN per month).
+    const goliveStats = buildDashboardStats(areaBranchFiltered, colMap);
+
+    // --- Velocity trend (cumulative realized golive ports) ---
+    const timeSeriesMap = new Map<string, { name: string; actual: number; planned: number; timestamp: number }>();
+
+    areaBranchFiltered.forEach(p => {
+      const fullData = getFullDataArray(p);
+      const planPort = parseNumber(fullData[colMap.PORT_PLAN]);
+      const realPort = parseNumber(fullData[colMap.REAL_JML_PORT_GOLIVE]);
+      const goliveDate = parseExcelDate(fullData[colMap.TANGGAL_GOLIVE]);
+      if (!goliveDate) return;
+
+      const d = goliveDate;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+      const existing = timeSeriesMap.get(key) || { name: label, actual: 0, planned: 0, timestamp: d.getTime() };
+      existing.actual += realPort;
+      existing.planned += planPort;
+      timeSeriesMap.set(key, existing);
     });
 
     const avgDelayDays = lateProjects > 0 ? Math.round(totalLeadTimeDays / lateProjects) : 0;
@@ -162,28 +186,41 @@ export default function ReportClient({ initialProjects, colMap = DEFAULT_COLUMN_
       { name: 'Late', value: lateProjects, color: '#ef4444' }
     ];
 
+    const overallAchiev = (() => {
+      const golive = (globalStatusCounts['7. GOLIVE'] || 0) + (globalStatusCounts['8. UJI TERIMA'] || 0);
+      const total = STATUS_COLS
+        .filter(s => s !== '0. DROP')
+        .reduce((sum, s) => sum + (globalStatusCounts[s] || 0), 0);
+      return total > 0 ? Math.round((golive / total) * 10000) / 100 : 0;
+    })();
+
     return {
       totalPlannedPorts,
       totalRealizedPorts,
+      donePorts,
+      overallAchiev,
       achievementRate: totalPlannedPorts > 0 ? Math.round((totalRealizedPorts / totalPlannedPorts) * 100) : 0,
       slaRate: (onTimeProjects + lateProjects) > 0 ? Math.round((onTimeProjects / (onTimeProjects + lateProjects)) * 100) : 0,
       avgDelayDays,
       velocityTrend,
-      trendData,
       branchData,
       slaData,
       onTimeProjects,
       lateProjects,
-      totalGolivePorts,
+      goliveMonthList: goliveStats.goliveMonthList,
+      totalGolivePorts: goliveStats.totalGolivePorts,
     };
-  }, [initialProjects, granularity, areaFilter, branchFilter, colMap]);
+  }, [initialProjects, year, month, areaFilter, branchFilter, colMap]);
 
 
   return (
     <div className="space-y-6 pb-10">
       <ReportFilters
-        granularity={granularity}
-        setGranularity={setGranularity}
+        month={month}
+        setMonth={setMonth}
+        year={year}
+        setYear={setYear}
+        years={years}
         areaFilter={areaFilter}
         setAreaFilter={handleAreaFilterChange}
         branchFilter={branchFilter}
@@ -204,9 +241,8 @@ export default function ReportClient({ initialProjects, colMap = DEFAULT_COLUMN_
 
       <BranchRanking branchData={stats.branchData} />
 
-      <GoliveDistributionChart
-        trendData={stats.trendData}
-        granularity={granularity}
+      <TimelineChart
+        goliveMonthList={stats.goliveMonthList}
         totalGolivePorts={stats.totalGolivePorts}
       />
     </div>

@@ -1,6 +1,6 @@
 // Grid of KPI cards specifically for report views
 import React from 'react';
-import { Target, TrendingUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Target, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface KpiCardProps {
   icon: React.ComponentType<{ size?: number }>;
@@ -29,8 +29,8 @@ const KpiCard = ({ icon: Icon, label, value, sub, color, suppressHydrationWarnin
 interface ReportKpiGridProps {
   stats: {
     achievementRate: number;
-    totalRealizedPorts: number;
-    totalPlannedPorts: number;
+    donePorts: number;
+    overallAchiev: number;
     slaRate: number;
     onTimeProjects: number;
     lateProjects: number;
@@ -48,10 +48,10 @@ export const ReportKpiGrid = ({ stats }: ReportKpiGridProps) => {
         color="bg-blue-600"
       />
       <KpiCard
-        icon={TrendingUp}
-        label="Total Realized Ports"
-        value={stats.totalRealizedPorts.toLocaleString('id-ID')}
-        sub={`Dari ${stats.totalPlannedPorts.toLocaleString('id-ID')} plan`}
+        icon={CheckCircle2}
+        label="Done Ports"
+        value={stats.donePorts.toLocaleString('id-ID')}
+        sub={`${stats.overallAchiev.toFixed(2)}% capaian`}
         color="bg-emerald-600"
         suppressHydrationWarning
       />

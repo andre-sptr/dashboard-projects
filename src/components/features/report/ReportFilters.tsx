@@ -2,11 +2,28 @@
 import React from 'react';
 import { Calendar, MapPin } from 'lucide-react';
 
-export type Granularity = 'daily' | 'weekly' | 'monthly' | 'yearly';
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+const now = new Date();
+
+// A month is "future" (and thus not selectable) when, combined with the chosen
+// year, it refers to a period that hasn't arrived yet.
+function isFutureMonth(monthIndex: number, year: number | 'all'): boolean {
+  if (year === 'all') return false;
+  if (year > now.getFullYear()) return true;
+  if (year < now.getFullYear()) return false;
+  return monthIndex > now.getMonth();
+}
 
 interface ReportFiltersProps {
-  granularity: Granularity;
-  setGranularity: (g: Granularity) => void;
+  month: number | 'all';
+  setMonth: (m: number | 'all') => void;
+  year: number | 'all';
+  setYear: (y: number | 'all') => void;
+  years: number[];
   areaFilter: string;
   setAreaFilter: (a: string) => void;
   branchFilter: string;
@@ -15,8 +32,11 @@ interface ReportFiltersProps {
 }
 
 export const ReportFilters = ({
-  granularity,
-  setGranularity,
+  month,
+  setMonth,
+  year,
+  setYear,
+  years,
   areaFilter,
   setAreaFilter,
   branchFilter,
@@ -27,20 +47,33 @@ export const ReportFilters = ({
     <div className="flex flex-wrap items-center justify-between gap-4 glass-panel p-4 rounded-xl border border-gray-200 dark:border-gray-700">
       <div className="flex items-center gap-2">
         <Calendar size={18} className="text-blue-600" />
-        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-          {(['daily', 'weekly', 'monthly', 'yearly'] as Granularity[]).map((g) => (
-            <button
-              key={g}
-              onClick={() => setGranularity(g)}
-              className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${granularity === g
-                ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              {g.toUpperCase()}
-            </button>
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+          Komitmen Golive:
+        </span>
+        <select
+          value={String(month)}
+          onChange={(e) => setMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+          className="bg-gray-100 dark:bg-gray-800 border-none rounded-lg px-4 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="all">Semua</option>
+          {MONTH_NAMES.map((name, i) => (
+            <option key={name} value={i} disabled={isFutureMonth(i, year)}>{name}</option>
           ))}
-        </div>
+        </select>
+        <select
+          value={String(year)}
+          onChange={(e) => {
+            const nextYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+            setYear(nextYear);
+            if (month !== 'all' && isFutureMonth(month, nextYear)) setMonth('all');
+          }}
+          className="bg-gray-100 dark:bg-gray-800 border-none rounded-lg px-4 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="all">Semua</option>
+          {years.map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
