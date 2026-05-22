@@ -620,24 +620,24 @@ export default function BoqPage() {
                       </div>
 
                       <div className="overflow-x-auto rounded-xl border border-gray-200/50 dark:border-gray-700/50">
-                        <table className="min-w-[1200px] border-collapse">
+                        <table className="w-full border-collapse">
                           <thead className="sticky top-0 z-10">
                             <tr className="bg-yellow-400 dark:bg-yellow-500">
                               <th rowSpan={2} className="px-3 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">NO</th>
-                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle min-w-[120px]">DESIGNATOR</th>
-                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle min-w-[280px]">URAIAN PEKERJAAN</th>
+                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">DESIGNATOR</th>
+                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">URAIAN PEKERJAAN</th>
                               <th rowSpan={2} className="px-3 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">SATUAN</th>
                               <th colSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">HARGA SATUAN (PAKET-2)</th>
                               <th rowSpan={2} className="px-3 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">VOL</th>
                               <th colSpan={3} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">TOTAL HARGA (Rp.)</th>
-                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle min-w-[120px]">KETERANGAN</th>
+                              <th rowSpan={2} className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 align-middle">KETERANGAN</th>
                             </tr>
                             <tr className="bg-yellow-400 dark:bg-yellow-500">
-                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[110px]">MATERIAL</th>
-                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[110px]">JASA</th>
-                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[110px]">MATERIAL</th>
-                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[110px]">JASA</th>
-                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400 min-w-[120px]">TOTAL</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">MATERIAL</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">JASA</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">MATERIAL</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">JASA</th>
+                              <th className="px-4 py-2 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border border-gray-400">TOTAL</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white dark:bg-gray-800">
@@ -663,8 +663,13 @@ export default function BoqPage() {
                                   <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
                                     {row.designator}
                                   </td>
-                                  <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 max-w-[320px] whitespace-normal">
-                                    {row.deskripsiPekerjaan}
+                                  <td 
+                                    className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 max-w-[320px] whitespace-normal"
+                                    title={row.deskripsiPekerjaan}
+                                  >
+                                    <div className="line-clamp-3">
+                                      {row.deskripsiPekerjaan}
+                                    </div>
                                   </td>
                                   <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 text-center border border-gray-300 dark:border-gray-600">
                                     {row.satuan}

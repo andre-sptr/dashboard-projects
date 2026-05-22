@@ -379,7 +379,7 @@ export default function BoqTrackingPage() {
           </div>
         ) : filteredRows.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-[1050px] w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
                   <th className="px-4 py-3 text-left text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
