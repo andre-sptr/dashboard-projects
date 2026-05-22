@@ -26,7 +26,7 @@ interface UTData {
   mitra: string;
   jumlah_temuan: number;
   wa_spang: string;
-  komitmen_penyelesaian: string;
+  komitmen_penyelesaian?: string;
   boq_data?: {
     full_data: string;
   } | null;
@@ -52,6 +52,7 @@ export default function UTPage() {
   const [boqRows, setBoqRows] = useState<unknown[]>([]);
   const [isUploadingBoq, setIsUploadingBoq] = useState(false);
   const [showBoqPreview, setShowBoqPreview] = useState(false);
+  const [temuanList, setTemuanList] = useState<{ text: string; checked: boolean }[]>([]);
 
   const [formData, setFormData] = useState({
     nama_lop: '',
@@ -68,7 +69,6 @@ export default function UTPage() {
     mitra: '',
     jumlah_temuan: '',
     wa_spang: '',
-    komitmen_penyelesaian: '',
   });
 
   const [searchLop, setSearchLop] = useState('');
@@ -121,18 +121,56 @@ export default function UTPage() {
     return () => { mounted = false; };
   }, [fetchData]);
 
-  const handleTemuanChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setFormData({ ...formData, temuan: value });
+  const parseTemuanString = (temuanStr: string): { text: string; checked: boolean }[] => {
+    if (!temuanStr || !temuanStr.trim()) return [];
+    
+    return temuanStr
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => {
+        const matchNumber = line.match(/^\d+\.\s*(.*)$/);
+        let content = matchNumber ? matchNumber[1].trim() : line;
 
-    const temuanMatches = value.match(/^\d+\./gm);
-    const count = temuanMatches ? temuanMatches.length : 0;
-    if (count > 0) {
-      setFormData(prev => ({ ...prev, temuan: value, jumlah_temuan: String(count) }));
-    } else {
-      setFormData(prev => ({ ...prev, temuan: value, jumlah_temuan: '' }));
-    }
+        let checked = false;
+        if (content.endsWith('[x]') || content.endsWith('[X]')) {
+          checked = true;
+          content = content.substring(0, content.length - 3).trim();
+        } else if (content.endsWith('[ ]')) {
+          checked = false;
+          content = content.substring(0, content.length - 3).trim();
+        }
+
+        return { text: content, checked };
+      });
   };
+
+  const addTemuanItem = () => {
+    setTemuanList(prev => [...prev, { text: '', checked: false }]);
+  };
+
+  const updateTemuanItem = (index: number, fields: Partial<{ text: string; checked: boolean }>) => {
+    setTemuanList(prev => prev.map((item, i) => i === index ? { ...item, ...fields } : item));
+  };
+
+  const removeTemuanItem = (index: number) => {
+    setTemuanList(prev => prev.filter((_, i) => i !== index));
+  };
+
+  useEffect(() => {
+    if (showForm) {
+      const validItems = temuanList.filter(item => item.text.trim() !== '');
+      const serialized = temuanList
+        .map((item, index) => `${index + 1}. ${item.text.trim()} [${item.checked ? 'x' : ' '}]`)
+        .join('\n');
+      
+      setFormData(prev => ({
+        ...prev,
+        temuan: serialized,
+        jumlah_temuan: validItems.length > 0 ? String(validItems.length) : '',
+      }));
+    }
+  }, [temuanList, showForm]);
 
   const handleBoqUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -203,6 +241,9 @@ export default function UTPage() {
   };
 
   const handleEdit = (item: UTData) => {
+    const parsedTemuan = parseTemuanString(item.temuan || '');
+    setTemuanList(parsedTemuan);
+
     setFormData({
       nama_lop: item.nama_lop,
       id_ihld: item.id_ihld,
@@ -218,7 +259,6 @@ export default function UTPage() {
       mitra: item.mitra || '',
       jumlah_temuan: String(item.jumlah_temuan || ''),
       wa_spang: item.wa_spang || '',
-      komitmen_penyelesaian: item.komitmen_penyelesaian || '',
     });
     setSearchLop(item.nama_lop);
     setEditingId(item.id);
@@ -269,8 +309,8 @@ export default function UTPage() {
       mitra: '',
       jumlah_temuan: '',
       wa_spang: '',
-      komitmen_penyelesaian: '',
     });
+    setTemuanList([]);
     setBoqRows([]);
     setSearchLop('');
     setShowDropdown(false);
@@ -495,15 +535,55 @@ export default function UTPage() {
               </div>
             </div>
 
-            <div>
-              <label className={labelClass}>Temuan</label>
-              <textarea
-                value={formData.temuan}
-                onChange={handleTemuanChange}
-                className={`${inputClass} min-h-[120px] resize-y`}
-                placeholder="1. Temuan pertama&#10;2. Temuan kedua&#10;3. Temuan ketiga..."
-              />
-              <p className="text-[10px] text-gray-400 mt-1">Gunakan format: 1. ... 2. ... 3. ...</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className={labelClass}>Daftar Temuan</label>
+                <button
+                  type="button"
+                  onClick={addTemuanItem}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold rounded-lg border border-blue-100 dark:border-blue-800 transition-colors"
+                >
+                  <Plus size={14} />
+                  <span>Tambah Temuan</span>
+                </button>
+              </div>
+
+              {temuanList.length > 0 ? (
+                <div className="space-y-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-gray-50/50 dark:bg-gray-900/30">
+                  {temuanList.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2.5 bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-100 dark:border-gray-700/50 shadow-sm transition-shadow hover:shadow-md">
+                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 w-5 text-right">
+                        {index + 1}.
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={(e) => updateTemuanItem(index, { checked: e.target.checked })}
+                        className="w-4 h-4 rounded text-blue-600 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:ring-2 transition-colors cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={item.text}
+                        onChange={(e) => updateTemuanItem(index, { text: e.target.value })}
+                        className="flex-1 bg-transparent border-0 p-0 text-sm text-gray-900 dark:text-white focus:ring-0 focus:outline-none placeholder-gray-400"
+                        placeholder="Masukkan deskripsi temuan..."
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeTemuanItem(index)}
+                        className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
+                        title="Hapus Temuan"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50/30 dark:bg-gray-900/10">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Belum ada temuan. Klik "Tambah Temuan" untuk menambahkan temuan baru.</p>
+                </div>
+              )}
             </div>
 
             <div>
@@ -591,16 +671,6 @@ export default function UTPage() {
                   )}
                 </div>
               </div>
-            </div>
-
-            <div>
-              <label className={labelClass}>Komitment penyelesaian</label>
-              <input
-                type="date"
-                value={formData.komitmen_penyelesaian}
-                onChange={(e) => setFormData({ ...formData, komitmen_penyelesaian: e.target.value })}
-                className={inputClass}
-              />
             </div>
 
             <div className="flex gap-3 pt-2">

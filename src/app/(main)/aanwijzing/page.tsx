@@ -37,7 +37,7 @@ interface AanwijzingData {
   port_awal: number;
   port_akhir: number;
   wa_spang: string;
-  ut: string;
+  ut?: string;
   boq_data?: {
     full_data: string;
   } | null;
@@ -79,7 +79,6 @@ export default function AanwijzingPage() {
     port_awal: '',
     port_akhir: '',
     wa_spang: '',
-    ut: '',
   });
 
   const [searchLop, setSearchLop] = useState('');
@@ -262,7 +261,6 @@ export default function AanwijzingPage() {
       port_awal: String(item.port_awal || ''),
       port_akhir: String(item.port_akhir || ''),
       wa_spang: item.wa_spang || '',
-      ut: item.ut || '',
     });
     setPendingOverwrite(false);
     setSearchLop(item.nama_lop);
@@ -316,7 +314,6 @@ export default function AanwijzingPage() {
       port_awal: '',
       port_akhir: '',
       wa_spang: '',
-      ut: '',
     });
     setBoqRows([]);
     setSearchLop('');
@@ -640,17 +637,6 @@ export default function AanwijzingPage() {
               </div>
             </div>
 
-            <div>
-              <label className={labelClass}>UT</label>
-              <input
-                type="text"
-                value={formData.ut}
-                onChange={(e) => setFormData({ ...formData, ut: e.target.value })}
-                className={inputClass}
-                placeholder="Masukkan UT..."
-              />
-            </div>
-
             <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -757,7 +743,6 @@ export default function AanwijzingPage() {
                   <tr>
                     <th scope="col" className="px-3 py-3 text-left text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID IHLD / Nama LOP</th>
                     <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tgl AANWIJZING</th>
-                    <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">UT</th>
                     <th scope="col" className="px-3 py-3 text-center text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
                   </tr>
                 </thead>
@@ -782,9 +767,6 @@ export default function AanwijzingPage() {
                       </td>
                       <td className="px-3 py-3 text-center text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">
                         {item.tanggal_aanwijzing ? new Date(item.tanggal_aanwijzing).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
-                      </td>
-                      <td className="px-3 py-3 text-center text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">
-                        {item.ut || '-'}
                       </td>
                       <td className="px-3 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
