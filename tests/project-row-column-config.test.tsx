@@ -77,8 +77,6 @@ describe('ProjectRow column configuration', () => {
     expect(screen.getByText('Tanggal dari Config')).toBeInTheDocument();
     expect(screen.getByText('Status dari Config')).toBeInTheDocument();
 
-    const rawPanel = screen.getByText('Data Kolom Mentah (Raw)').closest('div');
-    expect(rawPanel).not.toBeNull();
-    expect(within(rawPanel as HTMLElement).queryByText('REGIONAL')).not.toBeInTheDocument();
+    expect(screen.queryByText('REGIONAL')).not.toBeInTheDocument();
   });
 });

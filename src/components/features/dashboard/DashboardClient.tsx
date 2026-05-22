@@ -184,10 +184,11 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
           <table className="w-full table-fixed">
             <colgroup>
               <col className="w-[32%]" />
-              <col className="w-[16%]" />
+              <col className="w-[8%]" />
               <col className="w-[14%]" />
-              <col className="w-[16%]" />
               <col className="w-[14%]" />
+              <col className="w-[14%]" />
+              <col className="w-[10%]" />
               <col className="w-[8%]" />
             </colgroup>
             <thead className="bg-gray-100/80 dark:bg-gray-800/70 border-b border-gray-200 dark:border-gray-700">
@@ -195,6 +196,7 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
                 <th scope="col" className="px-4 py-3.5 text-left text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID IHLD / Nama LOP</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sub Status</th>
+                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Komitmen</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tgl Golive</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Durasi</th>
                 <th scope="col" className="px-2 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
@@ -215,7 +217,7 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     {searchQuery ? 'Tidak ada proyek yang sesuai dengan pencarian.' : 'Belum ada data proyek. Silakan sinkronisasi data.'}
                   </td>
                 </tr>

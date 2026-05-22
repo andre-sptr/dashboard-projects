@@ -3,7 +3,7 @@ import React from 'react';
 import { ChevronDown, Activity, Database } from 'lucide-react';
 import type { Project } from '@/types/database';
 import { HistoryEntry, formatDuration } from '@/utils/duration';
-import { formatExcelDate, getFullDataArray, classifyStatus, type StatusBucket } from '@/utils/project';
+import { formatExcelDate, getFullDataArray } from '@/utils/project';
 import { parseJsonArray } from '@/utils/json';
 import { DurationCounter } from './DurationCounter';
 import {
@@ -98,12 +98,7 @@ function buildInfoGroups(columnConfig: ColumnConfigEntry[]): InfoGroup[] {
   return groups;
 }
 
-const STATUS_ACCENT: Record<StatusBucket, string> = {
-  done: 'border-l-emerald-400 dark:border-l-emerald-500',
-  progress: 'border-l-blue-400 dark:border-l-blue-500',
-  cancelled: 'border-l-red-400 dark:border-l-red-500',
-  other: 'border-l-slate-300 dark:border-l-slate-600',
-};
+
 
 function getDisplayColumnConfig(columnConfig?: ColumnConfigEntry[]): ColumnConfigEntry[] {
   const rows = columnConfig && columnConfig.length > 0 ? columnConfig : DEFAULT_RAW_COLUMN_CONFIG;
@@ -142,8 +137,13 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
 
   const tanggalGoliveIndex = getColumnIndex(displayColumnConfig, 'TANGGAL_GOLIVE');
   const displayTanggalGolive = formatExcelDate(fullData[tanggalGoliveIndex]);
+  const komitmenGoliveIndex = getColumnIndex(displayColumnConfig, 'KOMITMEN_GOLIVE');
+  const displayKomitmenGolive = formatExcelDate(fullData[komitmenGoliveIndex]);
+  
+  const statusNumberMatch = status.match(/^\d+/);
+  const statusNumber = statusNumberMatch ? statusNumberMatch[0] : status;
+
   const staggerClass = index < 10 ? `stagger-${(index % 4) + 1}` : '';
-  const statusBucket = classifyStatus(status);
   const rowBg = isExpanded
     ? 'bg-blue-50/70 dark:bg-blue-900/20'
     : index % 2 === 0
@@ -156,7 +156,7 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
         className={`group transition-colors cursor-pointer animate-in ${staggerClass} ${rowBg} hover:bg-blue-50/50 dark:hover:bg-gray-800/60`}
         onClick={onToggle}
       >
-        <td className={`px-4 py-3.5 align-top border-l-4 ${STATUS_ACCENT[statusBucket]}`}>
+        <td className="px-4 py-3.5 align-top">
           <div className="flex items-center gap-2 min-w-0">
             <div className="min-w-0 flex-1">
               <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight truncate" title={idIhld}>{idIhld}</div>
@@ -172,14 +172,26 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
           </div>
         </td>
         <td className="px-3 py-3.5 text-center align-middle">
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border whitespace-nowrap ${getStatusColor(status)}`}>
-            {status || '-'}
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border whitespace-nowrap ${getStatusColor(status)}`} title={status}>
+            {statusNumber || '-'}
           </span>
         </td>
         <td className="px-3 py-3.5 text-center align-middle">
           {subStatus ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300 whitespace-nowrap">
+            <span 
+              className="inline-block max-w-[140px] px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300 truncate align-middle"
+              title={subStatus}
+            >
               {subStatus}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
+          )}
+        </td>
+        <td className="px-3 py-3.5 text-center align-middle">
+          {displayKomitmenGolive !== '-' ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 whitespace-nowrap">
+              {displayKomitmenGolive}
             </span>
           ) : (
             <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
@@ -215,7 +227,7 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan={6} className="px-0 py-0 bg-gray-50/50 dark:bg-gray-800/30">
+          <td colSpan={7} className="px-0 py-0 bg-gray-50/50 dark:bg-gray-800/30">
             <div className="px-6 py-6 border-b border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-top-2 duration-200">
               <ProjectDetailTabs
                 project={project}
