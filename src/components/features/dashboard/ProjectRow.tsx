@@ -310,7 +310,16 @@ const ProjectDetailTabs = ({
                             }`}
                           title={String(displayVal)}
                         >
-                          {displayVal}
+                          {field.field_key === 'KOMITMEN_GOLIVE' && project.golive_target_violated === 1 ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <span>{displayVal}</span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 uppercase tracking-wider" title="Diedit setelah tanggal 10">
+                                Non-Commit
+                              </span>
+                            </div>
+                          ) : (
+                            displayVal
+                          )}
                         </dd>
                       </div>
                     );

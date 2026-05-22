@@ -742,6 +742,16 @@ const migrations: Migration[] = [
       `);
     }
   },
+  {
+    id: 21,
+    name: 'add_golive_target_violated',
+    run: (db) => {
+      const projectCols = (db.pragma('table_info(projects)') as { name: string }[]).map(c => c.name);
+      if (!projectCols.includes('golive_target_violated')) {
+        db.exec(`ALTER TABLE projects ADD COLUMN golive_target_violated INTEGER DEFAULT 0`);
+      }
+    }
+  },
 ];
 
 export function runMigrations(db: Database) {

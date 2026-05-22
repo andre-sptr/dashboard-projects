@@ -49,15 +49,16 @@ export class ProjectRepository {
     port_realized: number;
     golive_target: string;
     golive_actual: string;
+    golive_target_violated: number;
   }) {
     const stmt = db.prepare(`
       INSERT INTO projects (
         uid, id_ihld, batch_program, nama_lop, region, status, sub_status,
         full_data, last_changed_at, history,
         area, branch, mitra, sto, odp_planned, port_planned, port_realized,
-        golive_target, golive_actual
+        golive_target, golive_actual, golive_target_violated
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(uid) DO UPDATE SET
         id_ihld = excluded.id_ihld,
         batch_program = excluded.batch_program,
@@ -80,7 +81,8 @@ export class ProjectRepository {
         port_planned = excluded.port_planned,
         port_realized = excluded.port_realized,
         golive_target = excluded.golive_target,
-        golive_actual = excluded.golive_actual
+        golive_actual = excluded.golive_actual,
+        golive_target_violated = excluded.golive_target_violated
     `);
 
     return stmt.run(
@@ -101,7 +103,8 @@ export class ProjectRepository {
       data.port_planned,
       data.port_realized,
       data.golive_target,
-      data.golive_actual
+      data.golive_actual,
+      data.golive_target_violated
     );
   }
 }

@@ -34,6 +34,18 @@ export interface TrackingProjectRow {
   remaining_cost: number;
 }
 
+export interface SelisihAanwijzingSummaryRow {
+  branch_fmc: string;
+  port_plan: number;
+  boq_plan: number;
+  cpp_plan: number;
+  port_aanwijzing: number;
+  boq_aanwijzing: number;
+  cpp_aanwijzing: number;
+  kenaikan_boq: number;
+  persen_kenaikan: number;
+}
+
 export class BoqRepository {
   static findAll(): Boq[] {
     return db.prepare('SELECT * FROM boq ORDER BY created_at DESC').all() as Boq[];
@@ -211,5 +223,70 @@ export class BoqRepository {
       LEFT JOIN ut ON ut.designator = d.designator
       ORDER BY d.sort_no ASC, d.designator ASC
     `).all(idIhld, idIhld) as TrackingProjectRow[];
+  }
+
+  static getSelisihAanwijzingSummary(startDate?: string, endDate?: string): SelisihAanwijzingSummaryRow[] {
+    let dateCondition = "";
+    const params: any[] = [];
+    if (startDate && endDate) {
+      dateCondition = " AND DATE(COALESCE(NULLIF(p.golive_actual, ''), p.golive_target)) >= DATE(?) AND DATE(COALESCE(NULLIF(p.golive_actual, ''), p.golive_target)) <= DATE(?)";
+      params.push(startDate, endDate);
+    }
+
+    const rows = db.prepare(`
+      WITH project_data AS (
+        SELECT p.uid, p.id_ihld, p.branch, 
+               COALESCE(p.port_planned, 0) as port_planned, 
+               COALESCE(p.port_realized, 0) as port_realized
+        FROM projects p
+        WHERE p.branch IS NOT NULL AND TRIM(p.branch) != '' ${dateCondition}
+      ),
+      boq_plan AS (
+        SELECT id_ihld, SUM(total) as boq_plan_total
+        FROM boq_plan_items
+        GROUP BY id_ihld
+      ),
+      boq_aanwijzing AS (
+        SELECT id_ihld, SUM(total) as boq_aanwijzing_total
+        FROM boq_aanwijzing_items
+        GROUP BY id_ihld
+      )
+      SELECT 
+        pd.branch as branch_fmc,
+        SUM(pd.port_planned) as port_plan,
+        SUM(COALESCE(bp.boq_plan_total, 0)) as boq_plan,
+        SUM(pd.port_realized) as port_aanwijzing,
+        SUM(COALESCE(ba.boq_aanwijzing_total, 0)) as boq_aanwijzing
+      FROM project_data pd
+      LEFT JOIN boq_plan bp ON bp.id_ihld = pd.id_ihld
+      LEFT JOIN boq_aanwijzing ba ON ba.id_ihld = pd.id_ihld
+      GROUP BY pd.branch
+      ORDER BY pd.branch ASC
+    `).all(...params) as any[];
+
+    return rows.map((row) => {
+      const boq_plan = row.boq_plan || 0;
+      const port_plan = row.port_plan || 0;
+      const cpp_plan = port_plan > 0 ? boq_plan / port_plan : 0;
+
+      const boq_aanwijzing = row.boq_aanwijzing || 0;
+      const port_aanwijzing = row.port_aanwijzing || 0;
+      const cpp_aanwijzing = port_aanwijzing > 0 ? boq_aanwijzing / port_aanwijzing : 0;
+
+      const kenaikan_boq = boq_aanwijzing - boq_plan;
+      const persen_kenaikan = boq_plan > 0 ? (kenaikan_boq / boq_plan) * 100 : 0;
+
+      return {
+        branch_fmc: row.branch_fmc,
+        port_plan,
+        boq_plan,
+        cpp_plan,
+        port_aanwijzing,
+        boq_aanwijzing,
+        cpp_aanwijzing,
+        kenaikan_boq,
+        persen_kenaikan,
+      };
+    });
   }
 }

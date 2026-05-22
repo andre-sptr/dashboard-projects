@@ -31,6 +31,7 @@ export interface Project {
   port_realized: number;
   golive_target: string | null;
   golive_actual: string | null;
+  golive_target_violated?: number;
 }
 
 /** Row from the `aanwijzing` table. */

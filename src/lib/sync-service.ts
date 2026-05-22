@@ -109,10 +109,35 @@ export class SyncService {
             created++;
           }
 
-          const fullDataAtoAF = row.slice(0, sliceLen).map(v => v === undefined || v === null ? '' : v);
-
           const str = (idx: number) => (row[idx] ?? '').toString().trim();
           const num = (idx: number) => { const n = Number(row[idx]); return isNaN(n) ? 0 : n; };
+
+          let golive_target_violated = 0;
+          let final_golive_target = str(COL.KOMITMEN_GOLIVE);
+          const fullDataAtoAF = row.slice(0, sliceLen).map(v => v === undefined || v === null ? '' : v);
+
+          if (existing) {
+            const newGoliveTarget = final_golive_target;
+            const oldGoliveTarget = existing.golive_target || '';
+            
+            // If the golive target changed from what we had
+            if (newGoliveTarget !== oldGoliveTarget && oldGoliveTarget !== '') {
+              const currentDay = new Date().getDate();
+              if (currentDay > 10) {
+                // Reject the change
+                final_golive_target = oldGoliveTarget;
+                golive_target_violated = 1;
+                // Override the value in fullData array so UI doesn't show the rejected value
+                fullDataAtoAF[COL.KOMITMEN_GOLIVE] = oldGoliveTarget;
+              } else {
+                // Accepted
+                golive_target_violated = 0;
+              }
+            } else {
+              // No change, preserve existing violation status if any
+              golive_target_violated = existing.golive_target_violated || 0;
+            }
+          }
 
           ProjectRepository.upsert({
             uid,
@@ -131,8 +156,9 @@ export class SyncService {
             odp_planned: num(COL.ODP_PLAN),
             port_planned: num(COL.PORT_PLAN),
             port_realized: num(COL.REAL_JML_PORT_GOLIVE),
-            golive_target: str(COL.KOMITMEN_GOLIVE),
+            golive_target: final_golive_target,
             golive_actual: str(COL.TANGGAL_GOLIVE),
+            golive_target_violated,
           });
           processed++;
         } catch (err) {
