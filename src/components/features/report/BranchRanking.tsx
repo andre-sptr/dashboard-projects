@@ -49,33 +49,40 @@ export const BranchRanking = ({ branchData }: BranchRankingProps) => {
           Branch Performance Ranking
         </h3>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div className="w-full">
+        <table className="w-full table-fixed text-left border-collapse">
+          <colgroup>
+            <col className="w-[13%]" />
+            {STATUS_COLS.map(s => (
+              <col key={s} className="w-[8%]" />
+            ))}
+            <col className="w-[15%]" />
+          </colgroup>
           <thead>
-            <tr className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-white dark:bg-gray-900">
-              <th className="px-4 py-4 sticky left-0 bg-white dark:bg-gray-900">Branch</th>
+            <tr className="text-[10px] font-black uppercase tracking-tight text-gray-400 bg-white dark:bg-gray-900">
+              <th className="px-2 py-3 whitespace-nowrap">Branch</th>
               {STATUS_COLS.map(s => (
-                <th key={s} className="px-3 py-4 text-center whitespace-nowrap">{SHORT_LABELS[s]}</th>
+                <th key={s} className="px-1 py-3 text-center whitespace-nowrap">{SHORT_LABELS[s]}</th>
               ))}
-              <th className="px-4 py-4">Achievement %</th>
+              <th className="px-2 py-3 text-center whitespace-nowrap">Achievement %</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {branchData.map((branch, i) => (
               <tr key={branch.name} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <td className="px-4 py-3 sticky left-0 bg-white dark:bg-gray-900">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-400 w-4">{i + 1}</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">{branch.name}</span>
+                <td className="px-2 py-3">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-xs font-bold text-gray-400 shrink-0">{i + 1}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white truncate" title={branch.name}>{branch.name}</span>
                   </div>
                 </td>
                 {STATUS_COLS.map(s => (
-                  <td key={s} className="px-3 py-3 text-center text-sm font-medium text-gray-600 dark:text-gray-400 tabular-nums" suppressHydrationWarning>
+                  <td key={s} className="px-1 py-3 text-center text-sm font-medium text-gray-600 dark:text-gray-400 tabular-nums" suppressHydrationWarning>
                     {(branch.statusCounts?.[s] ?? 0).toLocaleString('id-ID')}
                   </td>
                 ))}
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3 min-w-[110px]">
+                <td className="px-2 py-3">
+                  <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${branch.achievement >= 90 ? 'bg-emerald-500' :
@@ -85,7 +92,7 @@ export const BranchRanking = ({ branchData }: BranchRankingProps) => {
                         style={{ width: `${Math.min(100, branch.achievement)}%` }}
                       />
                     </div>
-                    <span className="text-xs font-black text-gray-700 dark:text-gray-300 w-14 text-right tabular-nums">
+                    <span className="text-xs font-black text-gray-700 dark:text-gray-300 w-12 text-right tabular-nums shrink-0">
                       {branch.achievement.toFixed(2)}%
                     </span>
                   </div>

@@ -207,9 +207,10 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
           )}
         </td>
         <td className="px-3 py-3.5 text-center align-middle">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 whitespace-nowrap">
-            <DurationCounter lastChangedAt={project.last_changed_at} />
-          </span>
+          <DurationCounter
+            lastChangedAt={project.last_changed_at}
+            className="inline-block max-w-[120px] truncate align-middle px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+          />
         </td>
         <td className="px-2 py-3.5 text-center align-middle">
           <button

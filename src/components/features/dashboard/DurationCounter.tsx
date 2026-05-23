@@ -4,9 +4,10 @@ import { calculateCurrentDuration } from '@/utils/duration';
 
 interface Props {
   lastChangedAt: string;
+  className?: string;
 }
 
-export const DurationCounter = ({ lastChangedAt }: Props) => {
+export const DurationCounter = ({ lastChangedAt, className }: Props) => {
   const [duration, setDuration] = useState(() => calculateCurrentDuration(lastChangedAt));
 
   useEffect(() => {
@@ -16,5 +17,5 @@ export const DurationCounter = ({ lastChangedAt }: Props) => {
     return () => clearInterval(interval);
   }, [lastChangedAt]);
 
-  return <>{duration}</>;
+  return <span className={className} title={duration}>{duration}</span>;
 };
