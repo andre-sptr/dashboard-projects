@@ -184,35 +184,46 @@ export default function SelisihAanwijzingPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="w-full">
+            <table className="w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
+              <colgroup>
+                <col className="w-[16%]" />
+                <col className="w-[10.5%]" />
+                <col className="w-[10.5%]" />
+                <col className="w-[10.5%]" />
+                <col className="w-[10.5%]" />
+                <col className="w-[10.5%]" />
+                <col className="w-[10.5%]" />
+                <col className="w-[10.5%]" />
+                <col className="w-[10.5%]" />
+              </colgroup>
               <thead className="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-left text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     BRANCH FMC
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     Port Plan
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     BOQ Plan
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     CPP Plan
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     Port Aanwijzing
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     BOQ Aanwijzing
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     CPP Aanwijzing
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     Kenaikan BoQ
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-2 py-3 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight leading-tight">
                     % kenaikan
                   </th>
                 </tr>
@@ -221,33 +232,33 @@ export default function SelisihAanwijzingPage() {
                 {data.length > 0 ? (
                   data.map((row) => (
                     <tr key={row.branch_fmc} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                      <td className="px-2 py-3 text-xs font-semibold text-gray-900 dark:text-white truncate" title={row.branch_fmc}>
                         {row.branch_fmc}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-2 py-3 text-xs text-center tabular-nums text-gray-700 dark:text-gray-300">
                         {formatNumber(row.port_plan)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-2 py-3 text-xs text-center tabular-nums text-gray-700 dark:text-gray-300">
                         {formatNumber(row.boq_plan)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-2 py-3 text-xs text-center tabular-nums text-gray-700 dark:text-gray-300">
                         {formatNumber(row.cpp_plan)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-2 py-3 text-xs text-center tabular-nums text-gray-700 dark:text-gray-300">
                         {formatNumber(row.port_aanwijzing)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-2 py-3 text-xs text-center tabular-nums text-gray-700 dark:text-gray-300">
                         {formatNumber(row.boq_aanwijzing)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-2 py-3 text-xs text-center tabular-nums text-gray-700 dark:text-gray-300">
                         {formatNumber(row.cpp_aanwijzing)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-2 py-3 text-xs text-center tabular-nums text-gray-700 dark:text-gray-300">
                         {formatNumber(row.kenaikan_boq)}
                       </td>
-                      <td 
-                        className={`px-4 py-3 text-sm text-center tabular-nums font-semibold
-                          ${row.persen_kenaikan > 10 
+                      <td
+                        className={`px-2 py-3 text-xs text-center tabular-nums font-semibold
+                          ${row.persen_kenaikan > 10
                             ? 'bg-red-600 text-white dark:bg-red-600 dark:text-white' 
                             : 'text-gray-900 dark:text-white'
                           }`}
@@ -267,31 +278,31 @@ export default function SelisihAanwijzingPage() {
               {data.length > 0 && (
                 <tfoot className="bg-gray-50 dark:bg-gray-800/80 border-t-2 border-gray-200 dark:border-gray-700">
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs font-bold text-gray-900 dark:text-white truncate">
                       Grand Total
                     </td>
-                    <td className="px-4 py-3 text-sm text-center tabular-nums font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs text-center tabular-nums font-bold text-gray-900 dark:text-white">
                       {formatNumber(totals.port_plan)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center tabular-nums font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs text-center tabular-nums font-bold text-gray-900 dark:text-white">
                       {formatNumber(totals.boq_plan)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center tabular-nums font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs text-center tabular-nums font-bold text-gray-900 dark:text-white">
                       {formatNumber(totals.cpp_plan)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center tabular-nums font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs text-center tabular-nums font-bold text-gray-900 dark:text-white">
                       {formatNumber(totals.port_aanwijzing)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center tabular-nums font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs text-center tabular-nums font-bold text-gray-900 dark:text-white">
                       {formatNumber(totals.boq_aanwijzing)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center tabular-nums font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs text-center tabular-nums font-bold text-gray-900 dark:text-white">
                       {formatNumber(totals.cpp_aanwijzing)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center tabular-nums font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs text-center tabular-nums font-bold text-gray-900 dark:text-white">
                       {formatNumber(totals.kenaikan_boq)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center tabular-nums font-bold text-gray-900 dark:text-white">
+                    <td className="px-2 py-3 text-xs text-center tabular-nums font-bold text-gray-900 dark:text-white">
                       {formatPercent(totals.persen_kenaikan)}
                     </td>
                   </tr>
