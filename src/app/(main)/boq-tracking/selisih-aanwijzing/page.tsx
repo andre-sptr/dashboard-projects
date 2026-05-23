@@ -149,7 +149,7 @@ export default function SelisihAanwijzingPage() {
             Selisih AANWIJZING
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Perbandingan nilai BoQ Plan dengan BoQ Aanwijzing per Branch FMC.
+            Perbandingan nilai BoQ Plan dengan BoQ Aanwijzing per Branch.
           </p>
         </div>
 
