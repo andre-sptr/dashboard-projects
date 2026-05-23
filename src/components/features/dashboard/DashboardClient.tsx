@@ -69,7 +69,12 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
     }
 
     return {
-      statuses: Array.from(statuses).sort(),
+      statuses: Array.from(statuses).sort((a, b) => {
+        const aNum = parseFloat(a);
+        const bNum = parseFloat(b);
+        if (!isNaN(aNum) && !isNaN(bNum)) return bNum - aNum;
+        return b.localeCompare(a);
+      }),
       subStatuses: Array.from(subStatuses).sort((a, b) => {
         const aNum = parseFloat(a);
         const bNum = parseFloat(b);

@@ -373,7 +373,7 @@ const ProjectDetailTabs = ({
                         <li key={i} className="flex flex-col text-sm border-b border-gray-50 dark:border-gray-700/50 pb-3 last:border-0 last:pb-0">
                           <div className="flex items-center justify-between gap-2">
                             <span className="font-semibold text-gray-800 dark:text-gray-200">{h.status}</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                            <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 whitespace-nowrap">
                               {formatDuration(h.duration_minutes)}
                             </span>
                           </div>
@@ -404,7 +404,7 @@ const ProjectDetailTabs = ({
                       <li key={i} className="flex flex-col text-sm border-b border-gray-50 dark:border-gray-700/50 pb-3 last:border-0 last:pb-0">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-semibold text-gray-800 dark:text-gray-200">{h.sub_status || '-'}</span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 whitespace-nowrap">
                             {formatDuration(h.duration_minutes)}
                           </span>
                         </div>
