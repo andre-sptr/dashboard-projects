@@ -16,6 +16,10 @@ import {
   Settings,
   Columns3,
   Network,
+  RefreshCw,
+  ClipboardCheck,
+  TrendingUp,
+  Megaphone,
   ChevronDown,
   ChevronRight,
   type LucideIcon,
@@ -46,11 +50,22 @@ const PRIMARY_NAV_ITEM: NavItem = {
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    label: 'Project Tracking',
+    icon: ClipboardList,
+    items: [
+      { href: '/projects', label: 'Projects Data', icon: Database },
+      { href: '/boq', label: 'BoQ Plan', icon: Receipt },
+      { href: '/aanwijzing', label: 'AANWIJZING', icon: Megaphone },
+      { href: '/ut', label: 'Rekap UT', icon: ClipboardCheck },
+      { href: '/topology', label: 'Network Topology', icon: Network },
+    ],
+  },
+  {
     label: 'Monitoring',
     icon: Activity,
     items: [
       { href: '/report', label: 'Report', icon: BarChart3 },
-      { href: '/boq-tracking', label: 'BoQ Tracking', icon: BarChart3 },
+      { href: '/boq-tracking', label: 'BoQ Tracking', icon: TrendingUp },
     ],
   },
   {
@@ -64,21 +79,10 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Project Tracking',
-    icon: ClipboardList,
-    items: [
-      { href: '/projects', label: 'Projects Data', icon: Database },
-      { href: '/boq', label: 'BoQ Plan', icon: Receipt },
-      { href: '/aanwijzing', label: 'AANWIJZING', icon: FileText },
-      { href: '/ut', label: 'Rekap UT', icon: ClipboardList },
-      { href: '/topology', label: 'Network Topology', icon: Network },
-    ],
-  },
-  {
     label: 'Administration',
     icon: Settings,
     items: [
-      { href: '/settings/sync', label: 'Synchronization', icon: Settings },
+      { href: '/settings/sync', label: 'Synchronization', icon: RefreshCw },
       { href: '/settings/columns', label: 'Configuration', icon: Columns3 },
     ],
   },
