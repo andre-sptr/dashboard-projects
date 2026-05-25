@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { buildAlertMessage } from '../src/lib/waha-alert';
+import { describe, it, expect, vi } from 'vitest';
+import { buildAlertMessage, sendWahaAlert } from '../src/lib/waha-alert';
 import type { RiskyProjectDTO } from '../src/types/dashboard';
 
 function makeProject(overrides: Partial<RiskyProjectDTO> = {}): RiskyProjectDTO {
@@ -76,5 +76,69 @@ describe('buildAlertMessage', () => {
     const msg = buildAlertMessage({ kritisCount: 1, perhatianCount: 0, projects, totalProjects: 10 });
     expect(msg).toContain('(-)');
     expect(() => buildAlertMessage({ kritisCount: 1, perhatianCount: 0, projects, totalProjects: 10 })).not.toThrow();
+  });
+});
+
+describe('sendWahaAlert', () => {
+  const mockConfig = {
+    url: 'https://waha-api-test.com/',
+    session: 'test-session',
+    apiKey: 'test-api-key',
+    groupIds: ['group-1', 'group-2'],
+  };
+  const mockMessage = '🚨 Test Alert Message';
+
+  it('successfully sends message to all groups', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(sendWahaAlert(mockConfig, mockMessage)).resolves.not.toThrow();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Verifikasi pembersihan URL (trailing slash dihilangkan) dan headers/body
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'https://waha-api-test.com/api/sendText',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Api-Key': 'test-api-key',
+        },
+        body: JSON.stringify({
+          session: 'test-session',
+          chatId: 'group-1',
+          text: mockMessage,
+        }),
+      })
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it('throws Error with accumulated failures when all groups fail', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('Connection timeout'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(sendWahaAlert(mockConfig, mockMessage)).rejects.toThrow(
+      /\[WahaAlert\] Partial failure:\nGroup group-1: Connection timeout\nGroup group-2: Connection timeout/
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
+
+  it('throws Error when partial failure occurs (one succeeds, one fails)', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({ ok: false, status: 500, text: async () => 'Internal Server Error' });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(sendWahaAlert(mockConfig, mockMessage)).rejects.toThrow(
+      /\[WahaAlert\] Partial failure:\nGroup group-2: HTTP 500 — Internal Server Error/
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
   });
 });
