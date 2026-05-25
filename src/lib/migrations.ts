@@ -783,15 +783,15 @@ const migrations: Migration[] = [
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           entity_type TEXT NOT NULL CHECK (entity_type IN ('core', 'area', 'sto', 'olt', 'odc')),
           entity_name TEXT NOT NULL,
-          area TEXT DEFAULT '',
-          sto TEXT DEFAULT '',
+          area TEXT NOT NULL DEFAULT '',
+          sto TEXT NOT NULL DEFAULT '',
           latitude REAL NOT NULL,
           longitude REAL NOT NULL,
-          source TEXT DEFAULT 'manual',
+          source TEXT NOT NULL DEFAULT 'manual',
           confidence TEXT NOT NULL DEFAULT 'verified' CHECK (confidence IN ('verified', 'estimated')),
-          notes TEXT DEFAULT '',
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          notes TEXT NOT NULL DEFAULT '',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
           UNIQUE(entity_type, entity_name, area, sto)
         );
 
