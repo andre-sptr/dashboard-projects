@@ -17,6 +17,12 @@ import {
   X,
 } from 'lucide-react';
 import { TopologyHierarchy, OltData, SlotData } from '@/lib/topology';
+import type { TopologyLocation } from '@/types/database';
+
+interface NetworkTopologyProps {
+  initialData: TopologyHierarchy | null;
+  initialLocations?: TopologyLocation[];
+}
 
 const StatusBadge = ({ status }: { status: string }) => {
   const s = status.toLowerCase();
@@ -173,13 +179,18 @@ function SlotPanel({
   );
 }
 
-export default function NetworkTopology({ initialData }: { initialData: TopologyHierarchy | null }) {
+export default function NetworkTopology({
+  initialData,
+  initialLocations = [],
+}: NetworkTopologyProps) {
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(!initialData);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ ROOT: true });
   const [selectedArea, setSelectedArea] = useState<string>('');
   const [selectedSto, setSelectedSto] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const mapLocations = useMemo(() => initialLocations, [initialLocations]);
+  void mapLocations;
 
   const filteredData = useMemo<TopologyHierarchy | null>(() => {
     if (!data) return null;
