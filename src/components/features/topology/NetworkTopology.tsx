@@ -70,6 +70,11 @@ function SlotPanel({
     return slotByIndex.get(slotIdx)?.ports[portIdx] ?? null;
   };
 
+  // Scope the expand key to this OLT. port_str (e.g. "1/1/1") is only unique
+  // within one OLT and repeats across OLTs, so keying on it alone makes the
+  // same port expand in every OLT at once.
+  const portKey = (portStr: string) => `PORT-${olt.name}-${portStr}`;
+
   const getPortButtonClass = (portEntry: NonNullable<SlotData['ports'][number]>, isExpanded: boolean) => {
     if (isExpanded) {
       return 'bg-blue-500 ring-2 ring-blue-400 ring-offset-1 dark:ring-offset-gray-900 shadow-md';
@@ -104,7 +109,7 @@ function SlotPanel({
               {rowAxis.map((rowVal, rowIdx) => {
                 const expandedInRow = colAxis.map((colVal) => {
                   const p = cellAt(rowVal, colVal);
-                  return p && expandedNodes[`PORT-${p.port_str}`] ? p : null;
+                  return p && expandedNodes[portKey(p.port_str)] ? p : null;
                 }).filter((p): p is NonNullable<typeof p> => p !== null);
 
                 return (
@@ -115,7 +120,7 @@ function SlotPanel({
                       </td>
                       {colAxis.map((colVal) => {
                         const portEntry = cellAt(rowVal, colVal);
-                        const isExpanded = portEntry ? expandedNodes[`PORT-${portEntry.port_str}`] : false;
+                        const isExpanded = portEntry ? expandedNodes[portKey(portEntry.port_str)] : false;
                         const slotIdx = isMini ? rowVal : colVal;
                         const portIdx = isMini ? colVal : rowVal;
                         return (
@@ -129,7 +134,7 @@ function SlotPanel({
                               title={portEntry
                                 ? `${portEntry.port_str} -> ${portEntry.odc_name}${portEntry.source === 'allocation' ? ` (${portEntry.nama_lop || 'AANWIJZING'})` : ''}`
                                 : `S${slotIdx} P${portIdx}: empty`}
-                              onClick={() => portEntry && toggleNode(`PORT-${portEntry.port_str}`)}
+                              onClick={() => portEntry && toggleNode(portKey(portEntry.port_str))}
                               disabled={!portEntry}
                             />
                           </td>
