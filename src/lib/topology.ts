@@ -18,14 +18,35 @@ export interface SlotData {
   ports: (PortEntry | null)[];
 }
 
+export type OltType = 'mini' | 'big';
+
 export interface OltData {
   name: string;
   type: 'OLT';
+  oltType: OltType;
+  /**
+   * The first port number used by this OLT's vendor. HUAWEI numbers ports from
+   * 0 (0–15), ZTE from 1 (1–16). Vendor is not stored in the source data, so
+   * this is inferred from the ports actually present (see getNetworkHierarchy).
+   */
+  portBase: 0 | 1;
   status: string;
   plannedPorts: number;
   realizedPorts: number;
   slots: SlotData[];
   maxSlot: number;
+}
+
+/**
+ * Classify an OLT as a "big" chassis OLT or a compact "mini" OLT based on its
+ * name. The final dash-segment encodes the device: a purely numeric suffix
+ * (e.g. "GPON00-D1-AMK-2", "GPON01-D1-AMK-3") is a big chassis OLT, while a
+ * suffix carrying trailing letters (e.g. "GPON00-D1-AMK-2UKUI",
+ * "GPON00-D1-AMK-3SGL") is a mini OLT.
+ */
+export function classifyOltType(oltName: string): OltType {
+  const lastSegment = oltName.trim().split('-').pop() ?? '';
+  return /[A-Za-z]/.test(lastSegment) ? 'mini' : 'big';
 }
 
 export type StoData = Record<string, OltData>;
@@ -62,6 +83,8 @@ export function getNetworkHierarchy(): TopologyHierarchy {
       hierarchy[row.area][row.sto][row.olt_name] = {
         name: row.olt_name,
         type: 'OLT',
+        oltType: classifyOltType(row.olt_name),
+        portBase: 1,
         status: 'LIVE',
         plannedPorts: 0,
         realizedPorts: 0,
@@ -132,6 +155,10 @@ export function getNetworkHierarchy(): TopologyHierarchy {
           }
           return { slot: slotNum, frame: info.frame, maxPort, ports };
         });
+
+        // Infer the vendor port base: if any port 0 is populated the OLT is
+        // 0-based (HUAWEI), otherwise it is 1-based (ZTE).
+        olt.portBase = olt.slots.some(s => s.ports[0] != null) ? 0 : 1;
 
         olt.realizedPorts = olt.slots.reduce((sum, s) => sum + s.ports.filter(Boolean).length, 0);
         olt.plannedPorts = olt.slots.reduce((sum, s) => sum + s.ports.length, 0);

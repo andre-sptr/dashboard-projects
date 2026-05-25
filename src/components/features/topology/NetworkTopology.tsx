@@ -39,8 +39,37 @@ function SlotPanel({
   toggleNode: (id: string) => void;
 }) {
   const slotByIndex = new Map<number, SlotData>(olt.slots.map(s => [s.slot, s]));
-  const maxPortGlobal = olt.slots.reduce((max, s) => Math.max(max, s.maxPort), 15);
+  const maxPortObserved = olt.slots.reduce((max, s) => Math.max(max, s.maxPort), 15);
   const numSlots = olt.maxSlot + 1;
+
+  // Vendor port numbering: HUAWEI starts at port 0 (0–15), ZTE starts at port 1
+  // (1–16). Render the port axis over the vendor's real range (a full 16-port
+  // board) instead of always starting at 0, so ZTE OLTs don't show a phantom
+  // empty "port 0".
+  const portStart = olt.portBase;
+  const portEnd = Math.max(maxPortObserved, portStart + 15);
+  const portIndices = Array.from({ length: portEnd - portStart + 1 }, (_, i) => portStart + i);
+
+  // Mini OLTs (compact chassis like MA5608T / MA5800-X2 / ZTE C620) are drawn
+  // transposed to match the physical layout in the source sheet: slots as rows
+  // and ports spreading horizontally ("panjang ke samping"). Big chassis OLTs
+  // keep the original ports-as-rows / slots-as-columns grid.
+  const isMini = olt.oltType === 'mini';
+  const slotIndices = isMini
+    ? olt.slots.map(s => s.slot).sort((a, b) => a - b)
+    : Array.from({ length: numSlots }, (_, i) => i);
+
+  // Outer axis = table rows, inner axis = table columns.
+  const rowAxis = isMini ? slotIndices : portIndices;
+  const colAxis = isMini ? portIndices : slotIndices;
+  const cornerLabel = isMini ? 'S\\P' : 'P\\S';
+
+  const cellAt = (rowVal: number, colVal: number) => {
+    const slotIdx = isMini ? rowVal : colVal;
+    const portIdx = isMini ? colVal : rowVal;
+    return slotByIndex.get(slotIdx)?.ports[portIdx] ?? null;
+  };
+
   const getPortButtonClass = (portEntry: NonNullable<SlotData['ports'][number]>, isExpanded: boolean) => {
     if (isExpanded) {
       return 'bg-blue-500 ring-2 ring-blue-400 ring-offset-1 dark:ring-offset-gray-900 shadow-md';
@@ -59,36 +88,38 @@ function SlotPanel({
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/60">
                 <th className="sticky left-0 z-10 px-3 py-2 text-right text-[8px] text-gray-400 font-bold uppercase tracking-widest border-r border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 min-w-[2.5rem]">
-                  P\S
+                  {cornerLabel}
                 </th>
-                {Array.from({ length: numSlots }, (_, s) => (
+                {colAxis.map((colVal) => (
                   <th
-                    key={s}
+                    key={colVal}
                     className="py-2 text-center text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-gray-700 min-w-[1.5rem] w-6"
                   >
-                    {s}
+                    {colVal}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: maxPortGlobal + 1 }, (_, portIdx) => {
-                const expandedInRow = Array.from({ length: numSlots }, (_, slotIdx) => {
-                  const p = slotByIndex.get(slotIdx)?.ports[portIdx] ?? null;
+              {rowAxis.map((rowVal, rowIdx) => {
+                const expandedInRow = colAxis.map((colVal) => {
+                  const p = cellAt(rowVal, colVal);
                   return p && expandedNodes[`PORT-${p.port_str}`] ? p : null;
                 }).filter((p): p is NonNullable<typeof p> => p !== null);
 
                 return (
-                  <React.Fragment key={portIdx}>
-                    <tr className={`border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors ${portIdx % 2 === 1 ? 'bg-gray-50/60 dark:bg-gray-800/20' : ''}`}>
+                  <React.Fragment key={rowVal}>
+                    <tr className={`border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors ${rowIdx % 2 === 1 ? 'bg-gray-50/60 dark:bg-gray-800/20' : ''}`}>
                       <td className="sticky left-0 z-10 px-3 py-1 text-right text-gray-500 dark:text-gray-400 font-bold border-r border-gray-200 dark:border-gray-700 bg-inherit">
-                        {String(portIdx).padStart(2, '0')}
+                        {isMini ? `S${rowVal}` : String(rowVal).padStart(2, '0')}
                       </td>
-                      {Array.from({ length: numSlots }, (_, slotIdx) => {
-                        const portEntry = slotByIndex.get(slotIdx)?.ports[portIdx] ?? null;
+                      {colAxis.map((colVal) => {
+                        const portEntry = cellAt(rowVal, colVal);
                         const isExpanded = portEntry ? expandedNodes[`PORT-${portEntry.port_str}`] : false;
+                        const slotIdx = isMini ? rowVal : colVal;
+                        const portIdx = isMini ? colVal : rowVal;
                         return (
-                          <td key={slotIdx} className="p-0.5 text-center">
+                          <td key={colVal} className="p-0.5 text-center">
                             <button
                               className={`w-5 h-5 rounded-sm block mx-auto transition-all
                                 ${portEntry
@@ -107,7 +138,7 @@ function SlotPanel({
                     </tr>
                     {expandedInRow.length > 0 && (
                       <tr className="bg-blue-50 dark:bg-blue-900/20">
-                        <td colSpan={numSlots + 1} className="px-3 py-1.5">
+                        <td colSpan={colAxis.length + 1} className="px-3 py-1.5">
                           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
                             {expandedInRow.map(p => (
                               <div key={p.port_str} className="flex items-center gap-1.5 text-[9px]">
@@ -361,6 +392,13 @@ export default function NetworkTopology({ initialData }: { initialData: Topology
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2">
                                         <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">OLT (GPON)</span>
+                                        <span className={`text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                                          olt.oltType === 'mini'
+                                            ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400'
+                                            : 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400'
+                                        }`}>
+                                          {olt.oltType === 'mini' ? 'MINI' : 'BIG'}
+                                        </span>
                                         <StatusBadge status={olt.status} />
                                       </div>
                                       <p className="text-xs font-bold text-gray-900 dark:text-white">{olt.name}</p>

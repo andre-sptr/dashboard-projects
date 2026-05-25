@@ -752,6 +752,27 @@ const migrations: Migration[] = [
       }
     }
   },
+  {
+    id: 22,
+    name: 'dedup_olt_odc_map_by_slot_port',
+    run: (db) => {
+      // The source OLT-ODC sheet records the same physical port with
+      // inconsistent frame notation (e.g. "0/1/1" vs "0/0/1/1", "0/3/1" vs
+      // "1/0/3/1"). These resolve to the same olt_name/slot/port but differ by
+      // port_str, so the UNIQUE(olt_name, port_str) constraint let them through
+      // and inflated port counts. Collapse to one row per physical port
+      // (keeping the lowest id) and enforce uniqueness on (olt_name, slot, port)
+      // going forward.
+      db.exec(`
+        DELETE FROM olt_odc_map
+        WHERE id NOT IN (
+          SELECT MIN(id) FROM olt_odc_map GROUP BY olt_name, slot, port
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_olt_odc_unique_port
+          ON olt_odc_map(olt_name, slot, port);
+      `);
+    }
+  },
 ];
 
 export function runMigrations(db: Database) {

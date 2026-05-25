@@ -57,7 +57,12 @@ export function seedOltOdcIfEmpty(): void {
     const parsed = parsePort(portStr);
     if (!parsed) continue;
 
-    const key = `${olt}|${portStr}`;
+    // Dedup on the resolved physical port (olt|slot|port), NOT the raw
+    // port_str. The source sheet records the same port with inconsistent
+    // frame notation (e.g. "0/1/1" vs "0/0/1/1", "0/3/1" vs "1/0/3/1"), which
+    // all resolve to the same slot/port. Keying on port_str lets these
+    // through and inflates port counts.
+    const key = `${olt}|${parsed.slot}|${parsed.port}`;
     if (!seen.has(key)) {
       seen.add(key);
       unique.push({
