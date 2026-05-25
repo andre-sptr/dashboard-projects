@@ -6,9 +6,41 @@ function toNumber(value: unknown): number {
   if (value === null || value === undefined || value === '') return 0;
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
 
-  const parsed = Number.parseFloat(String(value).replace(/,/g, '').trim());
+  let str = String(value).trim();
+  
+  // Deteksi dan bersihkan format desimal/ribuan Indonesia vs US
+  if (str.includes(',') && str.includes('.')) {
+    if (str.lastIndexOf(',') > str.lastIndexOf('.')) {
+      // Indonesian format: "1.334.880,50" -> hapus titik, ubah koma ke titik desimal
+      str = str.replace(/\./g, '').replace(/,/g, '.');
+    } else {
+      // US format: "1,334,880.50" -> hapus koma ribuan
+      str = str.replace(/,/g, '');
+    }
+  } else if (str.includes(',')) {
+    // Hanya berisi koma, cek apakah desimal ID ("12,50") atau ribuan US ("1,234,567")
+    const parts = str.split(',');
+    if (parts.length > 2) {
+      str = str.replace(/,/g, '');
+    } else if (parts.length === 2) {
+      if (parts[1].length !== 3) {
+        str = str.replace(/,/g, '.');
+      } else {
+        str = str.replace(/,/g, '');
+      }
+    }
+  } else if (str.includes('.')) {
+    // Hanya berisi titik, cek apakah ribuan ID ("1.334.880") atau desimal US ("12.50")
+    const parts = str.split('.');
+    if (parts.length > 2) {
+      str = str.replace(/\./g, '');
+    }
+  }
+
+  const parsed = Number.parseFloat(str);
   return Number.isFinite(parsed) ? parsed : 0;
 }
+
 
 function toString(value: unknown): string {
   return value === null || value === undefined ? '' : String(value).trim();

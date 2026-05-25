@@ -50,7 +50,37 @@ describe('topology allocation helpers', () => {
     const detected = detectOdcName('RDR JPP PT3 EXPAND ARK FKF', ['ARK-FK', 'ARK-FKF']);
     expect(detected).toBe('ARK-FKF');
   });
+
+  it('self-corrects and builds allocations even if port_awal > port_akhir or slot_awal > slot_akhir', () => {
+    const rows = buildPortAllocations({
+      aanwijzing_id: 'AAN-1',
+      nama_lop: 'RKP TSEL PT3 LBJ-FAN BUGIS JUNCTION',
+      id_ihld: 'IHLD-1',
+      area: 'RIKEP',
+      sto: 'LBJ',
+      olt_name: 'OLT-LBJ-1',
+      odc_name: 'LBJ-FAN',
+      frame: 1,
+      slot_awal: 2, // reversed: 2 to 1
+      slot_akhir: 1,
+      port_awal: 1, // reversed: 1 to 0
+      port_akhir: 0,
+    });
+
+    expect(rows.map(r => r.port_str)).toEqual(['1/1/0', '1/1/1', '1/2/0', '1/2/1']);
+  });
+
+  it('returns empty string when detectOdcName is given an empty candidates array', () => {
+    const detected = detectOdcName('RDR JPP PT3 EXPAND ARK FKF', []);
+    expect(detected).toBe('');
+  });
+
+  it('tolerates casing differences when matching ODC name from LOP name', () => {
+    const detected = detectOdcName('rdr jpp pt3 expand ark fkf', ['ARK-FKF', 'ark-fk']);
+    expect(detected).toBe('ARK-FKF');
+  });
 });
+
 
 describe('topology allocation repository', () => {
   beforeEach(async () => {

@@ -46,7 +46,9 @@ export function buildAlertMessage(payload: AlertPayload): string {
     lines.push(``);
     lines.push(`🔴 *Project KRITIS:*`);
     kritis.slice(0, MAX_PROJECTS_IN_MESSAGE).forEach((p, i) => {
-      lines.push(`${i + 1}. ${p.nama_lop} (${p.branch || '-'}) — ${p.days_since_changed} hari`);
+      const name = (p.nama_lop || '').replace(/[*_]/g, '');
+      const branch = (p.branch || '-').replace(/[*_]/g, '');
+      lines.push(`${i + 1}. ${name} (${branch}) — ${p.days_since_changed} hari`);
     });
     if (kritis.length > MAX_PROJECTS_IN_MESSAGE) {
       lines.push(`   _...dan ${kritis.length - MAX_PROJECTS_IN_MESSAGE} lainnya_`);
@@ -58,7 +60,9 @@ export function buildAlertMessage(payload: AlertPayload): string {
     lines.push(``);
     lines.push(`🟡 *Project PERHATIAN:*`);
     perhatian.slice(0, remaining).forEach((p, i) => {
-      lines.push(`${i + 1}. ${p.nama_lop} (${p.branch || '-'}) — ${p.days_since_changed} hari`);
+      const name = (p.nama_lop || '').replace(/[*_]/g, '');
+      const branch = (p.branch || '-').replace(/[*_]/g, '');
+      lines.push(`${i + 1}. ${name} (${branch}) — ${p.days_since_changed} hari`);
     });
     if (perhatian.length > remaining) {
       lines.push(`   _...dan ${perhatian.length - remaining} lainnya_`);

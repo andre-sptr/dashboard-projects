@@ -184,4 +184,40 @@ describe('BoQ JSON submit routes', () => {
       .get() as { full_data: string };
     expect(JSON.parse(stored.full_data)[0].designator).toBe('OS-SM-1');
   });
+
+  it('rejects AANWIJZING submission with invalid inputs (Zod Error)', async () => {
+    const { POST } = await import('../src/app/api/aanwijzing/route');
+
+    const response = await POST(new Request('http://localhost/api/aanwijzing', {
+      method: 'POST',
+      body: JSON.stringify({
+        // missing nama_lop, which is mandatory
+        id_ihld: '', // invalid: empty
+        tanggal_aanwijzing: 'invalid-date', // invalid date format
+      }),
+    }) as never);
+
+    const body = await response.json();
+    expect(response.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toContain('ID IHLD tidak boleh kosong');
+  });
+
+  it('rejects UT submission with invalid inputs (Zod Error)', async () => {
+    const { POST } = await import('../src/app/api/ut/route');
+
+    const response = await POST(new Request('http://localhost/api/ut', {
+      method: 'POST',
+      body: JSON.stringify({
+        nama_lop: '', // empty name
+        id_ihld: 'IHLD-A',
+        jumlah_odp: -5, // invalid negative number
+      }),
+    }) as never);
+
+    const body = await response.json();
+    expect(response.status).toBe(400);
+    expect(body.success).toBe(false);
+  });
 });
+

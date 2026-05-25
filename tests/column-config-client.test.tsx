@@ -37,4 +37,50 @@ describe('ColumnConfigClient', () => {
       expect(screen.getByText('Deteksi selesai: 36 kolom cocok.')).toBeInTheDocument();
     });
   });
+
+  it('shows error banner when auto-detect API returns success: false', async () => {
+    const initialConfig = COLUMN_FIELDS.map((field, sort_order) => ({
+      field_key: field.key,
+      label: field.label,
+      header_text: field.headerText,
+      col_index: field.defaultIndex,
+      sort_order,
+    }));
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      json: async () => ({
+        success: false,
+        error: 'Spreadsheet not found / access denied',
+      }),
+    } as Response);
+
+    render(<ColumnConfigClient initialConfig={initialConfig} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /detect/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Spreadsheet not found / access denied')).toBeInTheDocument();
+    });
+  });
+
+  it('shows network error banner when auto-detect API fetch throws an error', async () => {
+    const initialConfig = COLUMN_FIELDS.map((field, sort_order) => ({
+      field_key: field.key,
+      label: field.label,
+      header_text: field.headerText,
+      col_index: field.defaultIndex,
+      sort_order,
+    }));
+
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network failure'));
+
+    render(<ColumnConfigClient initialConfig={initialConfig} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /detect/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Terjadi kesalahan jaringan saat deteksi header.')).toBeInTheDocument();
+    });
+  });
 });
+

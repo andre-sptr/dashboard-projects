@@ -77,7 +77,23 @@ describe('buildAlertMessage', () => {
     expect(msg).toContain('(-)');
     expect(() => buildAlertMessage({ kritisCount: 1, perhatianCount: 0, projects, totalProjects: 10 })).not.toThrow();
   });
+
+  it('sanitizes asterisk and underscore markdown characters in project name and branch', () => {
+    const projects = [
+      makeProject({
+        nama_lop: '*LOP Medan_Special*',
+        branch: 'SUM_UT*',
+        risk_level: 'KRITIS',
+      }),
+    ];
+    const msg = buildAlertMessage({ kritisCount: 1, perhatianCount: 0, projects, totalProjects: 10 });
+    expect(msg).toContain('LOP MedanSpecial');
+    expect(msg).toContain('SUMUT');
+    expect(msg).not.toContain('*LOP Medan_Special*');
+    expect(msg).not.toContain('SUM_UT*');
+  });
 });
+
 
 describe('sendWahaAlert', () => {
   const mockConfig = {
