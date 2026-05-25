@@ -309,6 +309,10 @@ describe('buildTopologyMapContext', () => {
       portStr: '1/1/1',
     });
     expect(context.traces[1]).toMatchObject({
+      area: 'AMK',
+      sto: 'AMK-01',
+      oltName: 'GPON00-D1-AMK-2',
+      odcName: 'ODC-AMK-FQ',
       source: 'allocation',
       portStr: '1/1/2',
       idIhld: 'IHLD-2408',
