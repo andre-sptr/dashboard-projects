@@ -43,6 +43,8 @@ next-env.d.ts
 data/*
 .gstack/
 .claude/
+.superpowers/
+.worktrees/
 
 CLAUDE.md
 TODOS.md
