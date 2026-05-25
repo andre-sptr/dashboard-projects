@@ -54,10 +54,12 @@ function SlotPanel({
   // and ports spreading horizontally ("panjang ke samping"). Big chassis OLTs
   // keep the original ports-as-rows / slots-as-columns grid.
   const isMini = olt.oltType === 'mini';
+  // Big OLT slots are 1-based (slot 0 is never used), so render 1..18 instead
+  // of 0..17. numSlots is floored at 18 via olt.maxSlot.
   const numSlots = olt.maxSlot + 1;
   const slotIndices = isMini
     ? olt.slots.map(s => s.slot).sort((a, b) => a - b)
-    : Array.from({ length: numSlots }, (_, i) => i);
+    : Array.from({ length: numSlots }, (_, i) => i + 1);
 
   // Outer axis = table rows, inner axis = table columns.
   const rowAxis = isMini ? slotIndices : portIndices;
@@ -87,7 +89,7 @@ function SlotPanel({
 
   return (
     <div className="mt-3 ml-4">
-      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
+      <div className="w-fit max-w-full rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
         <div className="overflow-x-auto">
           <table className="font-mono text-[9px] border-collapse">
             <thead>
