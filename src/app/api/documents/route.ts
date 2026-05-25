@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { DocumentRepository } from '@/repositories/DocumentRepository';
 import { FileStorage } from '@/lib/file-storage';
 import { AuditLogger } from '@/lib/audit-logger';
+import { validateMagicBytes, validateFileSize } from '@/lib/validation';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -32,6 +33,28 @@ export async function POST(request: NextRequest) {
 
     if (!file || !projectUid || !category) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // 1. Validate file extension
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.jpg', '.jpeg', '.png', '.txt'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!allowedExtensions.includes(fileExtension)) {
+      return NextResponse.json({ 
+        error: 'Format file tidak diizinkan. Hanya menerima PDF, Word, Excel, Gambar (JPG/PNG), atau TXT.' 
+      }, { status: 400 });
+    }
+
+    // 2. Validate file size (10MB)
+    if (!validateFileSize(file.size, 10)) {
+      return NextResponse.json({ error: 'Ukuran file terlalu besar (maksimal 10MB).' }, { status: 400 });
+    }
+
+    // 3. Validate magic bytes (file signature integrity)
+    const buffer = await file.arrayBuffer();
+    if (!validateMagicBytes(buffer, file.name)) {
+      return NextResponse.json({ 
+        error: 'Konten file tidak valid (gagal validasi signature/magic bytes).' 
+      }, { status: 400 });
     }
 
     // Save file to storage

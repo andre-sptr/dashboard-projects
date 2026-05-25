@@ -4,9 +4,17 @@ import { parseExcelDate } from '@/utils/date';
 
 export type RiskLevel = 'KRITIS' | 'PERHATIAN' | 'AMAN';
 
-const STUCK_DAYS = 14;
-const NEAR_GOLIVE_DAYS = 30;
-const LOW_REALIZATION_THRESHOLD = 0.5;
+function getStuckDays(): number {
+  return Number(process.env.RISK_THRESHOLD_STUCK_DAYS) || 14;
+}
+
+function getNearGoliveDays(): number {
+  return Number(process.env.RISK_THRESHOLD_NEAR_GOLIVE_DAYS) || 30;
+}
+
+function getLowRealizationThreshold(): number {
+  return Number(process.env.RISK_THRESHOLD_LOW_REALIZATION) || 0.5;
+}
 
 function normalizeTimestamp(ts: string): Date | null {
   if (!ts || ts.trim() === '') return null;
@@ -23,12 +31,12 @@ export function computeProjectRisk(project: Project): RiskLevel {
   const today = new Date();
   let criteriaCount = 0;
 
-  // Criterion 1: stuck — last status change > 14 days ago, project still active
+  // Criterion 1: stuck — last status change > stuck days ago, project still active
   if (!isDone) {
     const lastChanged = normalizeTimestamp(project.last_changed_at);
     if (lastChanged !== null) {
       const diffDays = (today.getTime() - lastChanged.getTime()) / (1000 * 60 * 60 * 24);
-      if (diffDays > STUCK_DAYS) criteriaCount++;
+      if (diffDays > getStuckDays()) criteriaCount++;
     }
   }
 
@@ -40,15 +48,15 @@ export function computeProjectRisk(project: Project): RiskLevel {
     }
   }
 
-  // Criterion 3: low realization — < 50% realized with golive within 30 days
+  // Criterion 3: low realization — < threshold realized with golive within near golive days
   // Guard: skip when port_planned === 0 (not applicable)
   if (!isDone && project.port_planned > 0 && project.golive_target) {
     const realization = project.port_realized / project.port_planned;
-    if (realization < LOW_REALIZATION_THRESHOLD) {
+    if (realization < getLowRealizationThreshold()) {
       const goliveDate = parseExcelDate(project.golive_target);
       if (goliveDate !== null) {
         const daysToGolive = (goliveDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
-        if (daysToGolive >= 0 && daysToGolive <= NEAR_GOLIVE_DAYS) {
+        if (daysToGolive >= 0 && daysToGolive <= getNearGoliveDays()) {
           criteriaCount++;
         }
       }

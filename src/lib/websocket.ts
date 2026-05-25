@@ -24,10 +24,20 @@ export class WebSocketServer {
       return;
     }
 
-    const httpServer = createServer();
+        const httpServer = createServer();
+    
+    let origin: string | string[] = '*';
+    if (process.env.NODE_ENV === 'production') {
+      if (process.env.NEXT_PUBLIC_APP_URL) {
+        origin = process.env.NEXT_PUBLIC_APP_URL;
+      } else {
+        console.warn('[WebSocket] Running in production but NEXT_PUBLIC_APP_URL is not defined! WebSocket CORS is open ("*").');
+      }
+    }
+
     const io = new SocketIOServer(httpServer, {
       cors: {
-        origin: '*', // Adjust for production
+        origin,
         methods: ['GET', 'POST'],
       },
     });

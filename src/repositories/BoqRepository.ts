@@ -226,8 +226,16 @@ export class BoqRepository {
   }
 
   static getSelisihAanwijzingSummary(startDate?: string, endDate?: string): SelisihAanwijzingSummaryRow[] {
+    interface RawSummaryRow {
+      branch_fmc: string;
+      port_plan: number;
+      boq_plan: number;
+      port_aanwijzing: number;
+      boq_aanwijzing: number;
+    }
+
     let dateCondition = "";
-    const params: any[] = [];
+    const params: string[] = [];
     if (startDate && endDate) {
       dateCondition = " AND DATE(COALESCE(NULLIF(p.golive_actual, ''), p.golive_target)) >= DATE(?) AND DATE(COALESCE(NULLIF(p.golive_actual, ''), p.golive_target)) <= DATE(?)";
       params.push(startDate, endDate);
@@ -262,7 +270,7 @@ export class BoqRepository {
       LEFT JOIN boq_aanwijzing ba ON ba.id_ihld = pd.id_ihld
       GROUP BY pd.branch
       ORDER BY pd.branch ASC
-    `).all(...params) as any[];
+    `).all(...params) as RawSummaryRow[];
 
     return rows.map((row) => {
       const boq_plan = row.boq_plan || 0;

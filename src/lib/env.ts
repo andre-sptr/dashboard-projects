@@ -37,6 +37,20 @@ const envSchema = z.object({
     .string()
     .optional()
     .describe('Path to Google Service Account JSON key file'),
+
+  GOOGLE_CREDENTIALS: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      try {
+        JSON.parse(val);
+        return true;
+      } catch {
+        return false;
+      }
+    }, 'Must be a valid JSON string of Google Service Account credentials')
+    .describe('Raw JSON string of Google Service Account credentials'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -52,6 +66,7 @@ function validateEnv(): Env {
       API_KEY: process.env.API_KEY,
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
       GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+      GOOGLE_CREDENTIALS: process.env.GOOGLE_CREDENTIALS,
     });
 
     return parsed;

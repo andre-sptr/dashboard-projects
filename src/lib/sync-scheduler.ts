@@ -17,11 +17,12 @@ export class SyncScheduler {
       return;
     }
 
-    // Schedule sync every hour
-    syncSchedulerState.job = cron.schedule('0 * * * *', async () => {
+    const schedule = process.env.SYNC_CRON_SCHEDULE || '0 * * * *';
+    syncSchedulerState.job = cron.schedule(schedule, async () => {
       try {
-        const result = await SyncService.syncProjects();
+        await SyncService.syncProjects();
       } catch (error) {
+        console.error('[SyncScheduler] Automatic background sync failed:', error);
       }
     });
   }

@@ -19,16 +19,40 @@ function resolveDatabasePath(configuredPath: string): string {
   return path.join(/* turbopackIgnore: true */ process.cwd(), configuredPath);
 }
 
-const dbPath = resolveDatabasePath(getDatabasePath());
-const dbDir = path.dirname(dbPath);
+let _dbInstance: Database.Database | null = null;
 
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+function getDbInstance(): Database.Database {
+  if (!_dbInstance) {
+    const dbPath = resolveDatabasePath(getDatabasePath());
+    const dbDir = path.dirname(dbPath);
+
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+
+    const instance = new Database(dbPath);
+    instance.pragma('journal_mode = WAL');
+    instance.pragma('foreign_keys = ON');
+
+    initializeSchema(instance);
+    _dbInstance = instance;
+  }
+  return _dbInstance;
 }
 
-export const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-initializeSchema(db);
+// Export a Proxy that intercepts all access and forwards to the lazily loaded database instance
+export const db = new Proxy({} as Database.Database, {
+  get(target, prop, receiver) {
+    const instance = getDbInstance();
+    const value = Reflect.get(instance, prop, receiver);
+    if (typeof value === 'function') {
+      return value.bind(instance);
+    }
+    return value;
+  },
+  set(target, prop, value, receiver) {
+    const instance = getDbInstance();
+    return Reflect.set(instance, prop, value, receiver);
+  }
+});
 

@@ -7,14 +7,32 @@ export interface SheetRow {
 }
 
 export class GoogleSheetsClient {
-  private static keyFile = process.env.GOOGLE_APPLICATION_CREDENTIALS
-    ? path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS)
-    : path.join(process.cwd(), 'kunci_rahasia_google.json');
+  private static getAuth() {
+    const scopes = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
+    
+    if (process.env.GOOGLE_CREDENTIALS) {
+      try {
+        const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+        return new google.auth.GoogleAuth({
+          credentials,
+          scopes,
+        });
+      } catch (error) {
+        console.error('Failed to parse GOOGLE_CREDENTIALS JSON string, falling back to file paths:', error);
+      }
+    }
 
-  private static auth = new google.auth.GoogleAuth({
-    keyFile: GoogleSheetsClient.keyFile,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-  });
+    const keyFile = process.env.GOOGLE_APPLICATION_CREDENTIALS
+      ? path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS)
+      : path.join(process.cwd(), 'kunci_rahasia_google.json');
+
+    return new google.auth.GoogleAuth({
+      keyFile,
+      scopes,
+    });
+  }
+
+  private static auth = GoogleSheetsClient.getAuth();
 
   private static sheets = google.sheets({ version: 'v4', auth: this.auth });
 

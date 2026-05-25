@@ -8,6 +8,7 @@ import {
   boqQuerySchema,
   validateExcelFile,
   validateFileSize,
+  validateMagicBytes,
   formatValidationError,
 } from '@/lib/validation';
 import { ValidationError, DatabaseError, FileProcessingError } from '@/lib/errors';
@@ -42,6 +43,9 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   try {
     const buffer = await file.arrayBuffer();
+    if (!validateMagicBytes(buffer, file.name)) {
+      throw new ValidationError('Konten file Excel tidak valid (gagal validasi magic bytes/signature)');
+    }
     const items = parseBoQExcelItems(buffer);
 
     if (items.length === 0) {

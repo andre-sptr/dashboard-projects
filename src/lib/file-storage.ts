@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { ForbiddenError } from './errors';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'documents');
 
@@ -18,10 +19,40 @@ export interface FileInfo {
 
 export class FileStorage {
   /**
+   * Helper function to prevent path traversal vulnerability.
+   * Resolves path and verifies it stays within the intended base directory.
+   */
+  private static getSafePath(userPath: string, baseDir: string = UPLOAD_DIR): string {
+    if (userPath.includes('\0')) {
+      throw new ForbiddenError('Path contains invalid null byte characters');
+    }
+
+    const resolvedBase = path.resolve(baseDir);
+    
+    // Normalize user path by removing leading uploads/documents prefix if present
+    let targetSegment = userPath;
+    if (targetSegment.startsWith('/uploads/documents/')) {
+      targetSegment = targetSegment.substring('/uploads/documents/'.length);
+    } else if (targetSegment.startsWith('uploads/documents/')) {
+      targetSegment = targetSegment.substring('uploads/documents/'.length);
+    } else if (targetSegment.startsWith('/')) {
+      targetSegment = targetSegment.substring(1);
+    }
+    
+    const resolvedPath = path.resolve(resolvedBase, targetSegment);
+    
+    if (!resolvedPath.startsWith(resolvedBase)) {
+      throw new ForbiddenError('Access to the requested path is forbidden: Path traversal detected.');
+    }
+    
+    return resolvedPath;
+  }
+
+  /**
    * Save a file from a Buffer or ReadableStream
    */
   static async saveFile(file: File, subfolder: string = ''): Promise<FileInfo> {
-    const targetDir = subfolder ? path.join(UPLOAD_DIR, subfolder) : UPLOAD_DIR;
+    const targetDir = subfolder ? FileStorage.getSafePath(subfolder, UPLOAD_DIR) : UPLOAD_DIR;
     
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
@@ -52,7 +83,7 @@ export class FileStorage {
    */
   static deleteFile(relativeFilePath: string): boolean {
     try {
-      const fullPath = path.join(process.cwd(), 'public', relativeFilePath);
+      const fullPath = FileStorage.getSafePath(relativeFilePath, UPLOAD_DIR);
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath);
         return true;
@@ -60,6 +91,9 @@ export class FileStorage {
       return false;
     } catch (error) {
       console.error(`Error deleting file ${relativeFilePath}:`, error);
+      if (error instanceof ForbiddenError) {
+        throw error;
+      }
       return false;
     }
   }
@@ -69,12 +103,15 @@ export class FileStorage {
    */
   static getFileStats(relativeFilePath: string) {
     try {
-      const fullPath = path.join(process.cwd(), 'public', relativeFilePath);
+      const fullPath = FileStorage.getSafePath(relativeFilePath, UPLOAD_DIR);
       if (fs.existsSync(fullPath)) {
         return fs.statSync(fullPath);
       }
       return null;
-    } catch {
+    } catch (error) {
+      if (error instanceof ForbiddenError) {
+        throw error;
+      }
       return null;
     }
   }

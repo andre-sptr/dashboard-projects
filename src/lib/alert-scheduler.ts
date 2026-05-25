@@ -1,4 +1,3 @@
-import 'server-only';
 import * as cron from 'node-cron';
 import { ProjectRepository } from '@/repositories/ProjectRepository';
 import { computeProjectRisk, getDaysSinceChanged } from './risk-criteria';
@@ -76,9 +75,10 @@ export class AlertScheduler {
       return;
     }
 
-    // Runs daily at 08:00
-    alertSchedulerState.job = cron.schedule('0 8 * * *', runDailyAlert);
-    console.log('[AlertScheduler] Started — daily at 08:00');
+    // Runs daily at 08:00 by default, custom cron schedule supported
+    const schedule = process.env.WAHA_ALERT_CRON_SCHEDULE || '0 8 * * *';
+    alertSchedulerState.job = cron.schedule(schedule, runDailyAlert);
+    console.log(`[AlertScheduler] Started — schedule: ${schedule}`);
   }
 
   static stop() {

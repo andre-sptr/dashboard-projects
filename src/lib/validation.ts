@@ -57,12 +57,21 @@ export const aanwijzingQuerySchema = z.object({
   id: idSchema,
 });
 
+export const boqItemSchema = z.object({
+  designator: z.string().min(1, 'Designator tidak boleh kosong'),
+  volume: z.coerce.number().nonnegative('Volume harus non-negatif'),
+  price: z.coerce.number().nonnegative('Harga harus non-negatif'),
+  total: z.coerce.number().nonnegative('Total harus non-negatif'),
+  kind: z.string().optional(),
+  sort_no: z.coerce.number().int().optional().default(0),
+});
+
 // Schema for BoQ Aanwijzing
 export const boqAanwijzingSchema = z.object({
   aanwijzing_id: idSchema,
   nama_lop: nameSchema,
   id_ihld: z.string().min(1, 'ID IHLD tidak boleh kosong'),
-  boq_items: z.array(z.unknown()).optional().default([]),
+  boq_items: z.array(boqItemSchema).optional().default([]),
 });
 
 export type BoqAanwijzingInput = z.infer<typeof boqAanwijzingSchema>;
@@ -99,7 +108,7 @@ export const boqUtSchema = z.object({
   ut_id: idSchema,
   nama_lop: nameSchema,
   id_ihld: z.string().min(1, 'ID IHLD tidak boleh kosong'),
-  boq_items: z.array(z.unknown()).optional().default([]),
+  boq_items: z.array(boqItemSchema).optional().default([]),
 });
 
 export type BoqUtInput = z.infer<typeof boqUtSchema>;
@@ -135,8 +144,47 @@ export function validateFileSize(size: number, maxSizeMB: number = 10): boolean 
   return size <= maxBytes;
 }
 
+/**
+ * Validate magic bytes (file signature) of the uploaded file to ensure it matches its extension.
+ */
+export function validateMagicBytes(arrayBuffer: ArrayBuffer, filename: string): boolean {
+  const uint8 = new Uint8Array(arrayBuffer.slice(0, 4));
+  const hex = Array.from(uint8)
+    .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+    .join(' ');
+  
+  const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+  
+  switch (ext) {
+    case '.xlsx':
+    case '.docx':
+      // ZIP-based Office Open XML format starts with "PK\x03\x04" (50 4B 03 04)
+      return hex.startsWith('50 4B 03 04');
+    case '.xls':
+    case '.doc':
+      // OLE2 / Compound File Binary Format starts with D0 CF 11 E0
+      return hex.startsWith('D0 CF 11 E0');
+    case '.pdf':
+      // PDF format starts with "%PDF" (25 50 44 46)
+      return hex.startsWith('25 50 44 46');
+    case '.png':
+      // PNG starts with 89 50 4E 47
+      return hex.startsWith('89 50 4E 47');
+    case '.jpg':
+    case '.jpeg':
+      // JPEG starts with FF D8 FF
+      return hex.startsWith('FF D8 FF');
+    case '.txt':
+      // Text files have no fixed signature, we just allow it
+      return true;
+    default:
+      return false;
+  }
+}
+
 // Schema for webhook request
 export const webhookSchema = z.object({
+  api_key: z.string().optional(),
 });
 
 // Parse and validate request body

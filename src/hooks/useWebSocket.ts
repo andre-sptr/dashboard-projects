@@ -15,8 +15,9 @@ export function useWebSocket() {
       return;
     }
 
-    // Port 3001 as defined in WebSocketServer.init
-    const socketInstance = io('http://localhost:3001', {
+    // Port 3001 as defined in WebSocketServer.init, custom URL supported in production
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
+    const socketInstance = io(wsUrl, {
       autoConnect: true,
       reconnection: true,
     });
