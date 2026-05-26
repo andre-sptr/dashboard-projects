@@ -11,30 +11,55 @@ interface SeedTopologyLocationRow {
   entity_name: string;
   area?: string;
   sto?: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
+  lat?: number;
+  lng?: number;
   source?: string;
   confidence?: TopologyLocationConfidence;
   notes?: string;
 }
 
-function isValidSeedRow(row: SeedTopologyLocationRow) {
+interface ResolvedSeedCoordinates {
+  latitude: number;
+  longitude: number;
+}
+
+function resolveSeedCoordinates(row: SeedTopologyLocationRow) {
+  return {
+    latitude: row.latitude ?? row.lat,
+    longitude: row.longitude ?? row.lng,
+  };
+}
+
+function hasValidSeedCoordinates(
+  coordinates: ReturnType<typeof resolveSeedCoordinates>
+): coordinates is ResolvedSeedCoordinates {
+  return Number.isFinite(coordinates.latitude)
+    && Number.isFinite(coordinates.longitude);
+}
+
+function isValidSeedRow(
+  row: SeedTopologyLocationRow,
+  coordinates: ReturnType<typeof resolveSeedCoordinates>
+): coordinates is ResolvedSeedCoordinates {
   return Boolean(row.entity_type)
     && Boolean(row.entity_name)
-    && Number.isFinite(row.latitude)
-    && Number.isFinite(row.longitude);
+    && hasValidSeedCoordinates(coordinates);
 }
 
 export function seedTopologyLocationsFromRows(rows: SeedTopologyLocationRow[]) {
   for (const row of rows) {
-    if (!isValidSeedRow(row)) continue;
+    const coordinates = resolveSeedCoordinates(row);
+    if (!isValidSeedRow(row, coordinates)) continue;
+
     TopologyLocationRepository.upsert({
       entity_type: row.entity_type,
       entity_name: row.entity_name,
       area: row.area ?? '',
       sto: row.sto ?? '',
-      latitude: row.latitude,
-      longitude: row.longitude,
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
       source: row.source ?? 'seed',
       confidence: row.confidence ?? 'verified',
       notes: row.notes ?? '',

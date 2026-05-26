@@ -365,4 +365,31 @@ describe('seedTopologyLocations', () => {
       },
     ]);
   });
+
+  it('seeds topology locations from compact coordinate fields', async () => {
+    const { seedTopologyLocationsFromRows } = await import('../src/lib/seed-topology-locations');
+    const { TopologyLocationRepository } = await import('../src/repositories/TopologyLocationRepository');
+
+    seedTopologyLocationsFromRows([
+      {
+        entity_type: 'sto',
+        entity_name: 'AMK-01',
+        lat: -0.95,
+        lng: 100.42,
+        source: 'seed',
+        confidence: 'verified',
+      },
+    ]);
+
+    expect(TopologyLocationRepository.findAll()).toMatchObject([
+      {
+        entity_type: 'sto',
+        entity_name: 'AMK-01',
+        latitude: -0.95,
+        longitude: 100.42,
+        source: 'seed',
+        confidence: 'verified',
+      },
+    ]);
+  });
 });
