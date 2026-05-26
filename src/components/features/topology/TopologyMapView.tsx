@@ -168,9 +168,27 @@ export default function TopologyMapView({
             <MapPinned size={16} />
             <h2 className="text-xs font-black uppercase tracking-widest">Map Trace</h2>
           </div>
-          <div className="mt-4 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-500 dark:border-gray-700 dark:bg-gray-900">
-            <Search size={13} className="mr-2 inline text-gray-400" />
-            {searchQuery || 'Cari ODC, OLT, STO, Port...'}
+          <div
+            aria-live="polite"
+            className="mt-4 rounded-xl bg-gray-50 p-3 dark:bg-gray-900/50"
+          >
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300">
+                <Search size={14} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  Filter
+                </p>
+                <p className={`mt-1 truncate text-xs font-bold ${
+                  searchQuery
+                    ? 'text-gray-900 dark:text-white'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}>
+                  {searchQuery ? `"${searchQuery}"` : ''}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
