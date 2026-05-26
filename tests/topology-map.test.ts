@@ -354,6 +354,26 @@ describe('buildTopologyMapContext', () => {
       { entityType: 'odc', name: 'ODC-AMK-FQ', area: 'AMK', sto: 'AMK-01' },
     ]);
   });
+
+  it('treats out-of-range coordinates as missing instead of corrupting the map viewport', () => {
+    const invalidLongitudeLocations = sampleLocations.map(location => (
+      location.entity_type === 'odc'
+        ? { ...location, longitude: 100423000 }
+        : location
+    ));
+
+    const context = buildTopologyMapContext(sampleTopology, invalidLongitudeLocations, 'ODC-AMK-FQ');
+
+    expect(context.nodes.map(node => `${node.entityType}:${node.name}`)).toEqual([
+      'core:SUMBAGTENG',
+      'sto:AMK-01',
+      'olt:GPON00-D1-AMK-2',
+    ]);
+    expect(context.traces).toEqual([]);
+    expect(context.missingLocations).toEqual([
+      { entityType: 'odc', name: 'ODC-AMK-FQ', area: 'AMK', sto: 'AMK-01' },
+    ]);
+  });
 });
 
 describe('seedTopologyLocations', () => {

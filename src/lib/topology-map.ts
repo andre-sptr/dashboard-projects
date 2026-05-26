@@ -51,12 +51,21 @@ function nodeId(entityType: TopologyLocationEntityType, name: string, area: stri
 function getLocationMap(locations: TopologyLocation[]) {
   return new Map(
     locations
-      .filter(location => location.confidence === 'verified')
+      .filter(location => location.confidence === 'verified' && hasValidCoordinates(location))
       .map(location => [
         key(location.entity_type, location.entity_name, location.area, location.sto),
         location,
       ])
   );
+}
+
+function hasValidCoordinates(location: TopologyLocation) {
+  return Number.isFinite(location.latitude)
+    && Number.isFinite(location.longitude)
+    && location.latitude >= -90
+    && location.latitude <= 90
+    && location.longitude >= -180
+    && location.longitude <= 180;
 }
 
 function addNode(
