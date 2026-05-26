@@ -79,10 +79,10 @@ function MissingLocations({ rows }: { rows: MissingTopologyLocation[] }) {
     <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30">
       <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
         <AlertTriangle size={16} />
-        <h3 className="text-xs font-black uppercase tracking-widest">Missing Location Metadata</h3>
+        <h3 className="text-xs font-black uppercase tracking-widest">Missing Verified Locations</h3>
       </div>
       <p className="mt-2 text-xs font-medium text-amber-700/80 dark:text-amber-200/80">
-        Markers only appear for entities with coordinates. Add coordinates to topology_locations for these entities.
+        Markers only appear for entities with verified coordinates. Verify coordinates in topology_locations for these entities.
       </p>
       <div className="mt-3 max-h-40 space-y-1 overflow-y-auto">
         {rows.slice(0, 12).map(row => (
@@ -99,7 +99,7 @@ function MissingLocations({ rows }: { rows: MissingTopologyLocation[] }) {
       </div>
       {rows.length > 12 && (
         <p className="mt-2 text-[11px] font-bold text-amber-700/80 dark:text-amber-200/80">
-          +{rows.length - 12} more entities without coordinates
+          +{rows.length - 12} more entities without verified coordinates
         </p>
       )}
     </div>

@@ -50,10 +50,12 @@ function nodeId(entityType: TopologyLocationEntityType, name: string, area: stri
 
 function getLocationMap(locations: TopologyLocation[]) {
   return new Map(
-    locations.map(location => [
-      key(location.entity_type, location.entity_name, location.area, location.sto),
-      location,
-    ])
+    locations
+      .filter(location => location.confidence === 'verified')
+      .map(location => [
+        key(location.entity_type, location.entity_name, location.area, location.sto),
+        location,
+      ])
   );
 }
 

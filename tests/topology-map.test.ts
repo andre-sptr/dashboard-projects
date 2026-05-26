@@ -334,6 +334,26 @@ describe('buildTopologyMapContext', () => {
       { entityType: 'odc', name: 'ODC-AMK-FQ', area: 'AMK', sto: 'AMK-01' },
     ]);
   });
+
+  it('treats estimated coordinates as missing for map markers and traces', () => {
+    const estimatedOdcLocations = sampleLocations.map(location => (
+      location.entity_type === 'odc'
+        ? { ...location, confidence: 'estimated' as const }
+        : location
+    ));
+
+    const context = buildTopologyMapContext(sampleTopology, estimatedOdcLocations, 'ODC-AMK-FQ');
+
+    expect(context.nodes.map(node => `${node.entityType}:${node.name}`)).toEqual([
+      'core:SUMBAGTENG',
+      'sto:AMK-01',
+      'olt:GPON00-D1-AMK-2',
+    ]);
+    expect(context.traces).toEqual([]);
+    expect(context.missingLocations).toEqual([
+      { entityType: 'odc', name: 'ODC-AMK-FQ', area: 'AMK', sto: 'AMK-01' },
+    ]);
+  });
 });
 
 describe('seedTopologyLocations', () => {
