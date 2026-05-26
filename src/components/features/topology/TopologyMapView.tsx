@@ -178,14 +178,14 @@ export default function TopologyMapView({
               </span>
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
-                  Filter
+                  Filter dari Search Utama
                 </p>
                 <p className={`mt-1 truncate text-xs font-bold ${
                   searchQuery
                     ? 'text-gray-900 dark:text-white'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}>
-                  {searchQuery ? `"${searchQuery}"` : ''}
+                  {searchQuery ? `"${searchQuery}"` : 'Belum ada filter pencarian'}
                 </p>
               </div>
             </div>

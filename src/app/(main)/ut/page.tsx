@@ -581,7 +581,7 @@ export default function UTPage() {
                 </div>
               ) : (
                 <div className="text-center py-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50/30 dark:bg-gray-900/10">
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Belum ada temuan. Klik "Tambah Temuan" untuk menambahkan temuan baru.</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Belum ada temuan. Klik &quot;Tambah Temuan&quot; untuk menambahkan temuan baru.</p>
                 </div>
               )}
             </div>

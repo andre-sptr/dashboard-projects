@@ -75,7 +75,6 @@ interface DistributionChartsProps {
 export const DistributionCharts = ({
   pieData,
   statusList,
-  totalPorts,
   branchGoliveData,
   statusTotalPorts,
   batchOptions,

@@ -384,7 +384,7 @@ describe('BoqRepository CRUD & Transactions', () => {
     // Verifikasi item di boq_plan_items
     const dbItems = state.db.prepare('SELECT * FROM boq_plan_items WHERE boq_plan_id = ?').all(boqId);
     expect(dbItems).toHaveLength(1);
-    expect((dbItems[0] as any).designator).toBe('DSG-1');
+    expect((dbItems[0] as { designator: string }).designator).toBe('DSG-1');
 
     // 2. Update dengan item baru (seharusnya menghapus item lama terlebih dahulu)
     const newItems = [
@@ -414,7 +414,7 @@ describe('BoqRepository CRUD & Transactions', () => {
 
     const dbItems2 = state.db.prepare('SELECT * FROM boq_plan_items WHERE boq_plan_id = ?').all(boqId);
     expect(dbItems2).toHaveLength(1);
-    expect((dbItems2[0] as any).designator).toBe('DSG-2'); // Verifikasi ia menggantikan DSG-1
+    expect((dbItems2[0] as { designator: string }).designator).toBe('DSG-2'); // Verifikasi ia menggantikan DSG-1
   });
 
   it('aggregates FMC branch data in getSelisihAanwijzingSummary and handles division-by-zero safely', async () => {

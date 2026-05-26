@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { computeProjectRisk, getDaysSinceChanged } from '../src/lib/risk-criteria';
 import type { Project } from '../src/types/database';
 

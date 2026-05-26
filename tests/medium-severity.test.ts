@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { db } from '../src/lib/db';
 import { boqItemSchema, boqAanwijzingSchema } from '../src/lib/validation';
-import { ZodError } from 'zod';
 
 describe('Medium Severity Architecture & Quality Fixes', () => {
   describe('M8: DB Lazy-Loading Proxy', () => {

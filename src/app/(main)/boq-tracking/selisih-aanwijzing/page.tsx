@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Search, Calendar, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, AlertCircle } from 'lucide-react';
 import type { ApiResponse } from '@/lib/response';
 
 interface SelisihAanwijzingSummaryRow {

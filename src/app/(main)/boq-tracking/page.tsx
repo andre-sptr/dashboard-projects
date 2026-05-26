@@ -265,10 +265,14 @@ export default function BoqTrackingPage() {
     return filteredRows.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredRows, currentPage]);
 
-  // Reset page when search or data changes
-  useEffect(() => {
+  // Reset to the first page when the search keyword or selected project changes.
+  // Adjusting state during render avoids the extra render pass an effect would cause.
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevFilters, setPrevFilters] = useState({ search, selectedProject });
+  if (search !== prevFilters.search || selectedProject !== prevFilters.selectedProject) {
+    setPrevFilters({ search, selectedProject });
     setCurrentPage(1);
-  }, [search, selectedProject]);
+  }
 
   const totals = useMemo(() => {
     return rows.reduce(

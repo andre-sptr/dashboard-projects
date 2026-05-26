@@ -14,9 +14,6 @@ describe('Low Severity Polishes & Config Dinamization', () => {
   });
 
   describe('L8: Dynamic Risk Criteria Thresholds', () => {
-    const originalStuckDays = process.env.RISK_THRESHOLD_STUCK_DAYS;
-    const originalNearGolive = process.env.RISK_THRESHOLD_NEAR_GOLIVE_DAYS;
-
     beforeEach(() => {
       vi.stubEnv('RISK_THRESHOLD_STUCK_DAYS', '5');
       vi.stubEnv('RISK_THRESHOLD_NEAR_GOLIVE_DAYS', '10');

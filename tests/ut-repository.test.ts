@@ -181,7 +181,7 @@ describe('UtRepository BOQ & Transaction Operations', () => {
     // Verify items in boq_ut_items
     const dbItems = state.db.prepare('SELECT * FROM boq_ut_items WHERE boq_ut_id = ?').all(boqId);
     expect(dbItems).toHaveLength(1);
-    expect((dbItems[0] as any).designator).toBe('UT-DSG-1');
+    expect((dbItems[0] as { designator: string }).designator).toBe('UT-DSG-1');
 
     // 2. Update with new items (should delete old ones first)
     const newItems = [
@@ -211,6 +211,6 @@ describe('UtRepository BOQ & Transaction Operations', () => {
 
     const dbItems2 = state.db.prepare('SELECT * FROM boq_ut_items WHERE boq_ut_id = ?').all(boqId);
     expect(dbItems2).toHaveLength(1);
-    expect((dbItems2[0] as any).designator).toBe('UT-DSG-2'); // Verify it replaced UT-DSG-1
+    expect((dbItems2[0] as { designator: string }).designator).toBe('UT-DSG-2'); // Verify it replaced UT-DSG-1
   });
 });
