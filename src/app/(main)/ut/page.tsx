@@ -157,20 +157,17 @@ export default function UTPage() {
     setTemuanList(prev => prev.filter((_, i) => i !== index));
   };
 
-  useEffect(() => {
-    if (showForm) {
-      const validItems = temuanList.filter(item => item.text.trim() !== '');
-      const serialized = temuanList
-        .map((item, index) => `${index + 1}. ${item.text.trim()} [${item.checked ? 'x' : ' '}]`)
-        .join('\n');
-      
-      setFormData(prev => ({
-        ...prev,
-        temuan: serialized,
-        jumlah_temuan: validItems.length > 0 ? String(validItems.length) : '',
-      }));
-    }
-  }, [temuanList, showForm]);
+  // Compute serialized temuan from temuanList on demand (not in an effect)
+  const getSerializedTemuan = () => {
+    const validItems = temuanList.filter(item => item.text.trim() !== '');
+    const serialized = temuanList
+      .map((item, index) => `${index + 1}. ${item.text.trim()} [${item.checked ? 'x' : ' '}]`)
+      .join('\n');
+    return {
+      temuan: serialized,
+      jumlah_temuan: validItems.length > 0 ? String(validItems.length) : '',
+    };
+  };
 
   const handleBoqUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -208,14 +205,16 @@ export default function UTPage() {
     setIsSubmitting(true);
 
     try {
+      const temuanData = getSerializedTemuan();
       const res = await fetch('/api/ut', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          temuan: temuanData.temuan,
           jumlah_odp: Number(formData.jumlah_odp) || 0,
           jumlah_port: Number(formData.jumlah_port) || 0,
-          jumlah_temuan: Number(formData.jumlah_temuan) || 0,
+          jumlah_temuan: Number(temuanData.jumlah_temuan) || 0,
           boq_data: boqRows.length > 0 ? boqRows : null,
           id: editingId ?? undefined,
         }),
