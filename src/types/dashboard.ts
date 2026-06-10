@@ -24,6 +24,7 @@ export interface GoliveTimelineDayEntry {
   dateKey: string;
   onTimePorts: number;
   pendingPorts: number;
+  uncommittedPorts: number;
   latePorts: number;
   totalPorts: number;
 }
@@ -35,6 +36,7 @@ export interface GoliveTimelineEntry {
   monthKey: string;
   onTimePorts: number;
   pendingPorts: number;
+  uncommittedPorts: number;
   latePorts: number;
   totalPorts: number;
   days: GoliveTimelineDayEntry[];

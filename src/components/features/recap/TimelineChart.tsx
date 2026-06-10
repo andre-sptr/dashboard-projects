@@ -19,6 +19,7 @@ type TimelineEntry = GoliveTimelineEntry | GoliveTimelineDayEntry;
 type TimelineChartEntry = TimelineEntry & {
   onTimeLabel: number | null;
   pendingLabel: number | null;
+  uncommittedLabel: number | null;
   lateLabel: number | null;
 };
 
@@ -30,8 +31,11 @@ interface TimelineChartProps {
 const STACKS = [
   { key: 'onTimePorts', name: 'Sesuai komitmen', color: '#10b981' },
   { key: 'pendingPorts', name: 'Belum lewat', color: '#9ca3af' },
+  { key: 'uncommittedPorts', name: 'Tanpa Komitmen', color: '#9ca3af', patterned: true },
   { key: 'latePorts', name: 'Melewati komitmen', color: '#ef4444' },
 ] as const;
+
+const UNCOMMITTED_PATTERN_ID = 'golive-uncommitted-pattern';
 
 const formatNumber = (value: unknown) => {
   const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
@@ -45,10 +49,18 @@ const hasPorts = (entry: TimelineEntry) => entry.totalPorts > 0;
 export function buildTimelineChartData(entries: TimelineEntry[]): TimelineChartEntry[] {
   return entries.map((entry) => ({
     ...entry,
-    onTimeLabel: entry.latePorts === 0 && entry.pendingPorts === 0 && entry.onTimePorts > 0
+    onTimeLabel: entry.latePorts === 0
+      && entry.uncommittedPorts === 0
+      && entry.pendingPorts === 0
+      && entry.onTimePorts > 0
       ? entry.totalPorts
       : null,
-    pendingLabel: entry.latePorts === 0 && entry.pendingPorts > 0
+    pendingLabel: entry.latePorts === 0
+      && entry.uncommittedPorts === 0
+      && entry.pendingPorts > 0
+      ? entry.totalPorts
+      : null,
+    uncommittedLabel: entry.latePorts === 0 && entry.uncommittedPorts > 0
       ? entry.totalPorts
       : null,
     lateLabel: entry.latePorts > 0 ? entry.totalPorts : null,
@@ -102,20 +114,40 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
             {STACKS.map((stack) => (
               <span key={stack.key} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: stack.color }} />
+                <span
+                  className="h-2 w-2 rounded-sm"
+                  style={{
+                    backgroundColor: stack.color,
+                    backgroundImage: 'patterned' in stack
+                      ? 'repeating-linear-gradient(135deg, transparent 0 2px, rgba(255,255,255,0.85) 2px 3px)'
+                      : undefined,
+                  }}
+                />
                 {stack.name}
               </span>
             ))}
           </div>
         </div>
         <span className="ml-auto text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-          {(selectedMonth?.totalPorts ?? totalGolivePorts).toLocaleString('id-ID')} total port komitmen
+          {(selectedMonth?.totalPorts ?? totalGolivePorts).toLocaleString('id-ID')} total port timeline
         </span>
       </div>
       {hasData ? (
         <div className="w-full">
           <ResponsiveContainer width="100%" height={350} minWidth={1}>
             <BarChart data={chartData} margin={{ top: 24, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <pattern
+                  id={UNCOMMITTED_PATTERN_ID}
+                  width="6"
+                  height="6"
+                  patternUnits="userSpaceOnUse"
+                  patternTransform="rotate(45)"
+                >
+                  <rect width="6" height="6" fill="#9ca3af" fillOpacity="0.35" />
+                  <line x1="0" y1="0" x2="0" y2="6" stroke="#9ca3af" strokeWidth="2" />
+                </pattern>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis
                 dataKey="name"
@@ -170,6 +202,22 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
                 />
               </Bar>
               <Bar
+                dataKey="uncommittedPorts"
+                stackId="golive"
+                fill={`url(#${UNCOMMITTED_PATTERN_ID})`}
+                name="Tanpa Komitmen"
+                barSize={selectedMonth ? 14 : 40}
+                onClick={handleBarClick}
+                cursor={selectedMonth ? 'default' : 'pointer'}
+              >
+                <LabelList
+                  dataKey="uncommittedLabel"
+                  position="top"
+                  formatter={formatLabel}
+                  className="fill-gray-700 text-[11px] font-semibold dark:fill-gray-200"
+                />
+              </Bar>
+              <Bar
                 dataKey="latePorts"
                 stackId="golive"
                 fill="#ef4444"
@@ -190,7 +238,7 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
         </div>
       ) : (
         <p className="text-sm text-gray-500 italic">
-          Belum ada data komitmen golive pada periode ini.
+          Belum ada data tanggal golive atau komitmen golive pada periode ini.
         </p>
       )}
     </div>

@@ -26,6 +26,7 @@ const PIE = {
 const BAR_INDIGO = '#6366f1';
 const BAR_EMERALD = '#10b981';
 const BAR_GRAY = '#9ca3af';
+const BAR_GRAY_LIGHT = '#cbd5e1';
 const BAR_RED = '#ef4444';
 
 const STATUS_COLS = [
@@ -454,7 +455,7 @@ export async function exportDashboardPDF(
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...C.emerald);
   doc.text(
-    `${timelineSource.totalGolivePorts.toLocaleString('id-ID')} total port komitmen`,
+    `${timelineSource.totalGolivePorts.toLocaleString('id-ID')} total port timeline`,
     margin + usableWidth, y, { align: 'right' }
   );
   doc.setTextColor(...C.textDark);
@@ -482,6 +483,7 @@ export async function exportDashboardPDF(
       const segments = [
         { value: m.onTimePorts, color: BAR_EMERALD },
         { value: m.pendingPorts, color: BAR_GRAY },
+        { value: m.uncommittedPorts, color: BAR_GRAY_LIGHT },
         { value: m.latePorts, color: BAR_RED },
       ];
       let top = chartBottom;
@@ -511,7 +513,7 @@ export async function exportDashboardPDF(
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(...C.textMuted);
-    doc.text('Belum ada data tanggal golive.', margin + 5, y + chartH / 2);
+    doc.text('Belum ada data tanggal golive atau komitmen.', margin + 5, y + chartH / 2);
     doc.setTextColor(...C.textDark);
     y += chartH + 10;
   }

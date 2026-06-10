@@ -19,6 +19,12 @@ interface DashboardStatsOptions {
   today?: Date;
 }
 
+type GoliveTimelineBucket =
+  | 'onTimePorts'
+  | 'pendingPorts'
+  | 'uncommittedPorts'
+  | 'latePorts';
+
 // Komitmen golive date (target) used for the month/year filter.
 export function getKomitmenGoliveDate(project: Project, colMap: ColumnMap = DEFAULT_COLUMN_MAP): Date | null {
   const fullData = getFullDataArray(project);
@@ -76,6 +82,7 @@ function createTimelineMonth(year: number, month: number): GoliveTimelineEntry {
     monthKey: getMonthKey(year, month),
     onTimePorts: 0,
     pendingPorts: 0,
+    uncommittedPorts: 0,
     latePorts: 0,
     totalPorts: 0,
     days: Array.from({ length: daysInMonth }, (_, index) => {
@@ -86,6 +93,7 @@ function createTimelineMonth(year: number, month: number): GoliveTimelineEntry {
         dateKey: getDateKey(year, month, day),
         onTimePorts: 0,
         pendingPorts: 0,
+        uncommittedPorts: 0,
         latePorts: 0,
         totalPorts: 0,
       };
@@ -94,27 +102,29 @@ function createTimelineMonth(year: number, month: number): GoliveTimelineEntry {
 }
 
 function classifyGoliveTimelineBucket(
-  targetDate: Date,
   actualDate: Date | null,
+  targetDate: Date | null,
   today: Date
-): 'onTimePorts' | 'pendingPorts' | 'latePorts' {
+): GoliveTimelineBucket | null {
   if (actualDate) {
+    if (!targetDate) return 'uncommittedPorts';
     return actualDate.getTime() <= targetDate.getTime() ? 'onTimePorts' : 'latePorts';
   }
 
+  if (!targetDate) return null;
   return targetDate.getTime() >= today.getTime() ? 'pendingPorts' : 'latePorts';
 }
 
 function addTimelinePorts(
   entry: GoliveTimelineEntry,
-  targetDate: Date,
-  category: 'onTimePorts' | 'pendingPorts' | 'latePorts',
+  timelineDate: Date,
+  category: GoliveTimelineBucket,
   ports: number
 ) {
   entry[category] += ports;
   entry.totalPorts += ports;
 
-  const dayEntry = entry.days[targetDate.getDate() - 1];
+  const dayEntry = entry.days[timelineDate.getDate() - 1];
   if (!dayEntry) return;
   dayEntry[category] += ports;
   dayEntry.totalPorts += ports;
@@ -153,21 +163,22 @@ export function buildDashboardStats(
     const status = mappedProject.status || '-';
     statusMap.set(status, (statusMap.get(status) || 0) + ports);
 
-    // Timeline grouped by commitment date and split into stacked SLA buckets.
-    const targetValue = fullData[colMap.KOMITMEN_GOLIVE] ?? mappedProject.golive_target;
-    const targetDateRaw = parseExcelDate(targetValue);
+    // Completed projects use their actual golive date. Pending projects fall
+    // back to their commitment date so they remain visible on the timeline.
+    const targetDateRaw = parseExcelDate(mappedProject.golive_target);
+    const actualDateRaw = parseExcelDate(mappedProject.golive_actual);
+    const targetDate = targetDateRaw ? startOfLocalDay(targetDateRaw) : null;
+    const actualDate = actualDateRaw ? startOfLocalDay(actualDateRaw) : null;
+    const timelineDate = actualDate ?? targetDate;
+    const category = classifyGoliveTimelineBucket(actualDate, targetDate, today);
 
-    if (targetDateRaw) {
-      const targetDate = startOfLocalDay(targetDateRaw);
-      const actualDateRaw = parseExcelDate(fullData[colMap.TANGGAL_GOLIVE]);
-      const actualDate = actualDateRaw ? startOfLocalDay(actualDateRaw) : null;
-      const monthKey = getMonthKey(targetDate.getFullYear(), targetDate.getMonth());
+    if (timelineDate && category) {
+      const monthKey = getMonthKey(timelineDate.getFullYear(), timelineDate.getMonth());
       const entry = goliveMonthMap.get(monthKey)
-        ?? createTimelineMonth(targetDate.getFullYear(), targetDate.getMonth());
-      const category = classifyGoliveTimelineBucket(targetDate, actualDate, today);
+        ?? createTimelineMonth(timelineDate.getFullYear(), timelineDate.getMonth());
 
       totalGolivePorts += ports;
-      addTimelinePorts(entry, targetDate, category, ports);
+      addTimelinePorts(entry, timelineDate, category, ports);
       goliveMonthMap.set(monthKey, entry);
     }
 

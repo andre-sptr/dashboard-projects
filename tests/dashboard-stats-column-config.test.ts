@@ -60,7 +60,7 @@ describe('dashboard stats column configuration', () => {
     expect(risky).toEqual([]);
   });
 
-  it('groups golive timeline by commitment date with on-time, pending, and late port stacks', () => {
+  it('groups golive timeline by actual date with commitment fallback and an uncommitted stack', () => {
     const colMap: ColumnMap = {
       ...DEFAULT_COLUMN_MAP,
       STATUS: 2,
@@ -100,11 +100,12 @@ describe('dashboard stats column configuration', () => {
 
     const stats = buildDashboardStats(
       [
-        makeProject('ON-TIME', 10, '10/06/2026', '10/06/2026'),
+        makeProject('ON-TIME-CROSS-MONTH', 10, '31/01/2026', '10/02/2026'),
+        makeProject('UNCOMMITTED', 12, '29/01/2026', null),
         makeProject('PENDING', 20, null, '12/06/2026'),
         makeProject('PENDING-ZERO', 5, '0', '13/06/2026'),
         makeProject('MISSING-COMMITMENT', 7, null, null),
-        makeProject('LATE-ACTUAL', 30, '15/06/2026', '11/06/2026'),
+        makeProject('LATE-ACTUAL-CROSS-MONTH', 30, '15/03/2026', '11/02/2026'),
         makeProject('LATE-OVERDUE', 40, null, '09/06/2026'),
         makeProject('NEXT-MONTH-PENDING', 50, null, '01/07/2026'),
       ],
@@ -112,38 +113,55 @@ describe('dashboard stats column configuration', () => {
       { today: new Date(2026, 5, 10) }
     );
 
-    expect(stats.totalGolivePorts).toBe(155);
-    expect(stats.goliveMonthList).toEqual([
-      {
-        name: 'Jun 2026',
-        year: 2026,
-        month: 5,
-        monthKey: '2026-06',
-        onTimePorts: 10,
-        pendingPorts: 25,
-        latePorts: 70,
-        totalPorts: 105,
-        days: expect.arrayContaining([
-          expect.objectContaining({ name: '9', latePorts: 40, totalPorts: 40 }),
-          expect.objectContaining({ name: '10', onTimePorts: 10, pendingPorts: 0, totalPorts: 10 }),
-          expect.objectContaining({ name: '11', latePorts: 30, totalPorts: 30 }),
-          expect.objectContaining({ name: '12', pendingPorts: 20, totalPorts: 20 }),
-          expect.objectContaining({ name: '13', pendingPorts: 5, totalPorts: 5 }),
-        ]),
-      },
-      {
-        name: 'Jul 2026',
-        year: 2026,
-        month: 6,
-        monthKey: '2026-07',
-        onTimePorts: 0,
-        pendingPorts: 50,
-        latePorts: 0,
-        totalPorts: 50,
-        days: expect.arrayContaining([
-          expect.objectContaining({ name: '1', pendingPorts: 50, totalPorts: 50 }),
-        ]),
-      },
+    expect(stats.totalGolivePorts).toBe(167);
+    expect(stats.goliveMonthList.map((month) => month.monthKey)).toEqual([
+      '2026-01',
+      '2026-02',
+      '2026-03',
+      '2026-04',
+      '2026-05',
+      '2026-06',
+      '2026-07',
     ]);
+
+    expect(stats.goliveMonthList.find((month) => month.monthKey === '2026-01')).toMatchObject({
+      onTimePorts: 10,
+      pendingPorts: 0,
+      uncommittedPorts: 12,
+      latePorts: 0,
+      totalPorts: 22,
+      days: expect.arrayContaining([
+        expect.objectContaining({ name: '29', uncommittedPorts: 12, totalPorts: 12 }),
+        expect.objectContaining({ name: '31', onTimePorts: 10, totalPorts: 10 }),
+      ]),
+    });
+    expect(stats.goliveMonthList.find((month) => month.monthKey === '2026-02')).toMatchObject({
+      totalPorts: 0,
+    });
+    expect(stats.goliveMonthList.find((month) => month.monthKey === '2026-03')).toMatchObject({
+      latePorts: 30,
+      totalPorts: 30,
+      days: expect.arrayContaining([
+        expect.objectContaining({ name: '15', latePorts: 30, totalPorts: 30 }),
+      ]),
+    });
+    expect(stats.goliveMonthList.find((month) => month.monthKey === '2026-06')).toMatchObject({
+      pendingPorts: 25,
+      uncommittedPorts: 0,
+      latePorts: 40,
+      totalPorts: 65,
+      days: expect.arrayContaining([
+        expect.objectContaining({ name: '9', latePorts: 40, totalPorts: 40 }),
+        expect.objectContaining({ name: '12', pendingPorts: 20, totalPorts: 20 }),
+        expect.objectContaining({ name: '13', pendingPorts: 5, totalPorts: 5 }),
+      ]),
+    });
+    expect(stats.goliveMonthList.find((month) => month.monthKey === '2026-07')).toMatchObject({
+      pendingPorts: 50,
+      totalPorts: 50,
+      days: expect.arrayContaining([
+        expect.objectContaining({ name: '1', pendingPorts: 50, totalPorts: 50 }),
+      ]),
+    });
   });
 });
