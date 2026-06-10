@@ -16,6 +16,11 @@ import {
 import type { GoliveTimelineDayEntry, GoliveTimelineEntry } from '@/types/dashboard';
 
 type TimelineEntry = GoliveTimelineEntry | GoliveTimelineDayEntry;
+type TimelineChartEntry = TimelineEntry & {
+  onTimeLabel: number | null;
+  pendingLabel: number | null;
+  lateLabel: number | null;
+};
 
 interface TimelineChartProps {
   goliveMonthList: GoliveTimelineEntry[];
@@ -33,7 +38,22 @@ const formatNumber = (value: unknown) => {
   return numericValue.toLocaleString('id-ID');
 };
 
+const formatLabel = (value: unknown) => value == null ? '' : formatNumber(value);
+
 const hasPorts = (entry: TimelineEntry) => entry.totalPorts > 0;
+
+export function buildTimelineChartData(entries: TimelineEntry[]): TimelineChartEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    onTimeLabel: entry.latePorts === 0 && entry.pendingPorts === 0 && entry.onTimePorts > 0
+      ? entry.totalPorts
+      : null,
+    pendingLabel: entry.latePorts === 0 && entry.pendingPorts > 0
+      ? entry.totalPorts
+      : null,
+    lateLabel: entry.latePorts > 0 ? entry.totalPorts : null,
+  }));
+}
 
 function getPayload(value: unknown): TimelineEntry | null {
   if (!value || typeof value !== 'object') return null;
@@ -49,7 +69,8 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
     () => goliveMonthList.find((month) => month.monthKey === selectedMonthKey) ?? null,
     [goliveMonthList, selectedMonthKey]
   );
-  const chartData: TimelineEntry[] = selectedMonth ? selectedMonth.days : goliveMonthList;
+  const timelineEntries: TimelineEntry[] = selectedMonth ? selectedMonth.days : goliveMonthList;
+  const chartData = buildTimelineChartData(timelineEntries);
   const hasData = chartData.some(hasPorts);
 
   const handleBarClick = (value: unknown) => {
@@ -124,7 +145,14 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
                 barSize={selectedMonth ? 14 : 40}
                 onClick={handleBarClick}
                 cursor={selectedMonth ? 'default' : 'pointer'}
-              />
+              >
+                <LabelList
+                  dataKey="onTimeLabel"
+                  position="top"
+                  formatter={formatLabel}
+                  className="fill-gray-700 text-[11px] font-semibold dark:fill-gray-200"
+                />
+              </Bar>
               <Bar
                 dataKey="pendingPorts"
                 stackId="golive"
@@ -133,7 +161,14 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
                 barSize={selectedMonth ? 14 : 40}
                 onClick={handleBarClick}
                 cursor={selectedMonth ? 'default' : 'pointer'}
-              />
+              >
+                <LabelList
+                  dataKey="pendingLabel"
+                  position="top"
+                  formatter={formatLabel}
+                  className="fill-gray-700 text-[11px] font-semibold dark:fill-gray-200"
+                />
+              </Bar>
               <Bar
                 dataKey="latePorts"
                 stackId="golive"
@@ -144,9 +179,9 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
                 cursor={selectedMonth ? 'default' : 'pointer'}
               >
                 <LabelList
-                  dataKey="totalPorts"
+                  dataKey="lateLabel"
                   position="top"
-                  formatter={formatNumber}
+                  formatter={formatLabel}
                   className="fill-gray-700 text-[11px] font-semibold dark:fill-gray-200"
                 />
               </Bar>
