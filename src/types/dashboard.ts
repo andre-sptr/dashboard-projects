@@ -18,6 +18,28 @@ export interface BranchRankingEntry {
   statusCounts: Record<string, number>;
 }
 
+export interface GoliveTimelineDayEntry {
+  name: string;
+  day: number;
+  dateKey: string;
+  onTimePorts: number;
+  pendingPorts: number;
+  latePorts: number;
+  totalPorts: number;
+}
+
+export interface GoliveTimelineEntry {
+  name: string;
+  year: number;
+  month: number;
+  monthKey: string;
+  onTimePorts: number;
+  pendingPorts: number;
+  latePorts: number;
+  totalPorts: number;
+  days: GoliveTimelineDayEntry[];
+}
+
 export interface DashboardStats {
   total: number;
   totalPorts: number;
@@ -28,7 +50,7 @@ export interface DashboardStats {
   statusList: { name: string; count: number }[];
   overallAchiev: number;
   totalGolivePorts: number;
-  goliveMonthList: { name: string; count: number }[];
+  goliveMonthList: GoliveTimelineEntry[];
   branchGoliveData: { name: string; done: number; achiev: number }[];
   branchRankingData: BranchRankingEntry[];
   recent: Project[];

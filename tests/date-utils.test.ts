@@ -197,6 +197,8 @@ describe('Date Utilities - Excel parsing and formatting', () => {
     expect(parseExcelDate(undefined)).toBeNull();
     expect(parseExcelDate('')).toBeNull();
     expect(parseExcelDate('#N/A')).toBeNull();
+    expect(parseExcelDate(0)).toBeNull();
+    expect(parseExcelDate('0')).toBeNull();
   });
 
   it('formatExcelDate & formatExcelDateShort: formats Excel values to Indonesian locale', () => {

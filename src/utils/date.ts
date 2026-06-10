@@ -187,6 +187,7 @@ export function parseExcelDate(value: unknown): Date | null {
   if (value === null || value === undefined || value === '' || String(value).trim() === '#N/A') return null;
 
   const strVal = String(value).trim().toUpperCase();
+  if (strVal === '0') return null;
 
   // Handle Excel Serial Number
   const serial = Number(strVal);

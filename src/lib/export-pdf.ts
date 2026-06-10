@@ -25,6 +25,8 @@ const PIE = {
 };
 const BAR_INDIGO = '#6366f1';
 const BAR_EMERALD = '#10b981';
+const BAR_GRAY = '#9ca3af';
+const BAR_RED = '#ef4444';
 
 const STATUS_COLS = [
   '0. DROP',
@@ -452,7 +454,7 @@ export async function exportDashboardPDF(
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...C.emerald);
   doc.text(
-    `${timelineSource.totalGolivePorts.toLocaleString('id-ID')} total ports golive`,
+    `${timelineSource.totalGolivePorts.toLocaleString('id-ID')} total port komitmen`,
     margin + usableWidth, y, { align: 'right' }
   );
   doc.setTextColor(...C.textDark);
@@ -460,8 +462,8 @@ export async function exportDashboardPDF(
 
   const chartH = 50;
   panel(margin, y, usableWidth, chartH);
-  if (months.some((m) => m.count > 0)) {
-    const maxC = Math.max(1, ...months.map((m) => m.count));
+  if (months.some((m) => m.totalPorts > 0)) {
+    const maxC = Math.max(1, ...months.map((m) => m.totalPorts));
     const padL = 6;
     const chartBottom = y + chartH - 9;
     const chartTop = y + 6;
@@ -476,16 +478,27 @@ export async function exportDashboardPDF(
     const slot = plotW / months.length;
     const barW = Math.min(slot * 0.6, 11);
     months.forEach((m, i) => {
-      const h = (m.count / maxC) * plotH;
       const bx = plotX + slot * i + (slot - barW) / 2;
-      const by = chartBottom - h;
-      if (m.count > 0) {
-        doc.setFillColor(...hexToRgb(BAR_EMERALD));
-        doc.roundedRect(bx, by, barW, h, 0.8, 0.8, 'F');
+      const segments = [
+        { value: m.onTimePorts, color: BAR_EMERALD },
+        { value: m.pendingPorts, color: BAR_GRAY },
+        { value: m.latePorts, color: BAR_RED },
+      ];
+      let top = chartBottom;
+
+      for (const segment of segments) {
+        const h = (segment.value / maxC) * plotH;
+        if (h <= 0) continue;
+        top -= h;
+        doc.setFillColor(...hexToRgb(segment.color));
+        doc.rect(bx, top, barW, h, 'F');
+      }
+
+      if (m.totalPorts > 0) {
         doc.setFontSize(5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...C.textDark);
-        doc.text(m.count.toLocaleString('id-ID'), bx + barW / 2, by - 1, { align: 'center' });
+        doc.text(m.totalPorts.toLocaleString('id-ID'), bx + barW / 2, top - 1, { align: 'center' });
       }
       doc.setFontSize(5);
       doc.setFont('helvetica', 'normal');

@@ -1,9 +1,8 @@
 // Shared dashboard statistics builders (client + server safe).
 import type { Project } from '@/types/database';
-import type { DashboardStats, RiskyProjectDTO } from '@/types/dashboard';
+import type { DashboardStats, GoliveTimelineEntry, RiskyProjectDTO } from '@/types/dashboard';
 import {
   classifyStatus,
-  formatExcelDateShort,
   getFullDataArray,
   parseExcelDate,
   parseNumber,
@@ -15,6 +14,10 @@ export const STATUS_COLS = [
   '0. DROP', '1. AANWIJZING', '2. DONE AANWIJZING', '3. PERIZINAN',
   '4. MATDEL', '5. INSTALASI', '6. FINISH INSTALASI', '7. GOLIVE', '8. UJI TERIMA',
 ] as const;
+
+interface DashboardStatsOptions {
+  today?: Date;
+}
 
 // Komitmen golive date (target) used for the month/year filter.
 export function getKomitmenGoliveDate(project: Project, colMap: ColumnMap = DEFAULT_COLUMN_MAP): Date | null {
@@ -51,7 +54,77 @@ function computeStatusAchiev(sc: Record<string, number>): number {
   return total > 0 ? Math.round((golive / total) * 10000) / 100 : 0;
 }
 
-export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEFAULT_COLUMN_MAP): DashboardStats {
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getMonthKey(year: number, month: number): string {
+  return `${year}-${String(month + 1).padStart(2, '0')}`;
+}
+
+function getDateKey(year: number, month: number, day: number): string {
+  return `${getMonthKey(year, month)}-${String(day).padStart(2, '0')}`;
+}
+
+function createTimelineMonth(year: number, month: number): GoliveTimelineEntry {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  return {
+    name: new Date(year, month, 1).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }),
+    year,
+    month,
+    monthKey: getMonthKey(year, month),
+    onTimePorts: 0,
+    pendingPorts: 0,
+    latePorts: 0,
+    totalPorts: 0,
+    days: Array.from({ length: daysInMonth }, (_, index) => {
+      const day = index + 1;
+      return {
+        name: String(day),
+        day,
+        dateKey: getDateKey(year, month, day),
+        onTimePorts: 0,
+        pendingPorts: 0,
+        latePorts: 0,
+        totalPorts: 0,
+      };
+    }),
+  };
+}
+
+function classifyGoliveTimelineBucket(
+  targetDate: Date,
+  actualDate: Date | null,
+  today: Date
+): 'onTimePorts' | 'pendingPorts' | 'latePorts' {
+  if (actualDate) {
+    return actualDate.getTime() <= targetDate.getTime() ? 'onTimePorts' : 'latePorts';
+  }
+
+  return targetDate.getTime() >= today.getTime() ? 'pendingPorts' : 'latePorts';
+}
+
+function addTimelinePorts(
+  entry: GoliveTimelineEntry,
+  targetDate: Date,
+  category: 'onTimePorts' | 'pendingPorts' | 'latePorts',
+  ports: number
+) {
+  entry[category] += ports;
+  entry.totalPorts += ports;
+
+  const dayEntry = entry.days[targetDate.getDate() - 1];
+  if (!dayEntry) return;
+  dayEntry[category] += ports;
+  dayEntry.totalPorts += ports;
+}
+
+export function buildDashboardStats(
+  projects: Project[],
+  colMap: ColumnMap = DEFAULT_COLUMN_MAP,
+  options: DashboardStatsOptions = {}
+): DashboardStats {
   let totalPorts = 0;
   let donePorts = 0;
   let progressPorts = 0;
@@ -59,10 +132,11 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
   let otherPorts = 0;
 
   const statusMap = new Map<string, number>();
-  const goliveMonthMap = new Map<string, number>();
+  const goliveMonthMap = new Map<string, GoliveTimelineEntry>();
   const branchRankingMap = new Map<string, { planned: number; actual: number; statusCounts: Record<string, number> }>();
   const globalStatusCounts: Record<string, number> = Object.fromEntries(STATUS_COLS.map(s => [s, 0]));
   let totalGolivePorts = 0;
+  const today = startOfLocalDay(options.today ?? new Date());
 
   for (const project of projects) {
     const fullData = getFullDataArray(project);
@@ -79,12 +153,22 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
     const status = mappedProject.status || '-';
     statusMap.set(status, (statusMap.get(status) || 0) + ports);
 
-    // Timeline grouped by actual Tanggal Golive (kolom AF) month — based purely on
-    // whether a golive date exists, regardless of status.
-    const goliveStr = formatExcelDateShort(fullData[colMap.TANGGAL_GOLIVE]);
-    if (goliveStr) {
+    // Timeline grouped by commitment date and split into stacked SLA buckets.
+    const targetValue = fullData[colMap.KOMITMEN_GOLIVE] ?? mappedProject.golive_target;
+    const targetDateRaw = parseExcelDate(targetValue);
+
+    if (targetDateRaw) {
+      const targetDate = startOfLocalDay(targetDateRaw);
+      const actualDateRaw = parseExcelDate(fullData[colMap.TANGGAL_GOLIVE]);
+      const actualDate = actualDateRaw ? startOfLocalDay(actualDateRaw) : null;
+      const monthKey = getMonthKey(targetDate.getFullYear(), targetDate.getMonth());
+      const entry = goliveMonthMap.get(monthKey)
+        ?? createTimelineMonth(targetDate.getFullYear(), targetDate.getMonth());
+      const category = classifyGoliveTimelineBucket(targetDate, actualDate, today);
+
       totalGolivePorts += ports;
-      goliveMonthMap.set(goliveStr, (goliveMonthMap.get(goliveStr) || 0) + ports);
+      addTimelinePorts(entry, targetDate, category, ports);
+      goliveMonthMap.set(monthKey, entry);
     }
 
     const branch = (mappedProject.branch || 'UNKNOWN').toUpperCase();
@@ -105,15 +189,9 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
     branchRankingMap.set(branch, rankEntry);
   }
 
-  const goliveMonthList: { name: string; count: number }[] = [];
-  const parsedMonths = Array.from(goliveMonthMap.keys())
-    .map((label) => {
-      const parts = label.split(' ');
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const monthIndex = monthNames.findIndex(m => m.toLowerCase() === parts[0].toLowerCase());
-      return { label, year: parseInt(parts[1]), month: monthIndex % 12 };
-    })
+  const goliveMonthList: GoliveTimelineEntry[] = [];
+  const parsedMonths = Array.from(goliveMonthMap.values())
+    .map((entry) => ({ year: entry.year, month: entry.month }))
     .filter(m => !isNaN(m.year) && m.year >= 1900 && m.year <= 2100 && m.month >= 0);
 
   if (parsedMonths.length > 0) {
@@ -127,8 +205,10 @@ export function buildDashboardStats(projects: Project[], colMap: ColumnMap = DEF
       const endMonth = year === maxYear ? maxMonth : 11;
       for (let month = startMonth; month <= endMonth; month++) {
         const date = new Date(year, month, 1);
-        const label = date.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
-        goliveMonthList.push({ name: label, count: goliveMonthMap.get(label) || 0 });
+        const monthKey = getMonthKey(date.getFullYear(), date.getMonth());
+        goliveMonthList.push(
+          goliveMonthMap.get(monthKey) ?? createTimelineMonth(date.getFullYear(), date.getMonth())
+        );
       }
     }
   }

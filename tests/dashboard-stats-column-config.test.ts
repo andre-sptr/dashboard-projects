@@ -59,4 +59,91 @@ describe('dashboard stats column configuration', () => {
     });
     expect(risky).toEqual([]);
   });
+
+  it('groups golive timeline by commitment date with on-time, pending, and late port stacks', () => {
+    const colMap: ColumnMap = {
+      ...DEFAULT_COLUMN_MAP,
+      STATUS: 2,
+      PORT_PLAN: 3,
+      REAL_JML_PORT_GOLIVE: 4,
+      BRANCH_FMC: 5,
+      TANGGAL_GOLIVE: 6,
+      KOMITMEN_GOLIVE: 7,
+    };
+
+    const makeProject = (
+      uid: string,
+      ports: number,
+      actual: string | null,
+      target: string | null
+    ): Project => {
+      const fullData: unknown[] = [];
+      fullData[2] = actual ? '7. GOLIVE' : '5. INSTALASI';
+      fullData[3] = String(ports);
+      fullData[4] = actual ? String(ports - 1) : '0';
+      fullData[5] = 'CONFIG-BRANCH';
+      fullData[6] = actual;
+      fullData[7] = target;
+
+      return {
+        ...staleProject,
+        uid,
+        id_ihld: uid,
+        status: String(fullData[2]),
+        full_data: JSON.stringify(fullData),
+        port_planned: ports,
+        port_realized: actual ? ports - 1 : 0,
+        golive_actual: actual,
+        golive_target: target,
+      };
+    };
+
+    const stats = buildDashboardStats(
+      [
+        makeProject('ON-TIME', 10, '10/06/2026', '10/06/2026'),
+        makeProject('PENDING', 20, null, '12/06/2026'),
+        makeProject('PENDING-ZERO', 5, '0', '13/06/2026'),
+        makeProject('MISSING-COMMITMENT', 7, null, null),
+        makeProject('LATE-ACTUAL', 30, '15/06/2026', '11/06/2026'),
+        makeProject('LATE-OVERDUE', 40, null, '09/06/2026'),
+        makeProject('NEXT-MONTH-PENDING', 50, null, '01/07/2026'),
+      ],
+      colMap,
+      { today: new Date(2026, 5, 10) }
+    );
+
+    expect(stats.totalGolivePorts).toBe(155);
+    expect(stats.goliveMonthList).toEqual([
+      {
+        name: 'Jun 2026',
+        year: 2026,
+        month: 5,
+        monthKey: '2026-06',
+        onTimePorts: 10,
+        pendingPorts: 25,
+        latePorts: 70,
+        totalPorts: 105,
+        days: expect.arrayContaining([
+          expect.objectContaining({ name: '9', latePorts: 40, totalPorts: 40 }),
+          expect.objectContaining({ name: '10', onTimePorts: 10, pendingPorts: 0, totalPorts: 10 }),
+          expect.objectContaining({ name: '11', latePorts: 30, totalPorts: 30 }),
+          expect.objectContaining({ name: '12', pendingPorts: 20, totalPorts: 20 }),
+          expect.objectContaining({ name: '13', pendingPorts: 5, totalPorts: 5 }),
+        ]),
+      },
+      {
+        name: 'Jul 2026',
+        year: 2026,
+        month: 6,
+        monthKey: '2026-07',
+        onTimePorts: 0,
+        pendingPorts: 50,
+        latePorts: 0,
+        totalPorts: 50,
+        days: expect.arrayContaining([
+          expect.objectContaining({ name: '1', pendingPorts: 50, totalPorts: 50 }),
+        ]),
+      },
+    ]);
+  });
 });
