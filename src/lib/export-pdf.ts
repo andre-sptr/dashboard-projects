@@ -448,6 +448,14 @@ export async function exportDashboardPDF(
   // ── Tanggal Golive per Bulan (vertical bar chart) ───────────────────────────
   const timelineSource = options.timelineStats ?? stats;
   const months = timelineSource.goliveMonthList;
+  const uncommittedTimelinePorts = months.reduce(
+    (sum, month) => sum + month.uncommittedPorts,
+    0
+  );
+  const committedTimelinePorts = Math.max(
+    0,
+    timelineSource.totalGolivePorts - uncommittedTimelinePorts
+  );
   y += 6;
   ensureSpace(70);
   sectionTitle('Tanggal Golive per Bulan (by Port)', y, C.emerald);
@@ -455,7 +463,7 @@ export async function exportDashboardPDF(
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...C.emerald);
   doc.text(
-    `${timelineSource.totalGolivePorts.toLocaleString('id-ID')} total port timeline`,
+    `${committedTimelinePorts.toLocaleString('id-ID')} port komitmen + ${uncommittedTimelinePorts.toLocaleString('id-ID')} tanpa komitmen`,
     margin + usableWidth, y, { align: 'right' }
   );
   doc.setTextColor(...C.textDark);

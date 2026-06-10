@@ -67,6 +67,18 @@ export function buildTimelineChartData(entries: TimelineEntry[]): TimelineChartE
   }));
 }
 
+export function buildTimelineSummary(entries: TimelineEntry[], totalPorts: number) {
+  const uncommittedPorts = entries.reduce(
+    (sum, entry) => sum + entry.uncommittedPorts,
+    0
+  );
+
+  return {
+    committedPorts: Math.max(0, totalPorts - uncommittedPorts),
+    uncommittedPorts,
+  };
+}
+
 function getPayload(value: unknown): TimelineEntry | null {
   if (!value || typeof value !== 'object') return null;
   const payload = (value as { payload?: unknown }).payload;
@@ -84,6 +96,10 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
   const timelineEntries: TimelineEntry[] = selectedMonth ? selectedMonth.days : goliveMonthList;
   const chartData = buildTimelineChartData(timelineEntries);
   const hasData = chartData.some(hasPorts);
+  const timelineSummary = buildTimelineSummary(
+    selectedMonth ? [selectedMonth] : goliveMonthList,
+    selectedMonth?.totalPorts ?? totalGolivePorts
+  );
 
   const handleBarClick = (value: unknown) => {
     if (selectedMonth) return;
@@ -128,9 +144,19 @@ export const TimelineChart = ({ goliveMonthList, totalGolivePorts }: TimelineCha
             ))}
           </div>
         </div>
-        <span className="ml-auto text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-          {(selectedMonth?.totalPorts ?? totalGolivePorts).toLocaleString('id-ID')} total port timeline
-        </span>
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+            {timelineSummary.committedPorts.toLocaleString('id-ID')} total port komitmen
+          </span>
+          <span
+            className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(135deg, transparent 0 4px, rgba(156,163,175,0.22) 4px 6px)',
+            }}
+          >
+            + {timelineSummary.uncommittedPorts.toLocaleString('id-ID')} port tanpa komitmen
+          </span>
+        </div>
       </div>
       {hasData ? (
         <div className="w-full">

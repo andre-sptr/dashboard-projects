@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildTimelineChartData } from '@/components/features/recap/TimelineChart';
+import {
+  buildTimelineChartData,
+  buildTimelineSummary,
+} from '@/components/features/recap/TimelineChart';
 import type { GoliveTimelineDayEntry } from '@/types/dashboard';
 
 const createEntry = (
@@ -31,5 +34,22 @@ describe('buildTimelineChartData', () => {
       { onTimeLabel: null, pendingLabel: null, uncommittedLabel: 13, lateLabel: null },
       { onTimeLabel: null, pendingLabel: null, uncommittedLabel: null, lateLabel: 14 },
     ]);
+  });
+
+  it('separates committed ports from uncommitted timeline ports', () => {
+    const summary = buildTimelineSummary(
+      [
+        createEntry({ uncommittedPorts: 3_712, totalPorts: 3_712 }),
+        createEntry({ uncommittedPorts: 72, totalPorts: 2_520 }),
+        createEntry({ uncommittedPorts: 208, totalPorts: 4_384 }),
+        createEntry({ uncommittedPorts: 64, totalPorts: 1_736 }),
+      ],
+      20_248
+    );
+
+    expect(summary).toEqual({
+      committedPorts: 16_192,
+      uncommittedPorts: 4_056,
+    });
   });
 });
