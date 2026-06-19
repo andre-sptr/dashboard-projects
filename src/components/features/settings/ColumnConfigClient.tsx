@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { type SetStateAction, useMemo, useState } from 'react';
 import {
   Save,
   RotateCcw,
@@ -13,6 +13,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { indexToLetter, letterToIndex } from '@/lib/sheet-columns';
+import type { ProjectType } from '@/types/database';
+import { PROJECT_TYPES } from '@/lib/project-types';
 
 interface ColumnConfigRow {
   field_key: string;
@@ -23,7 +25,10 @@ interface ColumnConfigRow {
 }
 
 interface Props {
-  initialConfig: ColumnConfigRow[];
+  initialConfig?: ColumnConfigRow[];
+  initialConfigs?: Record<ProjectType, ColumnConfigRow[]>;
+  initialProjectType?: ProjectType;
+  projectOptions?: { type: ProjectType; label: string }[];
 }
 
 interface DetectedEntry {
@@ -34,12 +39,50 @@ interface DetectedEntry {
 
 type Banner = { type: 'success' | 'error' | 'info'; text: string } | null;
 
-export default function ColumnConfigClient({ initialConfig }: Props) {
-  const [rows, setRows] = useState<ColumnConfigRow[]>(initialConfig);
+const DEFAULT_PROJECT_OPTIONS = PROJECT_TYPES.map((type) => ({ type, label: type === 'NODEB' ? 'NodeB' : type }));
+const EMPTY_ROWS: ColumnConfigRow[] = [];
+
+function createInitialConfigState(
+  initialConfig?: ColumnConfigRow[],
+  initialConfigs?: Record<ProjectType, ColumnConfigRow[]>
+): Record<ProjectType, ColumnConfigRow[]> {
+  return {
+    JPP: initialConfigs?.JPP ?? initialConfig ?? [],
+    NODEB: initialConfigs?.NODEB ?? [],
+    HEM: initialConfigs?.HEM ?? [],
+  };
+}
+
+export default function ColumnConfigClient({
+  initialConfig,
+  initialConfigs,
+  initialProjectType = 'JPP',
+  projectOptions = DEFAULT_PROJECT_OPTIONS,
+}: Props) {
+  const [selectedProjectType, setSelectedProjectType] = useState<ProjectType>(initialProjectType);
+  const [rowsByProject, setRowsByProject] = useState<Record<ProjectType, ColumnConfigRow[]>>(() =>
+    createInitialConfigState(initialConfig, initialConfigs)
+  );
   const [saving, setSaving] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [resync, setResync] = useState(true);
   const [banner, setBanner] = useState<Banner>(null);
+  const selectedProject = projectOptions.find((project) => project.type === selectedProjectType);
+  const projectLabel = selectedProject?.label ?? selectedProjectType;
+  const rows = rowsByProject[selectedProjectType] ?? EMPTY_ROWS;
+  const setRows = (updater: SetStateAction<ColumnConfigRow[]>) => {
+    setRowsByProject((prev) => {
+      const currentRows = prev[selectedProjectType] ?? [];
+      const nextRows = typeof updater === 'function'
+        ? (updater as (value: ColumnConfigRow[]) => ColumnConfigRow[])(currentRows)
+        : updater;
+      return { ...prev, [selectedProjectType]: nextRows };
+    });
+  };
+  const handleProjectChange = (value: ProjectType) => {
+    setSelectedProjectType(value);
+    setBanner(null);
+  };
 
   // Detect duplicate indices so the user is warned before saving an ambiguous map.
   const duplicateIndices = useMemo(() => {
@@ -75,7 +118,7 @@ export default function ColumnConfigClient({ initialConfig }: Props) {
     setDetecting(true);
     setBanner(null);
     try {
-      const res = await fetch('/api/column-config/headers');
+      const res = await fetch(`/api/column-config/headers?projectType=${selectedProjectType}`);
       const data = await res.json();
       if (!data.success) {
         setBanner({ type: 'error', text: data.error || 'Gagal mengambil header dari spreadsheet.' });
@@ -115,6 +158,7 @@ export default function ColumnConfigClient({ initialConfig }: Props) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          projectType: selectedProjectType,
           entries: rows.map((r) => ({
             field_key: r.field_key,
             col_index: r.col_index,
@@ -144,7 +188,7 @@ export default function ColumnConfigClient({ initialConfig }: Props) {
       const res = await fetch('/api/column-config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reset: true, resync }),
+        body: JSON.stringify({ projectType: selectedProjectType, reset: true, resync }),
       });
       const data = await res.json();
       if (data.success) {
@@ -170,10 +214,25 @@ export default function ColumnConfigClient({ initialConfig }: Props) {
             Konfigurasi Kolom
           </h1>
           <p className="text-slate-500 mt-1">
-            Petakan setiap field ke kolom di Google Spreadsheet. Sesuaikan kolom sumber.
+            Petakan field {projectLabel} ke kolom di Google Spreadsheet. Sesuaikan kolom sumber.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600">
+            <span>Project</span>
+            <select
+              aria-label="Project"
+              value={selectedProjectType}
+              onChange={(event) => handleProjectChange(event.target.value as ProjectType)}
+              className="bg-transparent text-slate-900 focus:outline-none"
+            >
+              {projectOptions.map((project) => (
+                <option key={project.type} value={project.type}>
+                  {project.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             onClick={handleAutoDetect}
             disabled={busy}

@@ -1,5 +1,5 @@
-import ComingSoon from '@/components/ui/ComingSoon';
+import { UTPageClient } from '../../ut/page';
 
 export default function HemUtPage() {
-  return <ComingSoon title="Rekap UT — HEM" />;
+  return <UTPageClient projectType="HEM" />;
 }

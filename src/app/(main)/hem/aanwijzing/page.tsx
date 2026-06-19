@@ -1,5 +1,5 @@
-import ComingSoon from '@/components/ui/ComingSoon';
+import { AanwijzingPageClient } from '../../aanwijzing/page';
 
 export default function HemAanwijzingPage() {
-  return <ComingSoon title="AANWIJZING — HEM" />;
+  return <AanwijzingPageClient projectType="HEM" />;
 }

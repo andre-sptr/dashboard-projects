@@ -43,6 +43,7 @@ const BranchRanking = dynamic(() => import('@/components/features/report/BranchR
 interface Props {
   projects: Project[];
   colMap?: ColumnMap;
+  projectLabel?: string;
 }
 
 const now = new Date();
@@ -57,7 +58,7 @@ function isFutureMonth(monthIndex: number, year: number | 'all'): boolean {
   return monthIndex > now.getMonth();
 }
 
-export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }: Props) {
+export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP, projectLabel = 'Sumbagteng' }: Props) {
   const [exporting, setExporting] = useState(false);
   const [year, setYear] = useState<number | 'all'>(now.getFullYear());
   const [month, setMonth] = useState<number | 'all'>(now.getMonth());
@@ -139,7 +140,7 @@ export default function DashboardRecap({ projects, colMap = DEFAULT_COLUMN_MAP }
     <div className="w-full space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Monitoring project region Sumbagteng
+          Monitoring KPI project {projectLabel}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-gray-500 dark:text-gray-400">

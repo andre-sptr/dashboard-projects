@@ -2,9 +2,12 @@ import { db } from '../lib/db';
 import type { BoqItem } from '../lib/excel';
 import type { AllocationRow } from '@/lib/topology-allocation';
 import { TopologyAllocationRepository } from './TopologyAllocationRepository';
+import type { ProjectType } from '@/types/database';
+import { parseProjectType } from '@/lib/project-types';
 
 export interface Aanwijzing {
   id: string;
+  project_type?: ProjectType;
   nama_lop: string;
   id_ihld: string;
   tematik: string;
@@ -36,12 +39,16 @@ export interface BoqAanwijzing {
 }
 
 export class AanwijzingRepository {
-  static findAll(): Aanwijzing[] {
-    return db.prepare('SELECT * FROM aanwijzing ORDER BY created_at DESC').all() as Aanwijzing[];
+  static findAll(projectType: ProjectType = 'JPP'): Aanwijzing[] {
+    const resolvedType = parseProjectType(projectType);
+    return db.prepare('SELECT * FROM aanwijzing WHERE project_type = ? ORDER BY created_at DESC')
+      .all(resolvedType) as Aanwijzing[];
   }
 
-  static findAllWithBoq(): Array<Aanwijzing & { boq_data: BoqAanwijzing | null }> {
-    const list = db.prepare('SELECT * FROM aanwijzing ORDER BY created_at DESC').all() as Aanwijzing[];
+  static findAllWithBoq(projectType: ProjectType = 'JPP'): Array<Aanwijzing & { boq_data: BoqAanwijzing | null }> {
+    const resolvedType = parseProjectType(projectType);
+    const list = db.prepare('SELECT * FROM aanwijzing WHERE project_type = ? ORDER BY created_at DESC')
+      .all(resolvedType) as Aanwijzing[];
     if (list.length === 0) return [];
 
     const ids = list.map(a => a.id);
@@ -65,12 +72,13 @@ export class AanwijzingRepository {
   static upsert(data: Omit<Aanwijzing, 'created_at' | 'updated_at'>) {
     return db.prepare(`
       INSERT INTO aanwijzing (
-        id, nama_lop, id_ihld, tematik, area, sto, tanggal_aanwijzing, catatan,
+        id, project_type, nama_lop, id_ihld, tematik, area, sto, tanggal_aanwijzing, catatan,
         status_after_aanwijzing, gpon, odc_name, frame, slot_awal, slot_akhir,
         port_awal, port_akhir, wa_spang, ut, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT(id) DO UPDATE SET
+        project_type = excluded.project_type,
         nama_lop = excluded.nama_lop,
         id_ihld = excluded.id_ihld,
         tematik = excluded.tematik,
@@ -90,7 +98,7 @@ export class AanwijzingRepository {
         ut = excluded.ut,
         updated_at = CURRENT_TIMESTAMP
     `).run(
-      data.id, data.nama_lop, data.id_ihld, data.tematik,
+      data.id, data.project_type ?? 'JPP', data.nama_lop, data.id_ihld, data.tematik,
       data.area, data.sto, data.tanggal_aanwijzing, data.catatan, data.status_after_aanwijzing,
       data.gpon, data.odc_name, data.frame, data.slot_awal, data.slot_akhir,
       data.port_awal, data.port_akhir, data.wa_spang, data.ut

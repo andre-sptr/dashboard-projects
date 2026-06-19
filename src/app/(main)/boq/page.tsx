@@ -6,6 +6,7 @@ import { Upload, Trash2, FileText, ChevronLeft, ChevronRight, X, Loader2, Eye, P
 import { normalizeBoqItems } from '@/lib/boq-items';
 import { findDuplicateByIdIhld } from '@/lib/duplicate-check';
 import { useConfirm } from '@/hooks/useConfirm';
+import type { ProjectType } from '@/types/database';
 
 interface ProjectOption {
   nama_lop: string;
@@ -49,7 +50,11 @@ interface BoqData {
 
 const ITEMS_PER_PAGE = 5;
 
-export default function BoqPage() {
+interface BoqPageProps {
+  projectType?: ProjectType;
+}
+
+export function BoqPageClient({ projectType = 'JPP' }: BoqPageProps) {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [boqList, setBoqList] = useState<BoqData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +86,7 @@ export default function BoqPage() {
 
   const fetchData = React.useCallback(async () => {
     try {
-      const res = await fetch('/api/boq');
+      const res = await fetch(`/api/boq?projectType=${projectType}`);
       const response = await res.json();
       if (response.success) {
         setBoqList(response.data.boq || []);
@@ -95,7 +100,7 @@ export default function BoqPage() {
     } finally {
       setLoading(false);
     }
-  }, [showNotification]);
+  }, [projectType, showNotification]);
 
   useEffect(() => {
     let mounted = true;
@@ -151,6 +156,7 @@ export default function BoqPage() {
       submitData.append('file', formData.file);
       submitData.append('nama_lop', formData.nama_lop);
       submitData.append('id_ihld', formData.id_ihld);
+      submitData.append('projectType', projectType);
 
       const res = await fetch('/api/boq', {
         method: 'POST',
@@ -812,4 +818,8 @@ export default function BoqPage() {
       )}
     </div>
   );
+}
+
+export default function BoqPage() {
+  return <BoqPageClient projectType="JPP" />;
 }

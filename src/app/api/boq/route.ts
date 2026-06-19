@@ -12,10 +12,13 @@ import {
   formatValidationError,
 } from '@/lib/validation';
 import { ValidationError, DatabaseError, FileProcessingError } from '@/lib/errors';
+import { parseProjectType } from '@/lib/project-types';
 
-export const GET = withErrorHandling(async () => {
-  const boqList = BoqRepository.findAll();
-  const projects = ProjectRepository.getForSelect();
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url);
+  const projectType = parseProjectType(searchParams.get('projectType'));
+  const boqList = BoqRepository.findAll(projectType);
+  const projects = ProjectRepository.getForSelect(projectType);
   return successResponse({ boq: boqList, projects });
 });
 
@@ -24,6 +27,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const file = formData.get('file') as File | null;
   const nama_lop = formData.get('nama_lop') as string | null;
   const id_ihld = formData.get('id_ihld') as string | null;
+  const projectType = parseProjectType(formData.get('project_type') ?? formData.get('projectType'));
 
   if (!file) throw new ValidationError('File tidak ditemukan');
 
@@ -52,8 +56,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       throw new FileProcessingError('Tidak ada data yang ditemukan di file Excel', file.name);
     }
 
-    const project = ProjectRepository.findByIdIhld(validated.id_ihld);
-    const project_uid = project?.uid ?? validated.id_ihld;
+    const project = ProjectRepository.findByIdIhld(validated.id_ihld, projectType);
+    const project_uid = project?.uid ?? (projectType === 'JPP' ? validated.id_ihld : `${projectType}::${validated.id_ihld}`);
 
     const boqId = BoqRepository.upsertWithItems(
       { nama_lop: validated.nama_lop, id_ihld: validated.id_ihld, project_uid },

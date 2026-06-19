@@ -1,5 +1,5 @@
-import ComingSoon from '@/components/ui/ComingSoon';
+import { AanwijzingPageClient } from '../../aanwijzing/page';
 
 export default function NodebAanwijzingPage() {
-  return <ComingSoon title="AANWIJZING — NodeB" />;
+  return <AanwijzingPageClient projectType="NODEB" />;
 }

@@ -1,10 +1,13 @@
 import { ColumnConfigRepository } from '@/repositories/ColumnConfigRepository';
 import { SyncService } from '@/lib/sync-service';
 import { successResponse, errorResponse } from '@/lib/response';
+import { parseProjectType } from '@/lib/project-types';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const config = ColumnConfigRepository.getAll();
+    const { searchParams } = new URL(request.url);
+    const projectType = parseProjectType(searchParams.get('projectType'));
+    const config = ColumnConfigRepository.getAll(projectType);
     return successResponse(config);
   } catch (error) {
     console.error('Get column config error:', error);
@@ -13,6 +16,7 @@ export async function GET() {
 }
 
 interface UpdatePayload {
+  projectType?: string;
   entries?: { field_key: string; col_index: number; header_text?: string }[];
   reset?: boolean;
   resync?: boolean;
@@ -21,11 +25,12 @@ interface UpdatePayload {
 export async function PUT(request: Request) {
   try {
     const body = (await request.json()) as UpdatePayload;
+    const projectType = parseProjectType(body.projectType);
 
     if (body.reset) {
-      ColumnConfigRepository.resetDefaults();
+      ColumnConfigRepository.resetDefaults(projectType);
     } else if (Array.isArray(body.entries)) {
-      ColumnConfigRepository.updateMany(body.entries);
+      ColumnConfigRepository.updateMany(projectType, body.entries);
     } else {
       return errorResponse('Payload tidak valid: butuh "entries" atau "reset".', 400);
     }
@@ -39,10 +44,10 @@ export async function PUT(request: Request) {
     }
 
     return successResponse(
-      { config: ColumnConfigRepository.getAll(), sync: syncResult },
+      { config: ColumnConfigRepository.getAll(projectType), sync: syncResult },
       body.resync === false
-        ? 'Konfigurasi kolom disimpan. Jalankan sinkronisasi untuk menerapkan ke data.'
-        : 'Konfigurasi kolom disimpan dan data disinkronkan ulang.'
+        ? `Konfigurasi kolom ${projectType} disimpan. Jalankan sinkronisasi untuk menerapkan ke data.`
+        : `Konfigurasi kolom ${projectType} disimpan dan data disinkronkan ulang.`
     );
   } catch (error) {
     console.error('Update column config error:', error);

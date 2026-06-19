@@ -1,5 +1,5 @@
-import ComingSoon from '@/components/ui/ComingSoon';
+import { BoqPageClient } from '../../boq/page';
 
 export default function NodebBoqPage() {
-  return <ComingSoon title="BoQ Plan — NodeB" />;
+  return <BoqPageClient projectType="NODEB" />;
 }

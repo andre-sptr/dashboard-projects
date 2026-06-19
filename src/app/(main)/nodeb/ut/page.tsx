@@ -1,5 +1,5 @@
-import ComingSoon from '@/components/ui/ComingSoon';
+import { UTPageClient } from '../../ut/page';
 
 export default function NodebUtPage() {
-  return <ComingSoon title="Rekap UT — NodeB" />;
+  return <UTPageClient projectType="NODEB" />;
 }

@@ -1,8 +1,11 @@
 import { db } from '../lib/db';
 import type { BoqItem } from '../lib/excel';
+import type { ProjectType } from '@/types/database';
+import { parseProjectType } from '@/lib/project-types';
 
 export interface UT {
   id: string;
+  project_type?: ProjectType;
   nama_lop: string;
   id_ihld: string;
   witel: string;
@@ -33,12 +36,16 @@ export interface BoqUt {
 }
 
 export class UtRepository {
-  static findAll(): UT[] {
-    return db.prepare('SELECT * FROM ut ORDER BY created_at DESC').all() as UT[];
+  static findAll(projectType: ProjectType = 'JPP'): UT[] {
+    const resolvedType = parseProjectType(projectType);
+    return db.prepare('SELECT * FROM ut WHERE project_type = ? ORDER BY created_at DESC')
+      .all(resolvedType) as UT[];
   }
 
-  static findAllWithBoq(): Array<UT & { boq_data: BoqUt | null }> {
-    const list = db.prepare('SELECT * FROM ut ORDER BY created_at DESC').all() as UT[];
+  static findAllWithBoq(projectType: ProjectType = 'JPP'): Array<UT & { boq_data: BoqUt | null }> {
+    const resolvedType = parseProjectType(projectType);
+    const list = db.prepare('SELECT * FROM ut WHERE project_type = ? ORDER BY created_at DESC')
+      .all(resolvedType) as UT[];
     if (list.length === 0) return [];
 
     const ids = list.map(u => u.id);
@@ -62,12 +69,13 @@ export class UtRepository {
   static upsert(data: Omit<UT, 'created_at' | 'updated_at'>) {
     return db.prepare(`
       INSERT INTO ut (
-        id, nama_lop, id_ihld, witel, tematik, sto, tim_ut, commtest_ut,
+        id, project_type, nama_lop, id_ihld, witel, tematik, sto, tim_ut, commtest_ut,
         jumlah_odp, jumlah_port, tanggal_ct_ut, temuan, mitra,
         jumlah_temuan, wa_spang, komitmen_penyelesaian, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT(id) DO UPDATE SET
+        project_type = excluded.project_type,
         nama_lop = excluded.nama_lop,
         id_ihld = excluded.id_ihld,
         witel = excluded.witel,
@@ -85,7 +93,7 @@ export class UtRepository {
         komitmen_penyelesaian = excluded.komitmen_penyelesaian,
         updated_at = CURRENT_TIMESTAMP
     `).run(
-      data.id, data.nama_lop, data.id_ihld, data.witel, data.tematik,
+      data.id, data.project_type ?? 'JPP', data.nama_lop, data.id_ihld, data.witel, data.tematik,
       data.sto, data.tim_ut, data.commtest_ut, data.jumlah_odp, data.jumlah_port,
       data.tanggal_ct_ut, data.temuan, data.mitra, data.jumlah_temuan,
       data.wa_spang, data.komitmen_penyelesaian

@@ -1,5 +1,5 @@
-import ComingSoon from '@/components/ui/ComingSoon';
+import { BoqPageClient } from '../../boq/page';
 
 export default function HemBoqPage() {
-  return <ComingSoon title="BoQ Plan — HEM" />;
+  return <BoqPageClient projectType="HEM" />;
 }

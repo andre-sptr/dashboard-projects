@@ -40,6 +40,7 @@ export interface Project {
 /** Row from the `aanwijzing` table. */
 export interface Aanwijzing {
   id: string;
+  project_type?: ProjectType;
   nama_lop: string;
   id_ihld: string;
   tematik: string;
@@ -64,6 +65,7 @@ export interface Aanwijzing {
 /** Row from the `ut` table. */
 export interface UtRecord {
   id: string;
+  project_type?: ProjectType;
   nama_lop: string;
   id_ihld: string;
   witel: string;
@@ -250,6 +252,7 @@ export interface AuditLog {
 
 /** Row from the `column_config` table. */
 export interface ColumnConfig {
+  project_type?: ProjectType;
   field_key: string;
   label: string;
   header_text: string;

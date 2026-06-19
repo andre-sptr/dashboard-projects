@@ -7,6 +7,7 @@ import { findDuplicateByIdIhld } from '@/lib/duplicate-check';
 import { useConfirm } from '@/hooks/useConfirm';
 import BoqPreviewTable from '@/components/features/boq/BoqPreviewTable';
 import { detectOdcName } from '@/lib/topology-allocation';
+import type { ProjectType } from '@/types/database';
 
 interface ProjectOption {
   nama_lop: string;
@@ -48,7 +49,11 @@ interface AanwijzingData {
 
 const ITEMS_PER_PAGE = 5;
 
-export default function AanwijzingPage() {
+interface AanwijzingPageProps {
+  projectType?: ProjectType;
+}
+
+export function AanwijzingPageClient({ projectType = 'JPP' }: AanwijzingPageProps) {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [topologyOlts, setTopologyOlts] = useState<TopologyOltOption[]>([]);
   const [odcNames, setOdcNames] = useState<string[]>([]);
@@ -139,7 +144,7 @@ export default function AanwijzingPage() {
 
   const fetchData = React.useCallback(async () => {
     try {
-      const res = await fetch('/api/aanwijzing');
+      const res = await fetch(`/api/aanwijzing?projectType=${projectType}`);
       const response = await res.json();
       if (response.success) {
         setProjects(response.data.projects || []);
@@ -155,7 +160,7 @@ export default function AanwijzingPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectType]);
 
   useEffect(() => {
     let mounted = true;
@@ -206,6 +211,7 @@ export default function AanwijzingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          projectType,
           frame: Number(formData.frame) || 0,
           slot_awal: Number(formData.slot_awal) || 0,
           slot_akhir: Number(formData.slot_akhir) || 0,
@@ -918,4 +924,8 @@ export default function AanwijzingPage() {
       )}
     </div>
   );
+}
+
+export default function AanwijzingPage() {
+  return <AanwijzingPageClient projectType="JPP" />;
 }

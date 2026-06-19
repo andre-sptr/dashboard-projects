@@ -32,7 +32,7 @@ export class SyncService {
       const sourceConfigs: ProjectConfig[] = getAllProjectConfigs().map((config) => ({
         ...config,
         gid: getProjectSheetId(config.type),
-        fieldMap: config.type === 'JPP' ? ColumnConfigRepository.getMap() : config.fieldMap,
+        fieldMap: ColumnConfigRepository.getMap(config.type),
       }));
 
       const sourceRows = await Promise.all(sourceConfigs.map(async (config) => {
@@ -175,6 +175,7 @@ export class SyncService {
         records_created: created,
         records_updated: updated,
         records_failed: failed,
+        details: JSON.stringify({ total: totalRows, byProject }),
       });
 
       const result = { 

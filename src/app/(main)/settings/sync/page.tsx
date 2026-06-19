@@ -31,11 +31,41 @@ interface SyncLog {
   records_updated: number;
   records_failed: number;
   error_message?: string;
+  details?: string;
 }
 
 interface SyncStatus {
   isRunning?: boolean;
   latestSync?: SyncLog;
+}
+
+interface ProjectSyncStats {
+  total?: number;
+  processed?: number;
+  created?: number;
+  updated?: number;
+  failed?: number;
+}
+
+interface SyncDetails {
+  total?: number;
+  byProject?: Record<string, ProjectSyncStats>;
+}
+
+const PROJECT_SYNC_LABELS = [
+  { key: 'JPP', label: 'JPP' },
+  { key: 'NODEB', label: 'NodeB' },
+  { key: 'HEM', label: 'HEM' },
+];
+
+function parseSyncDetails(details?: string): SyncDetails {
+  if (!details) return {};
+  try {
+    const parsed = JSON.parse(details);
+    return parsed && typeof parsed === 'object' ? parsed as SyncDetails : {};
+  } catch {
+    return {};
+  }
 }
 
 function SkeletonCard() {
@@ -143,6 +173,7 @@ export default function SyncSettingsPage() {
   };
 
   const latestSync = status?.latestSync;
+  const latestDetails = parseSyncDetails(latestSync?.details);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -246,6 +277,43 @@ export default function SyncSettingsPage() {
           </>
         )}
       </div>
+
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {PROJECT_SYNC_LABELS.map((project) => {
+            const stats = latestDetails.byProject?.[project.key] ?? {};
+            return (
+              <div key={project.key} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <h3 className="font-semibold text-slate-700">{project.label}</h3>
+                  <span className="text-xs font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-500">
+                    {stats.total ?? 0} rows
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="text-lg font-bold text-slate-800">{stats.processed ?? 0}</p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Processed</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-emerald-600">{stats.created ?? 0}</p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Created</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-blue-600">{stats.updated ?? 0}</p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Updated</p>
+                  </div>
+                </div>
+                {(stats.failed ?? 0) > 0 && (
+                  <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                    {stats.failed} row gagal diproses
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Sync Statistics */}
       <div className="bg-slate-900 text-white rounded-2xl p-8 shadow-xl overflow-hidden relative">

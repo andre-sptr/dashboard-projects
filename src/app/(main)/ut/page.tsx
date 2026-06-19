@@ -6,6 +6,7 @@ import { ChevronDown, Save, Trash2, Edit3, Plus, X, FileText, ChevronLeft, Chevr
 import { findDuplicateByIdIhld } from '@/lib/duplicate-check';
 import { useConfirm } from '@/hooks/useConfirm';
 import BoqPreviewTable from '@/components/features/boq/BoqPreviewTable';
+import type { ProjectType } from '@/types/database';
 
 interface ProjectOption {
   nama_lop: string;
@@ -42,7 +43,11 @@ const COMMTEST_UT_OPTIONS = [
   { value: 'UT', label: 'UT' },
 ];
 
-export default function UTPage() {
+interface UTPageProps {
+  projectType?: ProjectType;
+}
+
+export function UTPageClient({ projectType = 'JPP' }: UTPageProps) {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [utList, setUtList] = useState<UTData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +105,7 @@ export default function UTPage() {
 
   const fetchData = React.useCallback(async () => {
     try {
-      const res = await fetch('/api/ut');
+      const res = await fetch(`/api/ut?projectType=${projectType}`);
       const response = await res.json();
       if (response.success) {
         setProjects(response.data.projects || []);
@@ -114,7 +119,7 @@ export default function UTPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectType]);
 
   useEffect(() => {
     let mounted = true;
@@ -230,6 +235,7 @@ export default function UTPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          projectType,
           temuan: temuanData.temuan,
           jumlah_odp: Number(formData.jumlah_odp) || 0,
           jumlah_port: Number(formData.jumlah_port) || 0,
@@ -882,4 +888,8 @@ export default function UTPage() {
       )}
     </div>
   );
+}
+
+export default function UTPage() {
+  return <UTPageClient projectType="JPP" />;
 }

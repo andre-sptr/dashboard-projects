@@ -10,6 +10,7 @@ import {
   formatValidationError,
 } from '@/lib/validation';
 import { ValidationError, DatabaseError } from '@/lib/errors';
+import { parseProjectType } from '@/lib/project-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,14 +18,17 @@ function generateId(): string {
   return `UT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 }
 
-export const GET = withErrorHandling(async () => {
-  const utWithBoq = UtRepository.findAllWithBoq();
-  const projects = ProjectRepository.getForSelect();
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url);
+  const projectType = parseProjectType(searchParams.get('projectType'));
+  const utWithBoq = UtRepository.findAllWithBoq(projectType);
+  const projects = ProjectRepository.getForSelect(projectType);
   return successResponse({ ut: utWithBoq, projects });
 });
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const body = await request.json();
+  const projectType = parseProjectType((body as { project_type?: unknown; projectType?: unknown }).project_type ?? (body as { projectType?: unknown }).projectType);
   if ((body as { id?: unknown }).id === null) {
     delete (body as { id?: unknown }).id;
   }
@@ -40,6 +44,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
     UtRepository.upsert({
       id: utId,
+      project_type: projectType,
       nama_lop: validated.nama_lop,
       id_ihld: validated.id_ihld,
       witel: validated.witel || '',

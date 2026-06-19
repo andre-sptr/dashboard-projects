@@ -1,5 +1,7 @@
 import { Database } from 'better-sqlite3';
 import { COLUMN_FIELDS } from './sheet-columns';
+import { getProjectColumnConfig } from './project-config';
+import { PROJECT_TYPES } from './project-types';
 
 interface Migration {
   id: number;
@@ -815,6 +817,67 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_projects_project_type ON projects(project_type);
         CREATE INDEX IF NOT EXISTS idx_projects_type_region ON projects(project_type, region);
       `);
+    }
+  },
+  {
+    id: 25,
+    name: 'multi_project_operational_scope',
+    run: (db) => {
+      const aanwijzingCols = (db.pragma('table_info(aanwijzing)') as { name: string }[]).map(c => c.name);
+      if (!aanwijzingCols.includes('project_type')) {
+        db.exec(`ALTER TABLE aanwijzing ADD COLUMN project_type TEXT NOT NULL DEFAULT 'JPP'`);
+      }
+
+      const utCols = (db.pragma('table_info(ut)') as { name: string }[]).map(c => c.name);
+      if (!utCols.includes('project_type')) {
+        db.exec(`ALTER TABLE ut ADD COLUMN project_type TEXT NOT NULL DEFAULT 'JPP'`);
+      }
+
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_aanwijzing_project_type ON aanwijzing(project_type);
+        CREATE INDEX IF NOT EXISTS idx_ut_project_type ON ut(project_type);
+      `);
+
+      const configCols = (db.pragma('table_info(column_config)') as { name: string }[]).map(c => c.name);
+      if (!configCols.includes('project_type')) {
+        db.exec(`
+          CREATE TABLE column_config_v2 (
+            project_type TEXT NOT NULL DEFAULT 'JPP',
+            field_key TEXT NOT NULL,
+            label TEXT NOT NULL,
+            header_text TEXT NOT NULL DEFAULT '',
+            col_index INTEGER NOT NULL,
+            sort_order INTEGER NOT NULL,
+            PRIMARY KEY (project_type, field_key)
+          );
+
+          INSERT INTO column_config_v2 (project_type, field_key, label, header_text, col_index, sort_order)
+          SELECT 'JPP', field_key, label, header_text, col_index, sort_order
+          FROM column_config;
+
+          DROP TABLE column_config;
+          ALTER TABLE column_config_v2 RENAME TO column_config;
+        `);
+      }
+
+      const insert = db.prepare(`
+        INSERT OR IGNORE INTO column_config (
+          project_type, field_key, label, header_text, col_index, sort_order
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      `);
+
+      for (const projectType of PROJECT_TYPES) {
+        for (const entry of getProjectColumnConfig(projectType)) {
+          insert.run(
+            projectType,
+            entry.field_key,
+            entry.label,
+            entry.header_text,
+            entry.col_index,
+            entry.sort_order
+          );
+        }
+      }
     }
   },
 ];

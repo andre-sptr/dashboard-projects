@@ -1,5 +1,7 @@
 import { db } from '../lib/db';
 import type { BoqItem } from '../lib/excel';
+import type { ProjectType } from '@/types/database';
+import { parseProjectType } from '@/lib/project-types';
 
 export interface Boq {
   id: string;
@@ -53,8 +55,21 @@ export interface CheckBoqDbRow {
 }
 
 export class BoqRepository {
-  static findAll(): Boq[] {
-    return db.prepare('SELECT * FROM boq ORDER BY created_at DESC').all() as Boq[];
+  static findAll(projectType: ProjectType = 'JPP'): Boq[] {
+    const resolvedType = parseProjectType(projectType);
+    return db.prepare(`
+      SELECT b.*
+      FROM boq b
+      LEFT JOIN projects p ON p.uid = b.project_uid
+      WHERE p.project_type = ?
+         OR (? = 'JPP' AND (
+              b.project_uid IS NULL
+              OR b.project_uid = ''
+              OR (b.project_uid NOT LIKE 'NODEB::%' AND b.project_uid NOT LIKE 'HEM::%')
+            ))
+         OR (? != 'JPP' AND b.project_uid LIKE ?)
+      ORDER BY b.created_at DESC
+    `).all(resolvedType, resolvedType, resolvedType, `${resolvedType}::%`) as Boq[];
   }
 
   static findById(id: string): Boq | undefined {
