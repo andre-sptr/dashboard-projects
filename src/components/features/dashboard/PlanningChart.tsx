@@ -34,7 +34,7 @@ export function PlanningChart({ projects, projectType }: Props) {
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">Chart Perencanaan</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Jumlah row berdasarkan komitmen dan OA/golive.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Jumlah row berdasarkan komitmen dan OA.</p>
         </div>
       </div>
 
@@ -48,10 +48,10 @@ export function PlanningChart({ projects, projectType }: Props) {
               cursor={{ fill: 'rgba(59, 130, 246, 0.08)' }}
               formatter={(value, name) => [
                 `${Number(value ?? 0).toLocaleString('id-ID')} row`,
-                name === 'plannedRows' ? 'Rencana' : 'OA/Golive',
+                name === 'plannedRows' ? 'Rencana' : 'OA',
               ]}
             />
-            <Legend formatter={(value) => value === 'plannedRows' ? 'Rencana' : 'OA/Golive'} />
+            <Legend formatter={(value) => value === 'plannedRows' ? 'Rencana' : 'OA'} />
             <Bar dataKey="plannedRows" fill="#2563eb" radius={[4, 4, 0, 0]} />
             <Bar dataKey="actualRows" fill="#059669" radius={[4, 4, 0, 0]} />
           </BarChart>
