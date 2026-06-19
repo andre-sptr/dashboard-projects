@@ -1,3 +1,5 @@
+import ComingSoon from '@/components/ui/ComingSoon';
+
 export default function JppKpiReportPage() {
-  return null;
+  return <ComingSoon title="KPI Report — JPP" />;
 }
