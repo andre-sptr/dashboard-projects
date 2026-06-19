@@ -2,7 +2,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronDown, Save, Trash2, Edit3, Plus, X, FileText, ChevronLeft, ChevronRight, Upload, Loader2, Eye } from 'lucide-react';
+import { ChevronDown, Save, Trash2, Edit3, Plus, X, FileText, ChevronLeft, ChevronRight, Upload, Loader2, Eye, Search } from 'lucide-react';
+import { findDuplicateByIdIhld } from '@/lib/duplicate-check';
+import { useConfirm } from '@/hooks/useConfirm';
 import BoqPreviewTable from '@/components/features/boq/BoqPreviewTable';
 import { detectOdcName } from '@/lib/topology-allocation';
 
@@ -83,6 +85,9 @@ export default function AanwijzingPage() {
 
   const [searchLop, setSearchLop] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const { confirm } = useConfirm();
+  const [search, setSearch] = useState('');
+  const [overwriteTargetId, setOverwriteTargetId] = useState<string | null>(null);
 
   const filteredProjects = projects.filter(p =>
     p.nama_lop.toLowerCase().includes(searchLop.toLowerCase()) ||
@@ -192,7 +197,7 @@ export default function AanwijzingPage() {
     }
   };
 
-  const submitAanwijzing = async (allowOverwrite: boolean) => {
+  const submitAanwijzing = async (allowOverwrite: boolean, targetId: string | null) => {
     setIsSubmitting(true);
 
     try {
@@ -208,7 +213,7 @@ export default function AanwijzingPage() {
           port_akhir: Number(formData.port_akhir) || 0,
           allow_overwrite: allowOverwrite,
           boq_data: boqRows.length > 0 ? boqRows : null,
-          id: editingId ?? undefined,
+          id: targetId ?? undefined,
         }),
       });
 
@@ -240,7 +245,23 @@ export default function AanwijzingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitAanwijzing(false);
+
+    let targetId: string | null = editingId;
+    const existing = findDuplicateByIdIhld(aanwijzingList, formData.id_ihld, editingId);
+    if (existing) {
+      const ok = await confirm({
+        title: 'Project sudah ada',
+        message: `Project "${formData.nama_lop}" (ID IHLD: ${formData.id_ihld}) sudah memiliki data AANWIJZING. Timpa data yang lama?`,
+        confirmLabel: 'Timpa',
+        cancelLabel: 'Batal',
+        variant: 'warning',
+      });
+      if (!ok) return;
+      targetId = existing.id ?? null;
+    }
+
+    setOverwriteTargetId(targetId);
+    await submitAanwijzing(false, targetId);
   };
 
   const handleEdit = (item: AanwijzingData) => {
@@ -280,7 +301,7 @@ export default function AanwijzingPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Yakin ingin menghapus data ini?')) return;
+    if (!window.confirm('Yakin ingin menghapus data ini?')) return;
 
     try {
       const res = await fetch(`/api/aanwijzing?id=${id}`, { method: 'DELETE' });
@@ -319,11 +340,28 @@ export default function AanwijzingPage() {
     setSearchLop('');
     setShowDropdown(false);
     setPendingOverwrite(false);
+    setOverwriteTargetId(null);
     setEditingId(null);
   };
 
-  const totalPages = Math.ceil(aanwijzingList.length / ITEMS_PER_PAGE);
-  const paginatedData = aanwijzingList.slice(
+  const filteredAanwijzingList = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    if (!keyword) return aanwijzingList;
+    return aanwijzingList.filter((a) =>
+      (a.id_ihld || '').toLowerCase().includes(keyword) ||
+      (a.nama_lop || '').toLowerCase().includes(keyword)
+    );
+  }, [aanwijzingList, search]);
+
+  // Reset to the first page when the search keyword changes (render-time adjustment, no effect).
+  const [prevSearch, setPrevSearch] = useState(search);
+  if (search !== prevSearch) {
+    setPrevSearch(search);
+    setCurrentPage(1);
+  }
+
+  const totalPages = Math.ceil(filteredAanwijzingList.length / ITEMS_PER_PAGE);
+  const paginatedData = filteredAanwijzingList.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -710,7 +748,7 @@ export default function AanwijzingPage() {
               {pendingOverwrite && (
                 <button
                   type="button"
-                  onClick={() => submitAanwijzing(true)}
+                  onClick={() => submitAanwijzing(true, overwriteTargetId)}
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white text-sm font-medium rounded-lg transition-colors"
                 >
@@ -731,6 +769,24 @@ export default function AanwijzingPage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {aanwijzingList.length > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {filteredAanwijzingList.length} dari {aanwijzingList.length} data
+          </p>
+          <div className="relative w-full sm:w-80">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari ID IHLD atau Nama LOP..."
+              className="w-full h-10 pl-9 pr-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
         </div>
       )}
 
