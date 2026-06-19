@@ -7,11 +7,15 @@ interface FilterOptions {
   subStatuses: string[];
   areas: string[];
   branches: string[];
+  tematik?: string[];
+  months?: { value: string; label: string }[];
+  years?: string[];
 }
 
 interface Props {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
+  searchPlaceholder?: string;
   statusFilter: string;
   setStatusFilter: (val: string) => void;
   subStatusFilter: string;
@@ -20,6 +24,16 @@ interface Props {
   setAreaFilter: (val: string) => void;
   branchFilter: string;
   setBranchFilter: (val: string) => void;
+  showAreaBranchFilters?: boolean;
+  areaLabel?: string;
+  branchLabel?: string;
+  tematikFilter?: string;
+  setTematikFilter?: (val: string) => void;
+  tematikLabel?: string;
+  monthFilter?: string;
+  setMonthFilter?: (val: string) => void;
+  yearFilter?: string;
+  setYearFilter?: (val: string) => void;
   resetFilters: () => void;
   filterOptions: FilterOptions;
 }
@@ -27,6 +41,7 @@ interface Props {
 export const FilterSection = ({
   searchQuery,
   setSearchQuery,
+  searchPlaceholder = 'Cari ID IHLD, Nama LOP, Status...',
   statusFilter,
   setStatusFilter,
   subStatusFilter,
@@ -35,10 +50,20 @@ export const FilterSection = ({
   setAreaFilter,
   branchFilter,
   setBranchFilter,
+  showAreaBranchFilters = true,
+  areaLabel = 'Area',
+  branchLabel = 'Branch',
+  tematikFilter = '',
+  setTematikFilter,
+  tematikLabel = 'Tematik',
+  monthFilter = '',
+  setMonthFilter,
+  yearFilter = '',
+  setYearFilter,
   resetFilters,
   filterOptions
 }: Props) => {
-  const hasActiveFilters = statusFilter || subStatusFilter || areaFilter || branchFilter || searchQuery;
+  const hasActiveFilters = statusFilter || subStatusFilter || areaFilter || branchFilter || tematikFilter || monthFilter || yearFilter || searchQuery;
 
 
   return (
@@ -49,7 +74,7 @@ export const FilterSection = ({
         </div>
         <input
           type="text"
-          placeholder="Cari ID IHLD, Nama LOP, Status..."
+          placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           aria-label="Cari proyek"
@@ -57,7 +82,7 @@ export const FilterSection = ({
         />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         <div className="space-y-1">
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Status</label>
           <select
@@ -88,35 +113,90 @@ export const FilterSection = ({
           </select>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Area</label>
-          <select
-            value={areaFilter}
-            onChange={(e) => setAreaFilter(e.target.value)}
-            aria-label="Filter area"
-            className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-          >
-            <option value="">Semua</option>
-            {filterOptions.areas.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
+        {showAreaBranchFilters && (
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">{areaLabel}</label>
+            <select
+              value={areaFilter}
+              onChange={(e) => setAreaFilter(e.target.value)}
+              aria-label={`Filter ${areaLabel.toLowerCase()}`}
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.areas.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        <div className="space-y-1">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Branch</label>
-          <select
-            value={branchFilter}
-            onChange={(e) => setBranchFilter(e.target.value)}
-            aria-label="Filter branch"
-            className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-          >
-            <option value="">Semua</option>
-            {filterOptions.branches.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
+        {showAreaBranchFilters && (
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">{branchLabel}</label>
+            <select
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              aria-label={`Filter ${branchLabel.toLowerCase()}`}
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.branches.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {setTematikFilter && filterOptions.tematik && (
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">{tematikLabel}</label>
+            <select
+              value={tematikFilter}
+              onChange={(e) => setTematikFilter(e.target.value)}
+              aria-label={`Filter ${tematikLabel.toLowerCase()}`}
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.tematik.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {setMonthFilter && filterOptions.months && (
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Bulan</label>
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              aria-label="Filter bulan"
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.months.map(month => (
+                <option key={month.value} value={month.value}>{month.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {setYearFilter && filterOptions.years && (
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Tahun</label>
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              aria-label="Filter tahun"
+              className="block w-full px-2 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">Semua</option>
+              {filterOptions.years.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {hasActiveFilters && (

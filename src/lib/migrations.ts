@@ -802,6 +802,21 @@ const migrations: Migration[] = [
       `);
     }
   },
+  {
+    id: 24,
+    name: 'add_project_type_to_projects',
+    run: (db) => {
+      const projectCols = (db.pragma('table_info(projects)') as { name: string }[]).map(c => c.name);
+      if (!projectCols.includes('project_type')) {
+        db.exec(`ALTER TABLE projects ADD COLUMN project_type TEXT NOT NULL DEFAULT 'JPP'`);
+      }
+
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_projects_project_type ON projects(project_type);
+        CREATE INDEX IF NOT EXISTS idx_projects_type_region ON projects(project_type, region);
+      `);
+    }
+  },
 ];
 
 export function runMigrations(db: Database) {

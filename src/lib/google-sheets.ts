@@ -42,6 +42,7 @@ export class GoogleSheetsClient {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId,
         range,
+        valueRenderOption: 'UNFORMATTED_VALUE',
       });
       return response.data.values || [];
     } catch (error) {
@@ -75,8 +76,12 @@ export class GoogleSheetsClient {
     }
   }
 
+  private static quoteSheetName(sheetName: string): string {
+    return `'${sheetName.replace(/'/g, "''")}'`;
+  }
+
   static async getRowsFromGid(gid: string, rangeOffset: string = 'A1:ZZ'): Promise<unknown[][]> {
     const sheetName = await this.getSheetNameById(gid);
-    return this.getSheetData(`${sheetName}!${rangeOffset}`);
+    return this.getSheetData(`${this.quoteSheetName(sheetName)}!${rangeOffset}`);
   }
 }

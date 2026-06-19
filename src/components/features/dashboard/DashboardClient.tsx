@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Project } from '@/types/database';
+import type { Project, ProjectType } from '@/types/database';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { FilterSection } from './FilterSection';
 import { ProjectRow } from './ProjectRow';
@@ -10,18 +10,28 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 import { useRouter } from 'next/navigation';
 import { AREA_BRANCH_MAP } from '@/lib/constants';
 import type { ColumnConfigEntry } from '@/lib/sheet-columns';
+import { getProjectConfig } from '@/lib/project-config';
+import { getFullDataArray } from '@/utils/project';
+import { parseExcelDate } from '@/utils/date';
+import { PlanningChart } from './PlanningChart';
 
 interface Props {
   initialProjects: Project[];
   columnConfig?: ColumnConfigEntry[];
+  projectType?: ProjectType;
 }
 
 const ITEMS_PER_PAGE = 10;
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
 
 
-export default function DashboardClient({ initialProjects, columnConfig }: Props) {
+export default function DashboardClient({ initialProjects, columnConfig, projectType = 'JPP' }: Props) {
   const router = useRouter();
   const { subscribe, unsubscribe } = useWebSocket();
+  const projectConfig = getProjectConfig(projectType);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -29,6 +39,9 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
   const [subStatusFilter, setSubStatusFilter] = useState<string>('');
   const [areaFilter, setAreaFilter] = useState<string>('');
   const [branchFilter, setBranchFilter] = useState<string>('');
+  const [tematikFilter, setTematikFilter] = useState<string>('');
+  const [monthFilter, setMonthFilter] = useState<string>('');
+  const [yearFilter, setYearFilter] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
@@ -50,12 +63,31 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
     const subStatuses = new Set<string>();
     const areas = new Set<string>();
     const branches = new Set<string>();
+    const tematik = new Set<string>();
+    const months = new Map<string, string>();
+    const years = new Set<string>();
 
     initialProjects.forEach(p => {
       if (p.status) statuses.add(p.status);
       if (p.sub_status) subStatuses.add(p.sub_status);
       if (p.area) areas.add(p.area.toUpperCase());
       if (p.branch) branches.add(p.branch.toUpperCase());
+
+      const fullData = getFullDataArray(p);
+      if (projectConfig.dashboard.tematikColIndex !== undefined) {
+        const value = fullData[projectConfig.dashboard.tematikColIndex];
+        const text = value === null || value === undefined ? '' : String(value).trim();
+        if (text) tematik.add(text);
+      }
+
+      if (projectConfig.dashboard.dateFilterColIndex !== undefined) {
+        const date = parseExcelDate(fullData[projectConfig.dashboard.dateFilterColIndex]);
+        if (date) {
+          const monthValue = String(date.getMonth() + 1).padStart(2, '0');
+          months.set(monthValue, MONTH_NAMES[date.getMonth()]);
+          years.add(String(date.getFullYear()));
+        }
+      }
     });
 
     const sortedAreas = Array.from(areas).sort();
@@ -83,8 +115,13 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
       }),
       areas: sortedAreas,
       branches: availableBranches,
+      tematik: Array.from(tematik).sort(),
+      months: Array.from(months.entries())
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([value, label]) => ({ value, label })),
+      years: Array.from(years).sort((a, b) => Number(b) - Number(a)),
     };
-  }, [initialProjects, areaFilter]);
+  }, [initialProjects, areaFilter, projectConfig.dashboard.dateFilterColIndex, projectConfig.dashboard.tematikColIndex]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -118,6 +155,9 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
     setSubStatusFilter('');
     setAreaFilter('');
     setBranchFilter('');
+    setTematikFilter('');
+    setMonthFilter('');
+    setYearFilter('');
     setCurrentPage(1);
   };
 
@@ -136,10 +176,28 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
       const matchesSubStatus = !subStatusFilter || p.sub_status === subStatusFilter;
       const matchesArea = !areaFilter || p.area === areaFilter;
       const matchesBranch = !branchFilter || p.branch === branchFilter;
+      const fullData = getFullDataArray(p);
 
-      return matchesSearch && matchesStatus && matchesSubStatus && matchesArea && matchesBranch;
+      const tematikValue = projectConfig.dashboard.tematikColIndex === undefined
+        ? ''
+        : String(fullData[projectConfig.dashboard.tematikColIndex] ?? '').trim();
+      const matchesTematik = !tematikFilter || tematikValue === tematikFilter;
+
+      const filterDate = projectConfig.dashboard.dateFilterColIndex === undefined
+        ? null
+        : parseExcelDate(fullData[projectConfig.dashboard.dateFilterColIndex]);
+      const matchesMonth = !monthFilter || (
+        filterDate !== null &&
+        String(filterDate.getMonth() + 1).padStart(2, '0') === monthFilter
+      );
+      const matchesYear = !yearFilter || (
+        filterDate !== null &&
+        String(filterDate.getFullYear()) === yearFilter
+      );
+
+      return matchesSearch && matchesStatus && matchesSubStatus && matchesArea && matchesBranch && matchesTematik && matchesMonth && matchesYear;
     });
-  }, [initialProjects, searchQuery, statusFilter, subStatusFilter, areaFilter, branchFilter]);
+  }, [initialProjects, searchQuery, statusFilter, subStatusFilter, areaFilter, branchFilter, tematikFilter, monthFilter, yearFilter, projectConfig.dashboard.dateFilterColIndex, projectConfig.dashboard.tematikColIndex]);
 
   const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
   const paginatedProjects = useMemo(() => {
@@ -160,11 +218,16 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
     return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
   };
 
+  const getFieldLabel = (fieldKey: string, fallback: string) => {
+    return columnConfig?.find((field) => field.field_key === fieldKey)?.label ?? fallback;
+  };
+
   return (
     <div className="w-full space-y-6">
       <FilterSection
         searchQuery={searchQuery}
         setSearchQuery={handleSearchChange}
+        searchPlaceholder={projectConfig.dashboard.searchPlaceholder}
         statusFilter={statusFilter}
         setStatusFilter={handleStatusFilterChange}
         subStatusFilter={subStatusFilter}
@@ -173,6 +236,16 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
         setAreaFilter={handleAreaFilterChange}
         branchFilter={branchFilter}
         setBranchFilter={handleBranchFilterChange}
+        showAreaBranchFilters={projectConfig.dashboard.showAreaBranchFilters}
+        areaLabel={projectConfig.dashboard.areaLabel}
+        branchLabel={projectConfig.dashboard.branchLabel}
+        tematikFilter={tematikFilter}
+        setTematikFilter={projectConfig.dashboard.tematikColIndex !== undefined ? (val) => { setTematikFilter(val); setCurrentPage(1); } : undefined}
+        tematikLabel={projectConfig.dashboard.tematikLabel}
+        monthFilter={monthFilter}
+        setMonthFilter={projectConfig.dashboard.dateFilterColIndex !== undefined ? (val) => { setMonthFilter(val); setCurrentPage(1); } : undefined}
+        yearFilter={yearFilter}
+        setYearFilter={projectConfig.dashboard.dateFilterColIndex !== undefined ? (val) => { setYearFilter(val); setCurrentPage(1); } : undefined}
         resetFilters={handleResetFilters}
         filterOptions={filterOptions}
       />
@@ -182,6 +255,10 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
           <RefreshCw className="w-4 h-4 animate-spin" />
           Updating dashboard data in real-time...
         </div>
+      )}
+
+      {projectType !== 'JPP' && (
+        <PlanningChart projects={filteredProjects} projectType={projectType} />
       )}
 
       <div className="glass-panel rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -198,11 +275,11 @@ export default function DashboardClient({ initialProjects, columnConfig }: Props
             </colgroup>
             <thead className="bg-gray-100/80 dark:bg-gray-800/70 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th scope="col" className="px-4 py-3.5 text-left text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID IHLD / Nama LOP</th>
+                <th scope="col" className="px-4 py-3.5 text-left text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{getFieldLabel('ID_IHLD', 'ID IHLD')} / {getFieldLabel('NAMA_LOP', 'Nama LOP')}</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sub Status</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Komitmen</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tgl Golive</th>
+                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{getFieldLabel('KOMITMEN_GOLIVE', 'Komitmen')}</th>
+                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{getFieldLabel('TANGGAL_GOLIVE', 'Tgl Golive')}</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Durasi</th>
                 <th scope="col" className="px-2 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
               </tr>

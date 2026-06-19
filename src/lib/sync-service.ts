@@ -2,7 +2,7 @@ import { ProjectRepository } from '@/repositories/ProjectRepository';
 import { SyncLogRepository } from '@/repositories/SyncLogRepository';
 import { AuditLogger } from './audit-logger';
 import { GoogleSheetsClient } from './google-sheets';
-import { getSheetId } from './env';
+import { getProjectSheetId } from './env';
 import { HistoryEntry } from '@/utils/duration';
 import { parseJsonArray } from '@/utils/json';
 import { normalizeWhitespace } from '@/utils/validation';
@@ -10,6 +10,8 @@ import { WebSocketServer } from './websocket';
 import { indexToLetter } from './sheet-columns';
 import { ColumnConfigRepository } from '@/repositories/ColumnConfigRepository';
 import { db } from './db';
+import { getAllProjectConfigs, type ProjectConfig } from './project-config';
+import { mapSheetRowToProjectData } from './project-row-mapper';
 
 function normalizeStatus(value: string): string {
   return normalizeWhitespace(
@@ -27,16 +29,24 @@ export class SyncService {
     });
 
     try {
-      const gid = getSheetId();
-      const COL = ColumnConfigRepository.getMap();
-      // The widest configured column drives both the fetch range and the slice
-      // length, so inserting columns in the sheet never truncates mapped fields.
-      const maxIndex = Math.max(...Object.values(COL));
-      const endLetter = indexToLetter(maxIndex);
-      const sliceLen = maxIndex + 1;
-      const rows = await GoogleSheetsClient.getRowsFromGid(gid, `A4:${endLetter}`);
+      const sourceConfigs: ProjectConfig[] = getAllProjectConfigs().map((config) => ({
+        ...config,
+        gid: getProjectSheetId(config.type),
+        fieldMap: config.type === 'JPP' ? ColumnConfigRepository.getMap() : config.fieldMap,
+      }));
 
-      if (!rows || rows.length === 0) {
+      const sourceRows = await Promise.all(sourceConfigs.map(async (config) => {
+        const maxIndex = Math.max(...Object.values(config.fieldMap));
+        const endLetter = indexToLetter(maxIndex);
+        const rows = await GoogleSheetsClient.getRowsFromGid(
+          config.gid,
+          `A${config.dataStartRow}:${endLetter}`
+        );
+        return { config, rows };
+      }));
+
+      const totalRows = sourceRows.reduce((sum, source) => sum + source.rows.length, 0);
+      if (totalRows === 0) {
         const errorMsg = 'Tidak ada data valid yang ditemukan.';
         SyncLogRepository.update(syncLogId, {
           status: 'FAILED',
@@ -53,121 +63,103 @@ export class SyncService {
       let created = 0;
       let updated = 0;
       let failed = 0;
+      const byProject: Record<string, { total: number; processed: number; created: number; updated: number; failed: number }> = {};
 
       // Wrap whole loop in single transaction for significant performance boost
       const syncTransaction = db.transaction(() => {
-        for (const row of rows) {
-          try {
-            if (row.length < 16) continue;
+        for (const { config, rows } of sourceRows) {
+          const projectStats = byProject[config.type] ?? {
+            total: rows.length,
+            processed: 0,
+            created: 0,
+            updated: 0,
+            failed: 0,
+          };
+          byProject[config.type] = projectStats;
 
-            const region = (row[COL.REGION_FMC] ?? '').toString().trim();
-            if (region !== 'SUMBAGTENG') continue;
+          for (const row of rows) {
+            try {
+              const mapped = mapSheetRowToProjectData(row, config);
+              if (!mapped) continue;
 
-            const id_ihld = (row[COL.ID_IHLD] ?? '').toString().trim();
-            const batch_program = (row[COL.BATCH_PROGRAM] ?? '').toString().trim();
-            
-            if (!id_ihld) {
-              failed++;
-              continue;
-            }
+              const existing = ProjectRepository.findByUid(mapped.uid);
+              let history: HistoryEntry[] = [];
+              const newStatus = mapped.status;
+              const newSubStatus = mapped.sub_status;
 
-            const uid = `${id_ihld}::${batch_program}`;
-            const existing = ProjectRepository.findByUid(uid);
-            
-            let history: HistoryEntry[] = [];
-            const newStatus = (row[COL.STATUS] ?? '').toString().trim();
-            const newSubStatus = (row[COL.SUB_STATUS_KONS] ?? '').toString().trim();
+              if (existing) {
+                updated++;
+                projectStats.updated++;
+                const prevStatus = normalizeStatus(existing.status);
+                const prevSubStatus = normalizeStatus(existing.sub_status);
 
-            if (existing) {
-              updated++;
-              const prevStatus = normalizeStatus(existing.status);
-              const prevSubStatus = normalizeStatus(existing.sub_status);
+                let dateStr = existing.last_changed_at;
+                if (!dateStr.includes('T')) dateStr = dateStr.replace(' ', 'T') + 'Z';
+                else if (!dateStr.endsWith('Z')) dateStr = dateStr + 'Z';
 
-              let dateStr = existing.last_changed_at;
-              if (!dateStr.includes('T')) dateStr = dateStr.replace(' ', 'T') + 'Z';
-              else if (!dateStr.endsWith('Z')) dateStr = dateStr + 'Z';
+                const prevChangedAt = new Date(dateStr);
+                const now = new Date();
+                const durationMinutes = Math.max(0, Math.round((now.getTime() - prevChangedAt.getTime()) / 60000));
 
-              const prevChangedAt = new Date(dateStr);
-              const now = new Date();
-              const durationMinutes = Math.max(0, Math.round((now.getTime() - prevChangedAt.getTime()) / 60000));
+                history = parseJsonArray<HistoryEntry>(existing.history || '[]', []);
 
-              history = parseJsonArray<HistoryEntry>(existing.history || '[]', []);
+                if (prevStatus !== normalizeStatus(newStatus) || prevSubStatus !== normalizeStatus(newSubStatus)) {
+                  const lastEntry = history[history.length - 1];
+                  const isDuplicate = lastEntry &&
+                    normalizeStatus(lastEntry.status) === prevStatus &&
+                    normalizeStatus(lastEntry.sub_status) === prevSubStatus;
 
-              if (prevStatus !== normalizeStatus(newStatus) || prevSubStatus !== normalizeStatus(newSubStatus)) {
-                const lastEntry = history[history.length - 1];
-                const isDuplicate = lastEntry &&
-                  normalizeStatus(lastEntry.status) === prevStatus &&
-                  normalizeStatus(lastEntry.sub_status) === prevSubStatus;
-
-                if (!isDuplicate) {
-                  history.push({
-                    status: existing.status,
-                    sub_status: existing.sub_status,
-                    duration_minutes: durationMinutes,
-                    ended_at: now.toISOString()
-                  });
-                }
-              }
-            } else {
-              created++;
-            }
-
-            const str = (idx: number) => (row[idx] ?? '').toString().trim();
-            const num = (idx: number) => { const n = Number(row[idx]); return isNaN(n) ? 0 : n; };
-
-            let golive_target_violated = 0;
-            let final_golive_target = str(COL.KOMITMEN_GOLIVE);
-            const fullDataAtoAF = row.slice(0, sliceLen).map(v => v === undefined || v === null ? '' : v);
-
-            if (existing) {
-              const newGoliveTarget = final_golive_target;
-              const oldGoliveTarget = existing.golive_target || '';
-              
-              // If the golive target changed from what we had
-              if (newGoliveTarget !== oldGoliveTarget && oldGoliveTarget !== '') {
-                const currentDay = new Date().getDate();
-                const deadlineDay = Number(process.env.GOLIVE_TARGET_DEADLINE_DAY) || 10;
-                if (currentDay > deadlineDay) {
-                  // Reject the change
-                  final_golive_target = oldGoliveTarget;
-                  golive_target_violated = 1;
-                  // Override the value in fullData array so UI doesn't show the rejected value
-                  fullDataAtoAF[COL.KOMITMEN_GOLIVE] = oldGoliveTarget;
-                } else {
-                  // Accepted
-                  golive_target_violated = 0;
+                  if (!isDuplicate) {
+                    history.push({
+                      status: existing.status,
+                      sub_status: existing.sub_status,
+                      duration_minutes: durationMinutes,
+                      ended_at: now.toISOString()
+                    });
+                  }
                 }
               } else {
-                // No change, preserve existing violation status if any
-                golive_target_violated = existing.golive_target_violated || 0;
+                created++;
+                projectStats.created++;
               }
-            }
 
-            ProjectRepository.upsert({
-              uid,
-              id_ihld,
-              batch_program,
-              nama_lop: str(COL.NAMA_LOP),
-              region,
-              status: newStatus,
-              sub_status: newSubStatus,
-              full_data: JSON.stringify(fullDataAtoAF),
-              history: JSON.stringify(history),
-              area: str(COL.AREA),
-              branch: str(COL.BRANCH_FMC),
-              mitra: str(COL.MITRA),
-              sto: str(COL.STO),
-              odp_planned: num(COL.ODP_PLAN),
-              port_planned: num(COL.PORT_PLAN),
-              port_realized: num(COL.REAL_JML_PORT_GOLIVE),
-              golive_target: final_golive_target,
-              golive_actual: str(COL.TANGGAL_GOLIVE),
-              golive_target_violated,
-            });
-            processed++;
-          } catch (err) {
-            console.error(`Error processing row:`, err);
-            failed++;
+              let goliveTargetViolated = 0;
+              let finalGoliveTarget = mapped.golive_target || '';
+              const fullData = parseJsonArray<unknown>(mapped.full_data, []);
+
+              if (existing && config.enforceGoliveDeadline) {
+                const newGoliveTarget = finalGoliveTarget;
+                const oldGoliveTarget = existing.golive_target || '';
+
+                if (newGoliveTarget !== oldGoliveTarget && oldGoliveTarget !== '') {
+                  const currentDay = new Date().getDate();
+                  const deadlineDay = Number(process.env.GOLIVE_TARGET_DEADLINE_DAY) || 10;
+                  if (currentDay > deadlineDay) {
+                    finalGoliveTarget = oldGoliveTarget;
+                    goliveTargetViolated = 1;
+                    fullData[config.fieldMap.KOMITMEN_GOLIVE] = oldGoliveTarget;
+                  } else {
+                    goliveTargetViolated = 0;
+                  }
+                } else {
+                  goliveTargetViolated = existing.golive_target_violated || 0;
+                }
+              }
+
+              ProjectRepository.upsert({
+                ...mapped,
+                full_data: JSON.stringify(fullData),
+                history: JSON.stringify(history),
+                golive_target: finalGoliveTarget || null,
+                golive_target_violated: goliveTargetViolated,
+              });
+              processed++;
+              projectStats.processed++;
+            } catch (err) {
+              console.error(`Error processing ${config.type} row:`, err);
+              failed++;
+              projectStats.failed++;
+            }
           }
         }
       });
@@ -191,7 +183,8 @@ export class SyncService {
         created, 
         updated, 
         failed,
-        total: rows.length,
+        total: totalRows,
+        byProject,
         completed_at: completedAt
       };
 

@@ -19,5 +19,5 @@ export default async function ProjectsPage() {
     throw new Error('Gagal mengambil data dari database.');
   }
 
-  return <DashboardClient initialProjects={projects} columnConfig={columnConfig} />;
+  return <DashboardClient initialProjects={projects} columnConfig={columnConfig} projectType="JPP" />;
 }

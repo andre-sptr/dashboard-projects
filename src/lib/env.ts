@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import type { ProjectType } from '@/types/database';
+import { getProjectConfig } from './project-config';
 
 // Environment variable validation schema
 const envSchema = z.object({
@@ -21,6 +23,21 @@ const envSchema = z.object({
     .string()
     .optional()
     .describe('Google Sheets sheet ID (gid) for webhook synchronization'),
+
+  JPP_SHEET_ID: z
+    .string()
+    .optional()
+    .describe('Google Sheets JPP sheet ID (gid)'),
+
+  NODEB_SHEET_ID: z
+    .string()
+    .optional()
+    .describe('Google Sheets NodeB sheet ID (gid)'),
+
+  HEM_SHEET_ID: z
+    .string()
+    .optional()
+    .describe('Google Sheets HEM sheet ID (gid)'),
 
   API_KEY: z
     .string()
@@ -63,6 +80,9 @@ function validateEnv(): Env {
       DATABASE_PATH: process.env.DATABASE_PATH,
       SPREADSHEET_ID: process.env.SPREADSHEET_ID,
       SHEET_ID: process.env.SHEET_ID,
+      JPP_SHEET_ID: process.env.JPP_SHEET_ID,
+      NODEB_SHEET_ID: process.env.NODEB_SHEET_ID,
+      HEM_SHEET_ID: process.env.HEM_SHEET_ID,
       API_KEY: process.env.API_KEY,
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
       GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
@@ -122,7 +142,7 @@ export function isTest(): boolean {
 
 // Check if Google Sheets config is available
 export function hasGoogleSheetsConfig(): boolean {
-  return hasEnvVar('SPREADSHEET_ID') && hasEnvVar('SHEET_ID');
+  return hasEnvVar('SPREADSHEET_ID');
 }
 
 // Get database path
@@ -148,6 +168,16 @@ export function getSheetId(): string {
     );
   }
   return env.SHEET_ID;
+}
+
+export function getProjectSheetId(projectType: ProjectType): string {
+  if (projectType === 'JPP') {
+    return env.JPP_SHEET_ID || env.SHEET_ID || getProjectConfig('JPP').gid;
+  }
+  if (projectType === 'NODEB') {
+    return env.NODEB_SHEET_ID || getProjectConfig('NODEB').gid;
+  }
+  return env.HEM_SHEET_ID || getProjectConfig('HEM').gid;
 }
 
 if (isDevelopment()) {

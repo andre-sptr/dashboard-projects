@@ -10,9 +10,12 @@
 // Core Tables
 // ---------------------------------------------------------------------------
 
+export type ProjectType = 'JPP' | 'NODEB' | 'HEM';
+
 /** Row from the `projects` table. */
 export interface Project {
   uid: string;
+  project_type?: ProjectType;
   id_ihld: string;
   batch_program: string;
   nama_lop: string;

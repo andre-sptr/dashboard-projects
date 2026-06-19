@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import type { Project } from '@/types/database';
+import type { Project, ProjectType } from '@/types/database';
 
 // Repository for Project entities
 export class ProjectRepository {
@@ -10,13 +10,21 @@ export class ProjectRepository {
 
   // Get all projects for region
   static findAllByRegion(region: string = 'SUMBAGTENG'): Project[] {
-    return db.prepare('SELECT * FROM projects WHERE region = ? ORDER BY last_changed_at DESC').all(region) as Project[];
+    return db
+      .prepare('SELECT * FROM projects WHERE project_type = ? AND region = ? ORDER BY last_changed_at DESC')
+      .all('JPP', region) as Project[];
+  }
+
+  static findAllByProjectType(projectType: ProjectType): Project[] {
+    return db
+      .prepare('SELECT * FROM projects WHERE project_type = ? ORDER BY last_changed_at DESC')
+      .all(projectType) as Project[];
   }
 
   // Find project by id_ihld (returns first match)
-  static findByIdIhld(idIhld: string): Project | undefined {
-    return db.prepare('SELECT * FROM projects WHERE id_ihld = ? LIMIT 1')
-      .get(idIhld) as Project | undefined;
+  static findByIdIhld(idIhld: string, projectType: ProjectType = 'JPP'): Project | undefined {
+    return db.prepare('SELECT * FROM projects WHERE project_type = ? AND id_ihld = ? LIMIT 1')
+      .get(projectType, idIhld) as Project | undefined;
   }
 
   // Get project names and IDs for select inputs
@@ -24,7 +32,7 @@ export class ProjectRepository {
     return db.prepare(`
       SELECT DISTINCT nama_lop, id_ihld, area, sto
       FROM projects 
-      WHERE nama_lop IS NOT NULL AND nama_lop != '' 
+      WHERE project_type = 'JPP' AND nama_lop IS NOT NULL AND nama_lop != '' 
       ORDER BY nama_lop ASC
     `).all() as { nama_lop: string; id_ihld: string; area: string; sto: string }[];
   }
@@ -32,6 +40,7 @@ export class ProjectRepository {
   // Insert or update project with history tracking
   static upsert(data: {
     uid: string;
+    project_type?: ProjectType;
     id_ihld: string;
     batch_program: string;
     nama_lop: string;
@@ -47,19 +56,20 @@ export class ProjectRepository {
     odp_planned: number;
     port_planned: number;
     port_realized: number;
-    golive_target: string;
-    golive_actual: string;
+    golive_target: string | null;
+    golive_actual: string | null;
     golive_target_violated: number;
   }) {
     const stmt = db.prepare(`
       INSERT INTO projects (
-        uid, id_ihld, batch_program, nama_lop, region, status, sub_status,
+        uid, project_type, id_ihld, batch_program, nama_lop, region, status, sub_status,
         full_data, last_changed_at, history,
         area, branch, mitra, sto, odp_planned, port_planned, port_realized,
         golive_target, golive_actual, golive_target_violated
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(uid) DO UPDATE SET
+        project_type = excluded.project_type,
         id_ihld = excluded.id_ihld,
         batch_program = excluded.batch_program,
         nama_lop = excluded.nama_lop,
@@ -87,6 +97,7 @@ export class ProjectRepository {
 
     return stmt.run(
       data.uid,
+      data.project_type ?? 'JPP',
       data.id_ihld,
       data.batch_program,
       data.nama_lop,
