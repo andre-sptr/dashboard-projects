@@ -24,7 +24,7 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'Monitoring sisa designator AANWIJZING dan cost BoQ UT.',
   },
   '/cek-boq': {
-    title: 'Cek BOQ',
+    title: 'Cek BoQ',
     subtitle: 'Perbandingan BOQ upload dengan data UT/AANWIJZING.',
   },
   '/aanwijzing': {
