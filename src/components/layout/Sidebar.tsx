@@ -10,7 +10,7 @@ import {
   X,
   Activity,
   FileText,
-  ClipboardList,
+  FolderKanban,
   Receipt,
   BarChart3,
   Settings,
@@ -51,41 +51,56 @@ const PRIMARY_NAV_ITEM: NavItem = {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Project Tracking',
-    icon: ClipboardList,
+    label: 'Project JPP',
+    icon: FolderKanban,
     items: [
       { href: '/projects', label: 'Projects Data', icon: Database },
       { href: '/boq', label: 'BoQ Plan', icon: Receipt },
       { href: '/aanwijzing', label: 'AANWIJZING', icon: Megaphone },
       { href: '/ut', label: 'Rekap UT', icon: ClipboardCheck },
-      { href: '/topology', label: 'Network Topology', icon: Network },
+      { href: '/report', label: 'Report', icon: BarChart3 },
+      { href: '/kpi-report/jpp', label: 'KPI Report', icon: FileText },
+    ],
+  },
+  {
+    label: 'Project NodeB',
+    icon: FolderKanban,
+    items: [
+      { href: '/nodeb/projects', label: 'Projects Data', icon: Database },
+      { href: '/nodeb/boq', label: 'BoQ Plan', icon: Receipt },
+      { href: '/nodeb/aanwijzing', label: 'AANWIJZING', icon: Megaphone },
+      { href: '/nodeb/ut', label: 'Rekap UT', icon: ClipboardCheck },
+      { href: '/nodeb/report', label: 'Report', icon: BarChart3 },
+      { href: '/nodeb/kpi-report', label: 'KPI Report', icon: FileText },
+    ],
+  },
+  {
+    label: 'Project HEM',
+    icon: FolderKanban,
+    items: [
+      { href: '/hem/projects', label: 'Projects Data', icon: Database },
+      { href: '/hem/boq', label: 'BoQ Plan', icon: Receipt },
+      { href: '/hem/aanwijzing', label: 'AANWIJZING', icon: Megaphone },
+      { href: '/hem/ut', label: 'Rekap UT', icon: ClipboardCheck },
+      { href: '/hem/report', label: 'Report', icon: BarChart3 },
+      { href: '/hem/kpi-report', label: 'KPI Report', icon: FileText },
     ],
   },
   {
     label: 'Monitoring',
     icon: Activity,
     items: [
-      { href: '/report', label: 'Report', icon: BarChart3 },
+      { href: '/topology', label: 'Network Topology', icon: Network },
       { href: '/boq-tracking', label: 'BoQ Tracking', icon: TrendingUp },
-      { href: '/cek-boq', label: 'Cek BOQ', icon: FileSearch },
+      { href: '/cek-boq', label: 'Cek BoQ', icon: FileSearch },
     ],
   },
   {
-    label: 'KPI Report',
-    icon: BarChart3,
-    items: [
-      { href: '/kpi-report/jpp', label: 'JPP', icon: FileText },
-      { href: '/kpi-report/nodeb', label: 'NodeB', icon: FileText },
-      { href: '/kpi-report/hem', label: 'HEM', icon: FileText },
-      { href: '/kpi-report/engineering', label: 'Engineering', icon: FileText },
-    ],
-  },
-  {
-    label: 'Administration',
+    label: 'Settings',
     icon: Settings,
     items: [
       { href: '/settings/sync', label: 'Synchronization', icon: RefreshCw },
-      { href: '/settings/columns', label: 'Configuration', icon: Columns3 },
+      { href: '/settings/columns', label: 'Column Config', icon: Columns3 },
     ],
   },
 ];
