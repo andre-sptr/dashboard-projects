@@ -1,7 +1,7 @@
 // Expandable table row for individual project data
 import React from 'react';
 import { ChevronDown, Activity, Database } from 'lucide-react';
-import type { Project } from '@/types/database';
+import type { Project, ProjectType } from '@/types/database';
 import { HistoryEntry, formatDuration } from '@/utils/duration';
 import { formatExcelDate, getFullDataArray } from '@/utils/project';
 import { parseJsonArray } from '@/utils/json';
@@ -20,6 +20,7 @@ interface Props {
   onToggle: () => void;
   getStatusColor: (status: string) => string;
   columnConfig?: ColumnConfigEntry[];
+  projectType?: ProjectType;
 }
 
 const DEFAULT_RAW_COLUMN_CONFIG: ColumnConfigEntry[] = COLUMN_FIELDS.map((field, sort_order) => ({
@@ -73,7 +74,7 @@ interface InfoGroup {
 
 // Resolve the static groups against the live column config, keeping any
 // ungrouped fields visible under a trailing "Data Tambahan" section.
-function buildInfoGroups(columnConfig: ColumnConfigEntry[]): InfoGroup[] {
+function buildInfoGroups(columnConfig: ColumnConfigEntry[], projectType: ProjectType = 'JPP'): InfoGroup[] {
   const byKey = new Map(columnConfig.map((f) => [f.field_key, f]));
   const used = new Set<ColKey>();
   const groups: InfoGroup[] = [];
@@ -87,7 +88,13 @@ function buildInfoGroups(columnConfig: ColumnConfigEntry[]): InfoGroup[] {
         used.add(key);
       }
     }
-    if (fields.length > 0) groups.push({ title: group.title, dot: group.dot, fields });
+    if (fields.length > 0) {
+      groups.push({
+        title: projectType === 'NODEB' && group.title === 'Golive' ? 'OA' : group.title,
+        dot: group.dot,
+        fields,
+      });
+    }
   }
 
   const leftovers = columnConfig.filter((f) => !used.has(f.field_key));
@@ -118,7 +125,7 @@ function formatRawColumnValue(fieldKey: ColKey, value: unknown): string {
   return isEmpty ? '-' : String(value);
 }
 
-export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColor, columnConfig }: Props) => {
+export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColor, columnConfig, projectType = 'JPP' }: Props) => {
   const parsedHistory = parseJsonArray<HistoryEntry>(project.history || '[]');
   const fullData = getFullDataArray(project);
   const displayColumnConfig = getDisplayColumnConfig(columnConfig);
@@ -235,6 +242,7 @@ export const ProjectRow = ({ project, index, isExpanded, onToggle, getStatusColo
                 fullData={fullData}
                 parsedHistory={parsedHistory}
                 columnConfig={displayColumnConfig}
+                projectType={projectType}
               />
             </div>
           </td>
@@ -251,11 +259,13 @@ const ProjectDetailTabs = ({
   fullData,
   parsedHistory,
   columnConfig,
+  projectType,
 }: {
   project: Project,
   fullData: unknown[],
   parsedHistory: HistoryEntry[],
   columnConfig: ColumnConfigEntry[],
+  projectType: ProjectType,
 }) => {
   const [activeTab, setActiveTab] = React.useState<ProjectDetailTab>('info');
 
@@ -286,7 +296,7 @@ const ProjectDetailTabs = ({
       <div className="min-h-40">
         {activeTab === 'info' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-[34rem] overflow-y-auto pr-1 custom-scrollbar animate-in fade-in duration-300">
-            {buildInfoGroups(columnConfig).map((group) => (
+            {buildInfoGroups(columnConfig, projectType).map((group) => (
               <section
                 key={group.title}
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"

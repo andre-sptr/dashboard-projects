@@ -279,7 +279,7 @@ export default function DashboardClient({ initialProjects, columnConfig, project
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sub Status</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Komitmen</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Golive</th>
+                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{projectType === 'NODEB' ? 'OA' : 'Golive'}</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Durasi</th>
                 <th scope="col" className="px-2 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
               </tr>
@@ -295,6 +295,7 @@ export default function DashboardClient({ initialProjects, columnConfig, project
                     onToggle={() => toggleRow(project.uid)}
                     getStatusColor={getStatusColor}
                     columnConfig={columnConfig}
+                    projectType={projectType}
                   />
                 ))
               ) : (
