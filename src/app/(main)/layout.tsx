@@ -12,11 +12,11 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'Rekapan status SLA project Sumbagteng.',
   },
   '/projects': {
-    title: 'Projects Data',
+    title: 'Projects Data — JPP',
     subtitle: 'Sistem pelacakan durasi perubahan status SLA project.',
   },
   '/boq': {
-    title: 'BoQ Plan',
+    title: 'BoQ Plan — JPP',
     subtitle: 'Form pencatatan bill of quantity plan.',
   },
   '/boq-tracking': {
@@ -28,15 +28,15 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'Perbandingan BOQ upload dengan data UT/AANWIJZING.',
   },
   '/aanwijzing': {
-    title: 'Catatan AANWIJZING',
+    title: 'Catatan AANWIJZING — JPP',
     subtitle: 'Form pencatatan aanwijzing project.',
   },
   '/ut': {
-    title: 'Rekap UT',
+    title: 'Rekap UT — JPP',
     subtitle: 'Form pencatatan hasil UT (Uji Terima).',
   },
   '/report': {
-    title: 'Report & Analytics',
+    title: 'Report — JPP',
     subtitle: 'Laporan mendalam performa proyek dan realisasi port.',
   },
   '/kpi-report/jpp': {

@@ -64,6 +64,20 @@ export const FilterSection = ({
   filterOptions
 }: Props) => {
   const hasActiveFilters = statusFilter || subStatusFilter || areaFilter || branchFilter || tematikFilter || monthFilter || yearFilter || searchQuery;
+  const visibleFilterCount = 2
+    + (showAreaBranchFilters ? 2 : 0)
+    + (setTematikFilter && filterOptions.tematik ? 1 : 0)
+    + (setMonthFilter && filterOptions.months ? 1 : 0)
+    + (setYearFilter && filterOptions.years ? 1 : 0);
+  const desktopGridClass: Record<number, string> = {
+    2: 'lg:grid-cols-2',
+    3: 'lg:grid-cols-3',
+    4: 'lg:grid-cols-4',
+    5: 'lg:grid-cols-5',
+    6: 'lg:grid-cols-6',
+  };
+  const filterGridClass = desktopGridClass[visibleFilterCount] ?? 'lg:grid-cols-6';
+  const filterItemClass = 'min-w-0 space-y-1';
 
 
   return (
@@ -82,8 +96,8 @@ export const FilterSection = ({
         />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        <div className="space-y-1">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${filterGridClass} gap-3`}>
+        <div className={filterItemClass}>
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Status</label>
           <select
             value={statusFilter}
@@ -98,7 +112,7 @@ export const FilterSection = ({
           </select>
         </div>
 
-        <div className="space-y-1">
+        <div className={filterItemClass}>
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Sub Status</label>
           <select
             value={subStatusFilter}
@@ -114,7 +128,7 @@ export const FilterSection = ({
         </div>
 
         {showAreaBranchFilters && (
-          <div className="space-y-1">
+          <div className={filterItemClass}>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">{areaLabel}</label>
             <select
               value={areaFilter}
@@ -131,7 +145,7 @@ export const FilterSection = ({
         )}
 
         {showAreaBranchFilters && (
-          <div className="space-y-1">
+          <div className={filterItemClass}>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">{branchLabel}</label>
             <select
               value={branchFilter}
@@ -148,7 +162,7 @@ export const FilterSection = ({
         )}
 
         {setTematikFilter && filterOptions.tematik && (
-          <div className="space-y-1">
+          <div className={filterItemClass}>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">{tematikLabel}</label>
             <select
               value={tematikFilter}
@@ -165,7 +179,7 @@ export const FilterSection = ({
         )}
 
         {setMonthFilter && filterOptions.months && (
-          <div className="space-y-1">
+          <div className={filterItemClass}>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Bulan</label>
             <select
               value={monthFilter}
@@ -182,7 +196,7 @@ export const FilterSection = ({
         )}
 
         {setYearFilter && filterOptions.years && (
-          <div className="space-y-1">
+          <div className={filterItemClass}>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Tahun</label>
             <select
               value={yearFilter}

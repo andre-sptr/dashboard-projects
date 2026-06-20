@@ -278,8 +278,8 @@ export default function DashboardClient({ initialProjects, columnConfig, project
                 <th scope="col" className="px-4 py-3.5 text-left text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{getFieldLabel('ID_IHLD', 'ID IHLD')} / {getFieldLabel('NAMA_LOP', 'Nama LOP')}</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sub Status</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{getFieldLabel('KOMITMEN_GOLIVE', 'Komitmen')}</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{getFieldLabel('TANGGAL_GOLIVE', 'Tgl Golive')}</th>
+                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Komitmen</th>
+                <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Golive</th>
                 <th scope="col" className="px-3 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Durasi</th>
                 <th scope="col" className="px-2 py-3.5 text-center text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
               </tr>
