@@ -5,6 +5,16 @@ import { AlertScheduler } from '../src/lib/alert-scheduler';
 import { downloadAndParseExcel } from '../src/lib/parse-excel';
 import type { Project } from '@/types/database';
 
+vi.mock('node-cron', () => ({
+  schedule: vi.fn(() => ({ stop: vi.fn() })),
+}));
+
+function daysFromNow(n: number): string {
+  return new Date(Date.now() + n * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
+}
+
 describe('Low Severity Polishes & Config Dinamization', () => {
   describe('L1: parse-excel.ts Renaming', () => {
     it('should correctly import and expose downloadAndParseExcel from parse-excel.ts', () => {
@@ -41,7 +51,7 @@ describe('Low Severity Polishes & Config Dinamization', () => {
         odp_planned: 10,
         port_planned: 80,
         port_realized: 0,
-        golive_target: '2026-06-30', // Far in future, won't trigger near golive
+        golive_target: daysFromNow(60), // Far enough ahead to avoid the near-golive criterion.
         golive_actual: '',
         golive_target_violated: 0,
         // Set last status change 8 days ago (more than 5 stuck days, but less than default 14)
